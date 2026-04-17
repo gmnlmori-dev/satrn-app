@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseClient } from "@/lib/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requestNoteRowToNote } from "@/lib/supabase/mappers";
 import type { RequestNoteRow } from "@/types/database";
 import type { RequestNote } from "@/types/request";
@@ -22,7 +22,7 @@ export async function createRequestNote(
     return { ok: false, message: "Inserisci un testo per la nota." };
   }
 
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data: row, error: insertError } = await supabase
     .from("request_notes")

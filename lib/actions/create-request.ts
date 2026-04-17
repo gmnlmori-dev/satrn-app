@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseClient } from "@/lib/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fromDatetimeLocalValue } from "@/lib/date";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
@@ -57,7 +57,7 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
 
   const next_action_at = fromDatetimeLocalValue(nextActionAtRaw);
 
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const last_interaction_at = new Date().toISOString();
 
   const { data, error } = await supabase

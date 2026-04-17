@@ -1,4 +1,4 @@
-import { createSupabaseClient } from "@/lib/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   requestNoteRowToNote,
   requestRowToRequest,
@@ -12,7 +12,7 @@ function assertNoError(message: string, error: { message: string } | null) {
 
 /** Tutte le richieste, ultimo aggiornamento per primo. */
 export async function getRequests(): Promise<Request[]> {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("requests")
     .select("*")
@@ -24,7 +24,7 @@ export async function getRequests(): Promise<Request[]> {
 
 /** Singola richiesta per id, o `null` se assente. */
 export async function getRequestById(id: string): Promise<Request | null> {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("requests")
     .select("*")
@@ -38,7 +38,7 @@ export async function getRequestById(id: string): Promise<Request | null> {
 
 /** Note collegate a una richiesta (cronologia). */
 export async function getRequestNotes(requestId: string): Promise<RequestNote[]> {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("request_notes")
     .select("*")

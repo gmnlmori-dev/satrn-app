@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseClient } from "@/lib/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Request } from "@/types/request";
 
 export type UpdateRequestDetailsPatch = Pick<
@@ -23,7 +23,7 @@ export async function updateRequestDetails(
   patch: UpdateRequestDetailsPatch,
 ): Promise<UpdateRequestDetailsResult> {
   const now = new Date().toISOString();
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("requests")

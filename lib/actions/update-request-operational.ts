@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseClient } from "@/lib/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type UpdateRequestOperationalInput = {
   status?: string;
@@ -23,7 +23,7 @@ export async function updateRequestOperational(
   id: string,
   fields: UpdateRequestOperationalInput,
 ): Promise<UpdateRequestOperationalResult> {
-  const supabase = createSupabaseClient();
+  const supabase = await createSupabaseServerClient();
 
   const payload: Record<string, unknown> = {};
   if (fields.status !== undefined) payload.status = fields.status;

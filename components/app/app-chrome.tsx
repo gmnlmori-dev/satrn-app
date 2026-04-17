@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/components/app/detail-save-feedback-context";
 import { NewRequestQuerySync } from "@/components/app/new-request-query-sync";
 import { NewRequestSlideOver } from "@/components/requests/new-request-slide-over";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /** Altezza unica barra superiore (sidebar + header) per allineare i border orizzontali */
 const TOP_BAR_H = "h-12";
@@ -206,6 +207,7 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
 }
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [newRequestOpen, setNewRequestOpen] = useState(false);
@@ -382,8 +384,30 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="shrink-0 border-t border-slate-200/90 p-2.5 text-xs leading-snug text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            Satrn
+          <div className="shrink-0 border-t border-slate-200/90 p-2.5 dark:border-slate-800">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs leading-snug text-slate-500 dark:text-slate-400">
+                Satrn
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  const supabase = createSupabaseBrowserClient();
+                  await supabase.auth.signOut();
+                  router.push("/login");
+                  router.refresh();
+                }}
+                className={cn(
+                  uiTransition,
+                  uiFocusRingInset,
+                  "shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-slate-600",
+                  "hover:bg-slate-100 hover:text-slate-900",
+                  "dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                )}
+              >
+                Esci
+              </button>
+            </div>
           </div>
         </aside>
 
