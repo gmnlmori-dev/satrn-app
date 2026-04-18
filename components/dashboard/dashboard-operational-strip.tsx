@@ -53,7 +53,7 @@ export function DashboardOperationalStrip({
             className={cn(
               uiTransition,
               uiFocusRingInset,
-              "group flex min-h-[7rem] flex-col px-4 py-4 outline-none md:px-5 md:py-5",
+              "group flex min-h-[7rem] flex-col px-4 py-4 pb-5 outline-none md:px-5 md:py-5",
               "hover:bg-slate-50/90 dark:hover:bg-slate-800/40",
             )}
           >
@@ -64,9 +64,6 @@ export function DashboardOperationalStrip({
             <p className="mt-1.5 text-sm leading-snug text-slate-600 dark:text-slate-400">
               {cell.hint}
             </p>
-            <span className="mt-auto pt-3 text-xs font-semibold text-slate-500 underline-offset-2 group-hover:underline dark:text-slate-500">
-              Apri in Da seguire
-            </span>
           </Link>
         ))}
       </div>

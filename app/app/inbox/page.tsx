@@ -24,7 +24,7 @@ export default async function InboxPage() {
           </p>
         </div>
         <Link
-          href="/app/inbox/new"
+          href="/app/inbox?nuova=1"
           className={cn(
             uiTransition,
             uiFocusRingOffset,
@@ -32,7 +32,7 @@ export default async function InboxPage() {
             "inline-flex shrink-0 justify-center self-start px-4 py-2.5 text-center no-underline sm:min-w-[10rem]",
           )}
         >
-          Nuovo ingresso
+          Nuovo inbox
         </Link>
       </header>
 
@@ -45,14 +45,14 @@ export default async function InboxPage() {
             Aggiungi un ingresso manuale per tenere traccia di messaggi e appunti prima di crearne una richiesta.
           </p>
           <Link
-            href="/app/inbox/new"
+            href="/app/inbox?nuova=1"
             className={cn(
               uiTransition,
               uiFocusRingOffset,
               "mt-5 inline-block rounded-md text-sm font-semibold text-slate-800 underline-offset-2 hover:underline dark:text-slate-200",
             )}
           >
-            Nuovo ingresso
+            Nuovo inbox
           </Link>
         </div>
       ) : (

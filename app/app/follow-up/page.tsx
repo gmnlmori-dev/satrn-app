@@ -1,3 +1,4 @@
+import { FollowUpHashScroll } from "@/components/follow-up/follow-up-hash-scroll";
 import { FollowUpView } from "@/components/follow-up/follow-up-view";
 import {
   getFollowUpTodayRequests,
@@ -22,6 +23,7 @@ export default async function FollowUpPage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
+      <FollowUpHashScroll />
       <header className="min-w-0">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           Da seguire

@@ -56,6 +56,7 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (pending) return;
     setError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);

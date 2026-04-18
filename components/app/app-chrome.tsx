@@ -18,7 +18,9 @@ import {
   useDetailSaveFeedback,
 } from "@/components/app/detail-save-feedback-context";
 import { NewRequestQuerySync } from "@/components/app/new-request-query-sync";
+import { InboxNewQuerySync } from "@/components/app/inbox-new-query-sync";
 import { NewRequestSlideOver } from "@/components/requests/new-request-slide-over";
+import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /** Altezza unica barra superiore (sidebar + header) per allineare i border orizzontali */
@@ -182,7 +184,7 @@ function breadcrumbsForPath(
   if (normalized === "/app/inbox/new") {
     return [
       { label: "Inbox", href: "/app/inbox" },
-      { label: "Nuovo ingresso" },
+      { label: "Nuovo inbox" },
     ];
   }
 
@@ -323,8 +325,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [newRequestOpen, setNewRequestOpen] = useState(false);
+  const [newInboxOpen, setNewInboxOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const openNewRequest = useCallback(() => setNewRequestOpen(true), []);
+  const openNewInbox = useCallback(() => setNewInboxOpen(true), []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -342,10 +346,17 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <NewRequestQuerySync onOpen={openNewRequest} />
         </Suspense>
+        <Suspense fallback={null}>
+          <InboxNewQuerySync onOpen={openNewInbox} />
+        </Suspense>
 
         <NewRequestSlideOver
           open={newRequestOpen}
           onClose={() => setNewRequestOpen(false)}
+        />
+        <InboxNewSlideOver
+          open={newInboxOpen}
+          onClose={() => setNewInboxOpen(false)}
         />
 
         {menuOpen ? (
@@ -458,19 +469,22 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                   >
                     Nuova richiesta
                   </button>
-                  <Link
-                    href="/app/inbox/new"
-                    onClick={() => setMenuOpen(false)}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openNewInbox();
+                    }}
                     className={cn(
                       uiTransition,
                       uiFocusRingInset,
-                      "block w-full rounded-md px-2.5 py-1.5 text-[15px] font-medium leading-snug",
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-[15px] font-medium leading-snug",
                       "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                       "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
                     )}
                   >
-                    Nuovo ingresso inbox
-                  </Link>
+                    Nuovo inbox
+                  </button>
                 </div>
               ) : null}
             </div>
