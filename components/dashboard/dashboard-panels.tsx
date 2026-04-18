@@ -91,7 +91,7 @@ export function DashboardTodayPanel({ items }: { items: Request[] }) {
 export function DashboardRecentPanel({ items }: { items: Request[] }) {
   return (
     <PanelShell
-      kicker="Attività"
+      kicker="Scrivania"
       title="Aggiornate di recente"
       actionHref="/app/requests"
       actionLabel="Vedi tutte"

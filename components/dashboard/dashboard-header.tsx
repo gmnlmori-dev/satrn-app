@@ -9,22 +9,33 @@ export function DashboardHeader() {
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            Centro di controllo
+            Home operativa
           </h2>
           <p className={cn(uiPageLead, "mt-1.5 max-w-xl")}>
-            Cosa richiede attenzione oggi e cosa è stato aggiornato di recente
-            sulla coda.
+            Ritardi, scadenze, inbox e ultime attività — punto di partenza per
+            lavorare la coda.
           </p>
         </div>
-        <Link
-          href="/app/requests"
-          className={cn(
-            uiBtnSecondary,
-            "inline-flex shrink-0 items-center justify-center rounded-lg px-4 py-2.5 text-sm"
-          )}
-        >
-          Vai alla scrivania richieste
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/app/follow-up"
+            className={cn(
+              uiBtnSecondary,
+              "inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm",
+            )}
+          >
+            Da seguire
+          </Link>
+          <Link
+            href="/app/requests"
+            className={cn(
+              uiBtnSecondary,
+              "inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm",
+            )}
+          >
+            Scrivania richieste
+          </Link>
+        </div>
       </div>
     </div>
   );

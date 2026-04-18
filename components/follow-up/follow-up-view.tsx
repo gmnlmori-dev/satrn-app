@@ -25,11 +25,14 @@ const QUICK_STATUSES: RequestStatus[] = [
 ];
 
 function Section({
+  anchorId,
   title,
   description,
   children,
   variant,
 }: {
+  /** Ancora per link dalla dashboard (`/app/follow-up#...`). */
+  anchorId?: string;
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -43,7 +46,7 @@ function Section({
         : "border-slate-200/80 dark:border-slate-800";
 
   return (
-    <section className="space-y-3">
+    <section id={anchorId} className="scroll-mt-24 space-y-3">
       <div className="min-w-0">
         <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {title}
@@ -289,6 +292,7 @@ export function FollowUpView({
   return (
     <div className="space-y-8 md:space-y-10">
       <Section
+        anchorId="follow-up-overdue"
         variant="danger"
         title="In ritardo"
         description="Prossima azione prima di oggi (calendario locale), escluse le richieste chiuse."
@@ -301,6 +305,7 @@ export function FollowUpView({
       </Section>
 
       <Section
+        anchorId="follow-up-today"
         variant="default"
         title="Oggi"
         description="Prossima azione prevista per oggi."
@@ -313,6 +318,7 @@ export function FollowUpView({
       </Section>
 
       <Section
+        anchorId="follow-up-upcoming"
         variant="muted"
         title="Prossimi 7 giorni"
         description="Dalla prossima mezzanotte fino alla fine del settimo giorno."
@@ -325,6 +331,7 @@ export function FollowUpView({
       </Section>
 
       <Section
+        anchorId="follow-up-inbox"
         variant="muted"
         title="Inbox da triage"
         description={`Stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non convertiti. Archivia per togliere dalla coda; Converti apre il dettaglio con il modulo richiesta.`}
