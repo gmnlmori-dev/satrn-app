@@ -59,6 +59,7 @@ export async function updateRequestOperational(
   revalidatePath("/app/requests");
   revalidatePath(`/app/requests/${id}`);
   revalidatePath("/app/dashboard");
+  revalidatePath("/app/follow-up");
 
   return {
     ok: true,

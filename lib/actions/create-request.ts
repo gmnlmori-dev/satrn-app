@@ -88,6 +88,7 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
 
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");
+  revalidatePath("/app/follow-up");
 
   return { ok: true, id };
 }

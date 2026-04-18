@@ -42,6 +42,7 @@ export async function updateInboxItemStatus(
 
   revalidatePath("/app/inbox");
   revalidatePath(`/app/inbox/${id}`);
+  revalidatePath("/app/follow-up");
 
   return { ok: true };
 }

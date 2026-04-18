@@ -53,6 +53,7 @@ export async function convertInboxToRequest(
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");
   revalidatePath(`/app/requests/${result.id}`);
+  revalidatePath("/app/follow-up");
 
   return { ok: true, requestId: result.id };
 }

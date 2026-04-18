@@ -49,6 +49,7 @@ export async function createInboxItem(
   }
 
   revalidatePath("/app/inbox");
+  revalidatePath("/app/follow-up");
 
   return { ok: true, id };
 }
