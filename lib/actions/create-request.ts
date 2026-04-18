@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { insertRequestActivity } from "@/lib/request-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fromDatetimeLocalValue } from "@/lib/date";
 import type { RequestPriority, RequestStatus } from "@/types/request";
@@ -86,9 +87,16 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     return { ok: false, message: "Nessun identificativo restituito dal database." };
   }
 
+  await insertRequestActivity(supabase, {
+    requestId: id,
+    type: "request_created",
+    body: `Richiesta creata: ${title}`,
+  });
+
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");
   revalidatePath("/app/follow-up");
+  revalidatePath(`/app/requests/${id}`);
 
   return { ok: true, id };
 }

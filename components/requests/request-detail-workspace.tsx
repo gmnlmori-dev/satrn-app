@@ -8,8 +8,10 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
+import type { RequestActivity } from "@/types/activity";
 import type { Request, RequestNote, RequestPriority, RequestStatus } from "@/types/request";
-import { priorityLabel, statusLabel } from "@/lib/labels";
+import { activityTypeLabel, priorityLabel, statusLabel } from "@/lib/labels";
 import {
   formatDateTime,
   fromDatetimeLocalValue,
@@ -63,6 +65,7 @@ const inputClass = cn(
 type Props = {
   initialRequest: Request;
   initialNotes: RequestNote[];
+  initialActivities: RequestActivity[];
 };
 
 /**
@@ -71,9 +74,13 @@ type Props = {
 export function RequestDetailWorkspace({
   initialRequest,
   initialNotes,
+  initialActivities,
 }: Props) {
+  const router = useRouter();
   const [request, setRequest] = useState<Request>(initialRequest);
   const [notes, setNotes] = useState<RequestNote[]>(initialNotes);
+  const [activities, setActivities] =
+    useState<RequestActivity[]>(initialActivities);
   const [editOpen, setEditOpen] = useState(false);
   const [composerBody, setComposerBody] = useState("");
   const { pulseTopBar } = useDetailSaveFeedback();
@@ -105,6 +112,11 @@ export function RequestDetailWorkspace({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync esplicito da RSC
     setNotes(initialNotes);
   }, [initialRequest.id, initialNotes]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync esplicito da RSC
+    setActivities(initialActivities);
+  }, [initialRequest.id, initialActivities]);
 
   const showFeedback = useCallback(() => {
     pulseTopBar();
@@ -157,8 +169,9 @@ export function RequestDetailWorkspace({
         updatedAt: res.updatedAt,
       });
       showFeedback();
+      router.refresh();
     },
-    [patchRequest, request.status, request.id, showFeedback]
+    [patchRequest, request.status, request.id, showFeedback, router]
   );
 
   const onPriority = useCallback(
@@ -178,8 +191,9 @@ export function RequestDetailWorkspace({
         updatedAt: res.updatedAt,
       });
       showFeedback();
+      router.refresh();
     },
-    [patchRequest, request.priority, request.id, showFeedback]
+    [patchRequest, request.priority, request.id, showFeedback, router]
   );
 
   const saveNextAction = useCallback(async () => {
@@ -211,6 +225,7 @@ export function RequestDetailWorkspace({
       setNextSaveUi("idle");
       nextSaveResetRef.current = undefined;
     }, 2000);
+    router.refresh();
   }, [
     nextAtDraft,
     nextDraft,
@@ -219,6 +234,7 @@ export function RequestDetailWorkspace({
     patchRequest,
     request.id,
     showFeedback,
+    router,
   ]);
 
   const saveDetails = useCallback(
@@ -270,7 +286,8 @@ export function RequestDetailWorkspace({
       setNoteSaveUi("idle");
       noteSaveResetRef.current = undefined;
     }, 2000);
-  }, [composerBody, noteSaveUi, patchRequest, request.id, showFeedback]);
+    router.refresh();
+  }, [composerBody, noteSaveUi, patchRequest, request.id, showFeedback, router]);
 
   const clearComposer = useCallback(() => {
     setComposerBody("");
@@ -502,6 +519,65 @@ export function RequestDetailWorkspace({
             {request.description}
           </p>
         </div>
+      </SurfaceCard>
+
+      <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
+        <h2 className={uiSectionHeading}>Attività</h2>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          Eventi registrati automaticamente (creazione, modifiche operative,
+          note).
+        </p>
+        {activities.length === 0 ? (
+          <div className="mt-5 rounded-lg border border-dashed border-slate-200/90 bg-slate-50/50 px-4 py-6 text-center dark:border-slate-700 dark:bg-slate-950/20">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Nessuna attività registrata.
+            </p>
+          </div>
+        ) : (
+          <ol
+            className="relative m-0 mt-5 list-none space-y-0 p-0"
+            aria-label="Attività"
+          >
+            {activities.map((a, idx) => (
+              <li
+                key={a.id}
+                className="relative flex gap-3 pb-6 last:pb-0 sm:gap-3.5"
+              >
+                {idx < activities.length - 1 ? (
+                  <span
+                    className="absolute bottom-0 left-[9px] top-5 w-px bg-slate-200/90 dark:bg-slate-700/90"
+                    aria-hidden
+                  />
+                ) : null}
+                <div
+                  className="relative z-10 mt-1.5 h-2 w-2 shrink-0 rounded-full border border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-800"
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span
+                      className={cn(
+                        uiOverline,
+                        "text-[10px] tracking-[0.08em] text-slate-500 dark:text-slate-500",
+                      )}
+                    >
+                      {activityTypeLabel[a.type]}
+                    </span>
+                    <time
+                      dateTime={a.createdAt}
+                      className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-400"
+                    >
+                      {formatDateTime(a.createdAt)}
+                    </time>
+                  </div>
+                  <p className="mt-1.5 text-[15px] leading-snug text-slate-800 dark:text-slate-200">
+                    {a.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
       </SurfaceCard>
 
       <SurfaceCard className="border-slate-200/70 dark:border-slate-800">

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { insertRequestActivity } from "@/lib/request-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requestNoteRowToNote } from "@/lib/supabase/mappers";
 import type { RequestNoteRow } from "@/types/database";
@@ -62,6 +63,15 @@ export async function createRequestNote(
 
   const r = req as { updated_at: string; last_interaction_at: string };
   const note = requestNoteRowToNote(row as RequestNoteRow);
+
+  const preview =
+    trimmed.length > 220 ? `${trimmed.slice(0, 220)}…` : trimmed;
+  await insertRequestActivity(supabase, {
+    requestId,
+    type: "note_added",
+    body: preview,
+    meta: { note_id: noteId },
+  });
 
   revalidatePath("/app/requests");
   revalidatePath(`/app/requests/${requestId}`);

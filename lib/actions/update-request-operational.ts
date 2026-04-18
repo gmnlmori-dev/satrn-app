@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { logOperationalChanges } from "@/lib/request-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type UpdateRequestOperationalInput = {
@@ -24,6 +25,19 @@ export async function updateRequestOperational(
   fields: UpdateRequestOperationalInput,
 ): Promise<UpdateRequestOperationalResult> {
   const supabase = await createSupabaseServerClient();
+
+  const { data: before, error: loadError } = await supabase
+    .from("requests")
+    .select("status, priority, next_action, next_action_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (loadError) {
+    return { ok: false, message: loadError.message };
+  }
+  if (!before) {
+    return { ok: false, message: "Richiesta non trovata." };
+  }
 
   const payload: Record<string, unknown> = {};
   if (fields.status !== undefined) payload.status = fields.status;
@@ -55,6 +69,18 @@ export async function updateRequestOperational(
     updated_at: string;
     last_interaction_at: string;
   };
+
+  await logOperationalChanges(
+    supabase,
+    id,
+    before as {
+      status: string;
+      priority: string;
+      next_action: string;
+      next_action_at: string | null;
+    },
+    fields,
+  );
 
   revalidatePath("/app/requests");
   revalidatePath(`/app/requests/${id}`);

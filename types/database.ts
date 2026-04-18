@@ -1,3 +1,4 @@
+import type { RequestActivityType } from "@/types/activity";
 import type { InboxItemStatus } from "@/types/inbox";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
@@ -17,6 +18,16 @@ export type RequestRow = {
   last_interaction_at: string;
   created_at: string;
   updated_at: string;
+};
+
+/** Riga tabella `public.request_activities`. */
+export type RequestActivityRow = {
+  id: string;
+  request_id: string;
+  type: RequestActivityType;
+  body: string;
+  meta: Record<string, unknown> | null;
+  created_at: string;
 };
 
 /** Riga tabella `public.request_notes`. */

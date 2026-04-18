@@ -1,6 +1,23 @@
-import type { InboxItemRow, RequestNoteRow, RequestRow } from "@/types/database";
+import type {
+  InboxItemRow,
+  RequestActivityRow,
+  RequestNoteRow,
+  RequestRow,
+} from "@/types/database";
+import type { RequestActivity } from "@/types/activity";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestNote } from "@/types/request";
+
+export function requestActivityRowToActivity(row: RequestActivityRow): RequestActivity {
+  return {
+    id: row.id,
+    requestId: row.request_id,
+    type: row.type,
+    body: row.body,
+    meta: row.meta,
+    createdAt: row.created_at,
+  };
+}
 
 export function requestRowToRequest(row: RequestRow): Request {
   return {

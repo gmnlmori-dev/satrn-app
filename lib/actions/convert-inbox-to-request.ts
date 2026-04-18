@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createRequest } from "@/lib/actions/create-request";
+import { insertRequestActivity } from "@/lib/request-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getInboxItemById } from "@/lib/supabase/inbox-queries";
 
@@ -47,6 +48,13 @@ export async function convertInboxToRequest(
       message: `Richiesta creata ma aggiornamento inbox fallito: ${error.message}`,
     };
   }
+
+  await insertRequestActivity(supabase, {
+    requestId: result.id,
+    type: "converted_from_inbox",
+    body: "Richiesta creata dalla conversione inbox.",
+    meta: { inbox_item_id: inboxItemId },
+  });
 
   revalidatePath("/app/inbox");
   revalidatePath(`/app/inbox/${inboxItemId}`);
