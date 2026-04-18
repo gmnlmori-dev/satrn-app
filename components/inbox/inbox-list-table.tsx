@@ -32,7 +32,7 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
   return (
     <tr
       tabIndex={0}
-      aria-label={`Apri: ${r.subject}`}
+      aria-label={`Apri: ${r.subject || "(Senza oggetto)"}`}
       onClick={go}
       onKeyDown={onKeyDown}
       className={cn(
@@ -74,11 +74,17 @@ export function InboxListTable({ items }: { items: InboxItem[] }) {
       <table className="w-full table-fixed border-collapse text-left text-sm">
         <thead>
           <tr className={dataTableHeadRowClass}>
-            <th className={cn(dataTableThClass, "min-w-0")}>Oggetto</th>
-            <th className={cn(dataTableThClass, "hidden w-[8.5rem] sm:table-cell", dataTableColSepClass)}>
+            <th scope="col" className={cn(dataTableThClass, "min-w-0")}>
+              Oggetto
+            </th>
+            <th
+              scope="col"
+              className={cn(dataTableThClass, "hidden w-[8.5rem] sm:table-cell", dataTableColSepClass)}
+            >
               Stato
             </th>
             <th
+              scope="col"
               className={cn(
                 dataTableThClass,
                 "hidden w-[11rem] md:table-cell lg:w-[12rem]",

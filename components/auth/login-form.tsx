@@ -21,6 +21,7 @@ export function LoginForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setError(null);
     setBusy(true);
     const supabase = createSupabaseBrowserClient();
