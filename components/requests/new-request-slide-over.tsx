@@ -149,6 +149,7 @@ export function NewRequestSlideOver({
               onSuccess={(requestId) => {
                 onClose();
                 router.push(`/app/requests/${requestId}`);
+                router.refresh();
               }}
             />
           </div>

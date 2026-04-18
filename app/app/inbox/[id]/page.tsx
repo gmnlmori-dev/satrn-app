@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConvertInboxForm } from "@/components/inbox/convert-inbox-form";
 import { InboxStatusControls } from "@/components/inbox/inbox-status-controls";
+import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { formatDateTime } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
@@ -37,8 +38,8 @@ export default async function InboxDetailPage({
           {item.subject || "Senza oggetto"}
         </h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-          Ingresso manuale — {inboxStatusLabel[item.status]}
-          {item.linkedRequestId ? " — collegato a una richiesta." : "."}
+          Ingresso registrato manualmente · stato {inboxStatusLabel[item.status]}
+          {item.linkedRequestId ? " · collegato a una richiesta esistente." : "."}
         </p>
       </header>
 
@@ -102,14 +103,22 @@ export default async function InboxDetailPage({
         <h2 className="text-sm font-semibold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
           Contenuto grezzo
         </h2>
-        <pre
-          className={cn(
-            "mt-3 max-h-[min(28rem,55vh)] overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200/80 bg-slate-50/90 p-4 text-[13px] leading-relaxed text-slate-900",
-            "dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-100",
-          )}
-        >
-          {item.rawContent || "—"}
-        </pre>
+        {item.rawContent?.trim() ? (
+          <pre
+            className={cn(
+              "mt-3 max-h-[min(28rem,55vh)] overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200/80 bg-slate-50/90 p-4 text-[13px] leading-relaxed text-slate-900",
+              "dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-100",
+            )}
+          >
+            {item.rawContent}
+          </pre>
+        ) : (
+          <AppEmptyHint
+            className="mt-3"
+            title="Nessun testo incollato"
+            description="Il contenuto grezzo non è presente. Puoi aggiornare l’ingresso se ti serve recuperare il messaggio originale."
+          />
+        )}
       </SurfaceCard>
 
       {!item.linkedRequestId ? <ConvertInboxForm item={item} /> : null}

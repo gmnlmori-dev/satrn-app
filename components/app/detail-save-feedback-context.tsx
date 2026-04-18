@@ -10,7 +10,7 @@ import {
 } from "react";
 
 type Ctx = {
-  /** Breve impulso visivo nella top bar dopo un salvataggio (dettaglio richiesta). */
+  /** Impulso “Salvato” nella top bar (badge verde) dopo salvataggi / aggiornamenti riusciti. */
   topBarSavePulse: boolean;
   pulseTopBar: () => void;
 };

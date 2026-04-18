@@ -30,6 +30,7 @@ import { uiFilterLabel, uiOverline, uiSectionHeading } from "@/lib/typography";
 import { createRequestNote } from "@/lib/actions/create-request-note";
 import { updateRequestDetails } from "@/lib/actions/update-request-details";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
+import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { StatusBadge } from "@/components/requests/status-badge";
@@ -515,23 +516,29 @@ export function RequestDetailWorkspace({
         </dl>
         <div className="mt-7 border-t border-slate-100 pt-6 dark:border-slate-800">
           <h3 className={uiSectionHeading}>Descrizione</h3>
-          <p className="mt-2.5 text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
-            {request.description}
-          </p>
+          {request.description?.trim() ? (
+            <p className="mt-2.5 text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
+              {request.description}
+            </p>
+          ) : (
+            <p className="mt-2.5 text-sm italic text-slate-500 dark:text-slate-500">
+              Nessuna descrizione testuale.
+            </p>
+          )}
         </div>
       </SurfaceCard>
 
       <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
         <h2 className={uiSectionHeading}>Attività</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Eventi registrati automaticamente (creazione, modifiche operative,
-          note).
+          Creazione, modifiche a stato e priorità, prossima azione e note — in ordine cronologico.
         </p>
         {activities.length === 0 ? (
-          <div className="mt-5 rounded-lg border border-dashed border-slate-200/90 bg-slate-50/50 px-4 py-6 text-center dark:border-slate-700 dark:bg-slate-950/20">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Nessuna attività registrata.
-            </p>
+          <div className="mt-5">
+            <AppEmptyHint
+              title="Ancora nessun evento"
+              description="Quando salvi modifiche o aggiungi note, la timeline si popolerà automaticamente."
+            />
           </div>
         ) : (
           <ol
@@ -583,7 +590,7 @@ export function RequestDetailWorkspace({
       <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
         <h2 className={uiSectionHeading}>Note e cronologia</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Storico attività e annotazioni operative sul database.
+          Note operative e aggiornamenti che aggiungi qui sotto; le voci più recenti sono in cima.
         </p>
 
         <form
@@ -690,15 +697,10 @@ export function RequestDetailWorkspace({
           </div>
 
           {notes.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-200/90 bg-slate-50/50 px-4 py-6 text-center dark:border-slate-700 dark:bg-slate-950/20">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Nessuna voce nella cronologia
-              </p>
-              <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-500">
-                Usa il riquadro sopra per registrare aggiornamenti, promemoria o
-                follow-up.
-              </p>
-            </div>
+            <AppEmptyHint
+              title="Nessuna nota ancora"
+              description="Scrivi nel riquadro sopra per registrare aggiornamenti, promemoria o passaggi operativi."
+            />
           ) : (
             <div className="relative">
               <div

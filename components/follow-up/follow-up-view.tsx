@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { InboxStatusBadge } from "@/components/inbox/inbox-status-badge";
 import { PriorityBadge } from "@/components/requests/priority-badge";
 import { StatusBadge } from "@/components/requests/status-badge";
@@ -11,6 +12,7 @@ import { updateRequestOperational } from "@/lib/actions/update-request-operation
 import { tomorrowAtNineLocalIso } from "@/lib/follow-up-windows";
 import { formatDateTime } from "@/lib/date";
 import { inboxStatusLabel, statusLabel } from "@/lib/labels";
+import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
 import { uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
 import type { InboxItem } from "@/types/inbox";
@@ -64,10 +66,10 @@ function Section({
   );
 }
 
-function EmptyRow({ children }: { children: React.ReactNode }) {
+function EmptyRow({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="bg-white px-4 py-8 text-center text-sm text-slate-600 dark:bg-slate-950/35 dark:text-slate-400">
-      {children}
+    <div className="bg-white px-3 py-3 sm:px-4 dark:bg-slate-950/35">
+      <AppEmptyHint title={title} description={hint} className="py-6" />
     </div>
   );
 }
@@ -81,6 +83,7 @@ function RequestBlock({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const { pulseTopBar } = useDetailSaveFeedback();
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -91,7 +94,10 @@ function RequestBlock({
       next_action_at: tomorrowAtNineLocalIso(),
       bump_last_interaction: true,
     });
-    if (r.ok) refresh();
+    if (r.ok) {
+      pulseTopBar();
+      refresh();
+    }
   }
 
   async function setStatus(id: string, status: RequestStatus) {
@@ -99,7 +105,10 @@ function RequestBlock({
       status,
       bump_last_interaction: true,
     });
-    if (r.ok) refresh();
+    if (r.ok) {
+      pulseTopBar();
+      refresh();
+    }
   }
 
   return (
@@ -204,6 +213,7 @@ function RequestBlock({
 function InboxBlock({ items }: { items: InboxItem[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const { pulseTopBar } = useDetailSaveFeedback();
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -211,7 +221,10 @@ function InboxBlock({ items }: { items: InboxItem[] }) {
 
   async function archivia(id: string) {
     const r = await updateInboxItemStatus(id, "archived");
-    if (r.ok) refresh();
+    if (r.ok) {
+      pulseTopBar();
+      refresh();
+    }
   }
 
   return (
@@ -298,7 +311,10 @@ export function FollowUpView({
         description="Prossima azione prima di oggi (calendario locale), escluse le richieste chiuse."
       >
         {overdue.length === 0 ? (
-          <EmptyRow>Nessuna richiesta in ritardo.</EmptyRow>
+          <EmptyRow
+            title="Nessun ritardo"
+            hint="Nessuna richiesta ha la prossima azione impostata prima di oggi (richieste chiuse escluse)."
+          />
         ) : (
           <RequestBlock requests={overdue} accent="danger" />
         )}
@@ -311,7 +327,10 @@ export function FollowUpView({
         description="Prossima azione prevista per oggi."
       >
         {today.length === 0 ? (
-          <EmptyRow>Niente in scadenza oggi.</EmptyRow>
+          <EmptyRow
+            title="Niente in scadenza oggi"
+            hint="Le richieste con prossima azione prevista per oggi compariranno in questo blocco."
+          />
         ) : (
           <RequestBlock requests={today} accent="default" />
         )}
@@ -324,7 +343,10 @@ export function FollowUpView({
         description="Dalla prossima mezzanotte fino alla fine del settimo giorno."
       >
         {upcoming.length === 0 ? (
-          <EmptyRow>Nessuna scadenza in questa finestra.</EmptyRow>
+          <EmptyRow
+            title="Nessuna scadenza nei prossimi 7 giorni"
+            hint="Domani fino al settimo giorno non risultano azioni programmate."
+          />
         ) : (
           <RequestBlock requests={upcoming} accent="default" />
         )}
@@ -334,10 +356,13 @@ export function FollowUpView({
         anchorId="follow-up-inbox"
         variant="muted"
         title="Inbox da triage"
-        description={`Stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non convertiti. Archivia per togliere dalla coda; Converti apre il dettaglio con il modulo richiesta.`}
+        description={`Ingressi in stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non ancora convertiti. Archivia per toglierli dalla coda; Converti apre il dettaglio con il modulo di creazione richiesta.`}
       >
         {inbox.length === 0 ? (
-          <EmptyRow>Inbox di triage vuota.</EmptyRow>
+          <EmptyRow
+            title="Nessun ingresso da triage"
+            hint="Gli elementi in stato Nuovo o Esaminato, non ancora convertiti in richiesta, compariranno qui."
+          />
         ) : (
           <InboxBlock items={inbox} />
         )}

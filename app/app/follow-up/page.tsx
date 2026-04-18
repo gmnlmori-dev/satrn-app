@@ -29,8 +29,8 @@ export default async function FollowUpPage() {
           Da seguire
         </h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-          Ritardi, scadenze oggi e nei prossimi sette giorni, più inbox da
-          triage — senza uscire dalla coda operativa.
+          Ritardi, scadenze oggi e nei prossimi sette giorni, più inbox da triage
+          — tutto in un unico elenco.
         </p>
       </header>
       <FollowUpView

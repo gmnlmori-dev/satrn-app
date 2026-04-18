@@ -5,10 +5,13 @@ import type { InboxItem } from "@/types/inbox";
 import { InboxStatusBadge } from "@/components/inbox/inbox-status-badge";
 import { formatDateTime } from "@/lib/date";
 import { cn } from "@/lib/cn";
+import {
+  dataTableColSepClass,
+  dataTableHeadRowClass,
+  dataTableShellClass,
+  dataTableThClass,
+} from "@/lib/table-ui";
 import { uiTransition } from "@/lib/ui-classes";
-
-const thClass =
-  "px-4 py-3 text-left text-xs font-medium tracking-normal text-slate-500 sm:px-5 dark:text-slate-400";
 
 function Row({ r, index }: { r: InboxItem; index: number }) {
   const router = useRouter();
@@ -34,7 +37,7 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
       onKeyDown={onKeyDown}
       className={cn(
         uiTransition,
-        "group cursor-pointer border-b border-slate-100/90 last:border-b-0",
+        "group min-h-[4.5rem] cursor-pointer border-b border-slate-100/90 last:border-b-0",
         isOdd
           ? "bg-slate-50/55 dark:bg-slate-800/22"
           : "bg-white dark:bg-slate-900/35",
@@ -51,10 +54,13 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
             "—"}
         </p>
       </td>
-      <td className="hidden px-4 py-3 align-middle sm:table-cell sm:px-5">
+      <td className={cn("hidden px-4 py-3 align-middle sm:table-cell sm:px-5", dataTableColSepClass)}>
         <InboxStatusBadge status={r.status} />
       </td>
-      <td className="hidden px-4 py-3 align-middle text-sm tabular-nums text-slate-600 md:table-cell sm:px-5 dark:text-slate-400">
+      <td className={cn(
+        "hidden px-4 py-3 align-middle text-sm tabular-nums text-slate-600 md:table-cell sm:px-5 dark:text-slate-400",
+        dataTableColSepClass,
+      )}>
         {formatDateTime(r.createdAt)}
       </td>
     </tr>
@@ -63,18 +69,20 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
 
 export function InboxListTable({ items }: { items: InboxItem[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
-      <table className="w-full table-fixed border-collapse text-sm">
+    <div className={dataTableShellClass}>
+      <div className="w-full min-w-[520px]">
+      <table className="w-full table-fixed border-collapse text-left text-sm">
         <thead>
-          <tr className="border-b border-slate-200/90 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-900/80">
-            <th className={cn(thClass, "min-w-0")}>Oggetto</th>
-            <th className={cn(thClass, "hidden w-[8.5rem] sm:table-cell")}>
+          <tr className={dataTableHeadRowClass}>
+            <th className={cn(dataTableThClass, "min-w-0")}>Oggetto</th>
+            <th className={cn(dataTableThClass, "hidden w-[8.5rem] sm:table-cell", dataTableColSepClass)}>
               Stato
             </th>
             <th
               className={cn(
-                thClass,
+                dataTableThClass,
                 "hidden w-[11rem] md:table-cell lg:w-[12rem]",
+                dataTableColSepClass,
               )}
             >
               Ricevuto
@@ -87,6 +95,7 @@ export function InboxListTable({ items }: { items: InboxItem[] }) {
           ))}
         </tbody>
       </table>
+      </div>
       <div className="border-t border-slate-200/80 px-4 py-2.5 text-right text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500 sm:hidden">
         Tocca una riga per aprire il dettaglio.
       </div>

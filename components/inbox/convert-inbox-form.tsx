@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { convertInboxToRequest } from "@/lib/actions/convert-inbox-to-request";
+import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import type { InboxItem } from "@/types/inbox";
 import { cn } from "@/lib/cn";
@@ -52,6 +53,7 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { pulseTopBar } = useDetailSaveFeedback();
   const d = defaultsFromInbox(item);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -67,6 +69,7 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
         setError(result.message);
         return;
       }
+      pulseTopBar();
       router.push(`/app/requests/${result.requestId}`);
       router.refresh();
     } finally {

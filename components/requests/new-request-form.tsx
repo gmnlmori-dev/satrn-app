@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { createRequest } from "@/lib/actions/create-request";
+import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
@@ -47,9 +48,11 @@ export function NewRequestForm({
   const p = (name: string) => `${uid}-${name}`;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { pulseTopBar } = useDetailSaveFeedback();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (pending) return;
     setError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
@@ -60,6 +63,7 @@ export function NewRequestForm({
         setError(result.message);
         return;
       }
+      pulseTopBar();
       form.reset();
       onSuccess(result.id);
     } finally {

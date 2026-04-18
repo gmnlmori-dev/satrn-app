@@ -5,6 +5,7 @@ import { uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { PriorityBadge } from "@/components/requests/priority-badge";
 import { formatDateTime } from "@/lib/date";
+import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { uiOverline } from "@/lib/typography";
 
 function PanelShell({
@@ -54,10 +55,10 @@ export function DashboardTodayPanel({ items }: { items: Request[] }) {
       actionLabel="Apri scrivania"
     >
       {items.length === 0 ? (
-        <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
-          Nessuna azione con scadenza oggi. Controlla la scrivania per la coda
-          completa.
-        </p>
+        <AppEmptyHint
+          title="Niente in scadenza oggi"
+          description="Le richieste con prossima azione impostata per oggi compariranno qui. Apri la scrivania per l’elenco completo."
+        />
       ) : (
         <ul className="space-y-2">
           {items.map((r) => (
@@ -97,9 +98,10 @@ export function DashboardRecentPanel({ items }: { items: Request[] }) {
       actionLabel="Vedi tutte"
     >
       {items.length === 0 ? (
-        <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
-          Nessuna richiesta aperta con aggiornamenti recenti.
-        </p>
+        <AppEmptyHint
+          title="Nessun aggiornamento recente"
+          description="Quando modifichi o annoti una richiesta, l’ultima attività comparirà in questo riquadro."
+        />
       ) : (
       <ul className="divide-y divide-slate-100 dark:divide-slate-800">
         {items.map((r) => (

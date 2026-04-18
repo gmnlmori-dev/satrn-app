@@ -4,6 +4,7 @@ import { activityTypeLabel } from "@/lib/labels";
 import { formatDateTime } from "@/lib/date";
 import { cn } from "@/lib/cn";
 import { uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
+import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { uiOverline } from "@/lib/typography";
 
 export function DashboardRecentActivities({
@@ -24,10 +25,10 @@ export function DashboardRecentActivities({
       </div>
       <div className="flex-1 px-4 py-4 md:px-5 md:py-5">
         {items.length === 0 ? (
-          <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
-            Nessuna attività registrata finora. Creando o aggiornando richieste
-            comparirà qui la cronologia.
-          </p>
+          <AppEmptyHint
+            title="Ancora nessuna attività"
+            description="Creazioni, aggiornamenti di stato e note appariranno qui man mano che lavori sulle richieste."
+          />
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {items.map((a) => (

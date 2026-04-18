@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { createInboxItem } from "@/lib/actions/create-inbox-item";
+import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
@@ -47,7 +48,7 @@ export function InboxNewForm({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedFlash, setSavedFlash] = useState(false);
+  const { pulseTopBar } = useDetailSaveFeedback();
 
   const isSheet = variant === "sheet";
 
@@ -65,10 +66,11 @@ export function InboxNewForm({
         return;
       }
       if (onSuccess) {
-        setSavedFlash(true);
+        pulseTopBar();
         window.setTimeout(() => onSuccess(result.id), 180);
         return;
       }
+      pulseTopBar();
       router.push(`/app/inbox/${result.id}`);
       router.refresh();
     } finally {
@@ -178,14 +180,6 @@ export function InboxNewForm({
       </FormSection>
 
       <div className="flex flex-col gap-2 pt-5 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-        {savedFlash ? (
-          <p
-            role="status"
-            className="mr-auto text-sm font-medium text-emerald-700 dark:text-emerald-300"
-          >
-            Salvato
-          </p>
-        ) : null}
         {error ? (
           <p
             role="alert"

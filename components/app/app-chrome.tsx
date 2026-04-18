@@ -327,8 +327,14 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const [newRequestOpen, setNewRequestOpen] = useState(false);
   const [newInboxOpen, setNewInboxOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const openNewRequest = useCallback(() => setNewRequestOpen(true), []);
-  const openNewInbox = useCallback(() => setNewInboxOpen(true), []);
+  const openNewRequest = useCallback(() => {
+    setNewInboxOpen(false);
+    setNewRequestOpen(true);
+  }, []);
+  const openNewInbox = useCallback(() => {
+    setNewRequestOpen(false);
+    setNewInboxOpen(true);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;

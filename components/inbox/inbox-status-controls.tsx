@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { updateInboxItemStatus } from "@/lib/actions/update-inbox-status";
+import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import type { InboxItem, InboxItemStatus } from "@/types/inbox";
 import { InboxStatusBadge } from "@/components/inbox/inbox-status-badge";
 import { inboxStatusLabel } from "@/lib/labels";
@@ -15,6 +16,7 @@ export function InboxStatusControls({ item }: { item: InboxItem }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { pulseTopBar } = useDetailSaveFeedback();
 
   const [value, setValue] = useState<InboxItemStatus>(() =>
     MANUAL.includes(item.status) ? item.status : "new",
@@ -36,6 +38,7 @@ export function InboxStatusControls({ item }: { item: InboxItem }) {
         setError(r.message);
         return;
       }
+      pulseTopBar();
       router.refresh();
     } finally {
       setPending(false);
