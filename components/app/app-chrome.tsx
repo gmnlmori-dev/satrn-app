@@ -11,6 +11,7 @@ import {
   uiTransition,
 } from "@/lib/ui-classes";
 import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb";
+import { fetchInboxSubjectForBreadcrumb } from "@/lib/actions/inbox-breadcrumb";
 import { CreateRequestProvider } from "@/components/app/create-request-context";
 import {
   DetailSaveFeedbackProvider,
@@ -26,6 +27,7 @@ const TOP_BAR_H = "h-12";
 const nav = [
   { href: "/app/dashboard", label: "Dashboard", glyph: "home" as const },
   { href: "/app/requests", label: "Richieste", glyph: "queue" as const },
+  { href: "/app/inbox", label: "Inbox", glyph: "inbox" as const },
 ] as const;
 
 function SidebarNavGlyph({
@@ -35,6 +37,30 @@ function SidebarNavGlyph({
   kind: (typeof nav)[number]["glyph"];
   active: boolean;
 }) {
+  if (kind === "inbox") {
+    const cls = cn(
+      "h-4 w-4 shrink-0",
+      active
+        ? "text-white dark:text-slate-900"
+        : "text-slate-500 dark:text-slate-500",
+    );
+    return (
+      <svg
+        className={cls}
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.75}
+        stroke="currentColor"
+        aria-hidden
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+        />
+      </svg>
+    );
+  }
   const cls = cn(
     "h-4 w-4 shrink-0",
     active
@@ -101,9 +127,24 @@ function requestDetailIdFromPath(pathname: string | null): string | null {
   return safeDecode(segments[2]!);
 }
 
+function inboxDetailIdFromPath(pathname: string | null): string | null {
+  if (!pathname) return null;
+  const normalized =
+    pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
+  const segments = normalized.split("/").filter(Boolean);
+  const isDetail =
+    segments[0] === "app" &&
+    segments[1] === "inbox" &&
+    Boolean(segments[2]) &&
+    segments[2] !== "new";
+  if (!isDetail) return null;
+  return safeDecode(segments[2]!);
+}
+
 function breadcrumbsForPath(
   pathname: string | null,
-  detailTitle: string | null,
+  requestDetailTitle: string | null,
+  inboxDetailTitle: string | null,
 ): Breadcrumb[] {
   if (!pathname) return [{ label: "Satrn" }];
   const normalized =
@@ -111,6 +152,13 @@ function breadcrumbsForPath(
 
   if (normalized === "/app/dashboard") return [{ label: "Dashboard" }];
   if (normalized === "/app/requests") return [{ label: "Richieste" }];
+  if (normalized === "/app/inbox") return [{ label: "Inbox" }];
+  if (normalized === "/app/inbox/new") {
+    return [
+      { label: "Inbox", href: "/app/inbox" },
+      { label: "Nuovo ingresso" },
+    ];
+  }
 
   const segments = normalized.split("/").filter(Boolean);
   const isRequestDetail =
@@ -122,7 +170,20 @@ function breadcrumbsForPath(
   if (isRequestDetail) {
     return [
       { label: "Richieste", href: "/app/requests" },
-      { label: detailTitle ?? "Richiesta dettaglio" },
+      { label: requestDetailTitle ?? "Richiesta dettaglio" },
+    ];
+  }
+
+  const isInboxDetail =
+    segments[0] === "app" &&
+    segments[1] === "inbox" &&
+    Boolean(segments[2]) &&
+    segments[2] !== "new";
+
+  if (isInboxDetail) {
+    return [
+      { label: "Inbox", href: "/app/inbox" },
+      { label: inboxDetailTitle ?? "Dettaglio" },
     ];
   }
 
@@ -151,9 +212,34 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
   const detailTitle =
     detailId && titleFetch?.id === detailId ? titleFetch.title : null;
 
+  const inboxDetailId = useMemo(
+    () => inboxDetailIdFromPath(pathname),
+    [pathname],
+  );
+  const [inboxTitleFetch, setInboxTitleFetch] = useState<{
+    id: string;
+    title: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!inboxDetailId) return;
+    let cancelled = false;
+    fetchInboxSubjectForBreadcrumb(inboxDetailId).then((title) => {
+      if (!cancelled) setInboxTitleFetch({ id: inboxDetailId, title });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [inboxDetailId]);
+
+  const inboxDetailTitle =
+    inboxDetailId && inboxTitleFetch?.id === inboxDetailId
+      ? inboxTitleFetch.title
+      : null;
+
   const crumbs = useMemo(
-    () => breadcrumbsForPath(pathname, detailTitle),
-    [pathname, detailTitle],
+    () => breadcrumbsForPath(pathname, detailTitle, inboxDetailTitle),
+    [pathname, detailTitle, inboxDetailTitle],
   );
   return (
     <div className="flex min-w-0 flex-1 items-center overflow-hidden self-stretch">
@@ -329,7 +415,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 </svg>
               </button>
               {createOpen ? (
-                <div id="sidebar-create-submenu" className="mt-0.5 pl-2">
+                <div id="sidebar-create-submenu" className="mt-0.5 space-y-0.5 pl-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -346,6 +432,19 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                   >
                     Nuova richiesta
                   </button>
+                  <Link
+                    href="/app/inbox/new"
+                    onClick={() => setMenuOpen(false)}
+                    className={cn(
+                      uiTransition,
+                      uiFocusRingInset,
+                      "block w-full rounded-md px-2.5 py-1.5 text-[15px] font-medium leading-snug",
+                      "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                      "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
+                    )}
+                  >
+                    Nuovo ingresso inbox
+                  </Link>
                 </div>
               ) : null}
             </div>
@@ -354,10 +453,15 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 pathname === "/app/requests" ||
                 (Boolean(pathname?.startsWith("/app/requests/")) &&
                   pathname !== "/app/requests/new");
+              const isInboxSection =
+                pathname === "/app/inbox" ||
+                Boolean(pathname?.startsWith("/app/inbox/"));
               const active =
                 item.href === "/app/requests"
                   ? isRequestsSection
-                  : pathname === item.href;
+                  : item.href === "/app/inbox"
+                    ? isInboxSection
+                    : pathname === item.href;
               return (
                 <Link
                   key={item.href}

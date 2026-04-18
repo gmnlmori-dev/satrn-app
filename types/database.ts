@@ -1,3 +1,4 @@
+import type { InboxItemStatus } from "@/types/inbox";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
 /** Riga tabella `public.requests` (snake_case come in Postgres). */
@@ -24,4 +25,18 @@ export type RequestNoteRow = {
   request_id: string;
   body: string;
   created_at: string;
+};
+
+/** Riga tabella `public.inbox_items`. */
+export type InboxItemRow = {
+  id: string;
+  source: string;
+  subject: string;
+  sender_name: string;
+  sender_email: string;
+  raw_content: string;
+  status: InboxItemStatus;
+  linked_request_id: string | null;
+  created_at: string;
+  updated_at: string;
 };
