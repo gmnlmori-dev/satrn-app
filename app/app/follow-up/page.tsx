@@ -21,6 +21,8 @@ export default async function FollowUpPage() {
     getInboxTriageItems(),
   ]);
 
+  const totalQueue = overdue.length + today.length + upcoming.length;
+
   return (
     <div className="space-y-6 md:space-y-8">
       <FollowUpHashScroll />
@@ -32,6 +34,39 @@ export default async function FollowUpPage() {
           Ritardi, scadenze oggi e nei prossimi sette giorni, più inbox da triage
           — tutto in un unico elenco.
         </p>
+        <dl className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-200/80 pt-4 dark:border-slate-800">
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              In coda richieste
+            </dt>
+            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+              {totalQueue}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              In ritardo
+            </dt>
+            <dd
+              className={cn(
+                "mt-0.5 text-lg font-semibold tabular-nums",
+                overdue.length > 0
+                  ? "text-rose-700 dark:text-rose-300"
+                  : "text-slate-900 dark:text-slate-100",
+              )}
+            >
+              {overdue.length}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Inbox triage
+            </dt>
+            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+              {inbox.length}
+            </dd>
+          </div>
+        </dl>
       </header>
       <FollowUpView
         overdue={overdue}
