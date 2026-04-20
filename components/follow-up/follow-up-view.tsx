@@ -17,7 +17,7 @@ import { formatDateTime, fromDatetimeLocalValue, toDatetimeLocalValue } from "@/
 import { inboxStatusLabel, statusLabel } from "@/lib/labels";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
-import { uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
+import { uiBtnIcon, uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestStatus } from "@/types/request";
@@ -42,8 +42,29 @@ const tableHeadCell =
 
 const tableRowInteractive = cn(
   uiTransition,
-  "cursor-pointer border-b border-slate-100 last:border-b-0 dark:border-slate-800/80",
+  "cursor-pointer border-b border-slate-100 outline-none last:border-b-0 dark:border-slate-800/80",
+  "focus-visible:bg-slate-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-900/10 dark:focus-visible:bg-slate-900/50 dark:focus-visible:ring-slate-100/15",
 );
+
+/** Icona calendario (Heroicons-style): sposta scadenza. */
+function IconCalendarReschedule({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-9-9h.008v.008H12V9.75zm-3 0h.008v.008H9V9.75zm-3 0h.008v.008H6V9.75zm6 3h.008v.008H12v-.008zm0 3h.008v.008H12V15zm0 3h.008v.008H12V18z"
+      />
+    </svg>
+  );
+}
 
 function Section({
   anchorId,
@@ -285,9 +306,12 @@ function RequestBlock({
     }
   }
 
+  function interactiveTarget(target: EventTarget | null) {
+    return (target as HTMLElement | null)?.closest("button, a, select, input, textarea");
+  }
+
   function rowNavigate(id: string, e: React.MouseEvent) {
-    const t = e.target as HTMLElement;
-    if (t.closest("button, a, select, input, textarea")) return;
+    if (interactiveTarget(e.target)) return;
     router.push(`/app/requests/${id}`, { scroll: true });
   }
 
@@ -310,14 +334,23 @@ function RequestBlock({
         />
       ) : null}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[52rem] table-fixed border-collapse text-left text-sm">
+          <colgroup>
+            <col className="min-w-0 w-[34%]" />
+            <col className="min-w-0 w-[22%]" />
+            <col className="w-[17%]" />
+            <col className="min-w-0 w-[19%]" />
+            <col className="w-[8%]" />
+          </colgroup>
           <thead>
             <tr>
               <th className={cn(tableHeadCell, "rounded-tl-2xl")}>Richiesta</th>
               <th className={tableHeadCell}>Azienda</th>
-              <th className={tableHeadCell}>Scadenza</th>
+              <th className={cn(tableHeadCell, "text-right")}>Scadenza</th>
               <th className={tableHeadCell}>Priorità · Stato</th>
-              <th className={cn(tableHeadCell, "rounded-tr-2xl text-right")}>Azioni</th>
+              <th className={cn(tableHeadCell, "rounded-tr-2xl text-right")}>
+                <span className="sr-only">Azioni</span>
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-slate-950/35">
@@ -327,34 +360,37 @@ function RequestBlock({
                 className={cn(tableRowInteractive, rowHover, pending && "pointer-events-none opacity-75")}
                 onClick={(e) => rowNavigate(r.id, e)}
               >
-                <td className="px-4 py-3 align-top">
+                <td className="px-4 py-3.5 align-middle">
                   <Link
                     href={`/app/requests/${r.id}`}
-                    className="font-medium text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                    className="sr-only"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {r.title}
+                    Apri dettaglio: {r.title}
                   </Link>
+                  <span className="line-clamp-2 font-medium leading-snug text-slate-900 dark:text-slate-100">
+                    {r.title}
+                  </span>
                 </td>
-                <td className="max-w-[12rem] px-4 py-3 align-top text-slate-600 dark:text-slate-400">
-                  <span className="line-clamp-2">{r.companyName}</span>
+                <td className="px-4 py-3.5 align-middle text-slate-600 dark:text-slate-400">
+                  <span className="line-clamp-2 leading-snug">{r.companyName}</span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 align-top tabular-nums text-slate-700 dark:text-slate-300">
+                <td className="whitespace-nowrap px-4 py-3.5 align-middle text-right tabular-nums text-slate-700 dark:text-slate-300">
                   {r.nextActionAt ? formatDateTime(r.nextActionAt) : "—"}
                 </td>
-                <td className="px-4 py-3 align-top">
-                  <div className="flex flex-wrap gap-1.5">
+                <td className="px-4 py-3.5 align-middle">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <PriorityBadge priority={r.priority} />
                     <StatusBadge status={r.status} />
                   </div>
                 </td>
-                <td className="px-4 py-3 align-top" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex flex-col items-end gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                <td className="px-4 py-3.5 align-middle" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-2">
                     <select
-                      aria-label="Cambia stato"
+                      aria-label={`Stato: ${r.title}`}
                       className={cn(
                         uiTransition,
-                        "max-w-[11rem] rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-800",
+                        "h-9 min-w-[9.5rem] max-w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-800",
                         "dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100",
                       )}
                       value={r.status}
@@ -370,21 +406,13 @@ function RequestBlock({
                     <button
                       type="button"
                       disabled={pending}
-                      className={cn(uiBtnSecondary, "whitespace-nowrap px-3 py-2 text-xs")}
+                      title="Sposta scadenza"
+                      aria-label={`Sposta scadenza: ${r.title}`}
+                      className={cn(uiBtnIcon, "h-9 w-9 shrink-0")}
                       onClick={() => setPostponeTarget(r)}
                     >
-                      Sposta scadenza
+                      <IconCalendarReschedule className="h-[1.125rem] w-[1.125rem]" />
                     </button>
-                    <Link
-                      href={`/app/requests/${r.id}`}
-                      className={cn(
-                        uiTransition,
-                        "inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm",
-                        "hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800",
-                      )}
-                    >
-                      Apri
-                    </Link>
                   </div>
                 </td>
               </tr>
@@ -421,13 +449,21 @@ function InboxBlock({ items }: { items: InboxItem[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+      <table className="w-full min-w-[44rem] table-fixed border-collapse text-left text-sm">
+        <colgroup>
+          <col className="min-w-0 w-[40%]" />
+          <col className="min-w-0 w-[32%]" />
+          <col className="w-[16%]" />
+          <col className="w-[12%]" />
+        </colgroup>
         <thead>
           <tr>
             <th className={cn(tableHeadCell, "rounded-tl-2xl")}>Oggetto</th>
             <th className={tableHeadCell}>Mittente · Origine</th>
             <th className={tableHeadCell}>Stato</th>
-            <th className={cn(tableHeadCell, "rounded-tr-2xl text-right")}>Azioni</th>
+            <th className={cn(tableHeadCell, "rounded-tr-2xl text-right")}>
+              <span className="sr-only">Azioni</span>
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-slate-950/35">
@@ -441,43 +477,37 @@ function InboxBlock({ items }: { items: InboxItem[] }) {
               )}
               onClick={(e) => rowNavigate(r.id, e)}
             >
-              <td className="px-4 py-3 align-top">
+              <td className="px-4 py-3.5 align-middle">
                 <Link
                   href={`/app/inbox/${r.id}`}
-                  className="font-medium text-slate-900 underline-offset-2 hover:underline dark:text-slate-100"
+                  className="sr-only"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {r.subject || "(Senza oggetto)"}
+                  Apri dettaglio: {r.subject || "(Senza oggetto)"}
                 </Link>
+                <span className="line-clamp-2 font-medium leading-snug text-slate-900 dark:text-slate-100">
+                  {r.subject || "(Senza oggetto)"}
+                </span>
               </td>
-              <td className="max-w-[14rem] px-4 py-3 align-top text-slate-600 dark:text-slate-400">
-                <span className="line-clamp-2">
+              <td className="px-4 py-3.5 align-middle text-slate-600 dark:text-slate-400">
+                <span className="line-clamp-2 leading-snug">
                   {[r.senderName, r.source].filter(Boolean).join(" · ") || "—"}
                 </span>
               </td>
-              <td className="px-4 py-3 align-top">
+              <td className="px-4 py-3.5 align-middle">
                 <InboxStatusBadge status={r.status} />
               </td>
-              <td className="px-4 py-3 align-top" onClick={(e) => e.stopPropagation()}>
-                <div className="flex flex-col items-end gap-2 sm:flex-row sm:justify-end">
+              <td className="px-4 py-3.5 align-middle" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-end">
                   <button
                     type="button"
                     disabled={pending}
-                    className={cn(uiBtnSecondary, "whitespace-nowrap px-3 py-2 text-xs")}
+                    aria-label={`Archivia: ${r.subject || "messaggio"}`}
+                    className={cn(uiBtnSecondary, "h-9 whitespace-nowrap px-3 text-sm")}
                     onClick={() => archivia(r.id)}
                   >
                     Archivia
                   </button>
-                  <Link
-                    href={`/app/inbox/${r.id}`}
-                    className={cn(
-                      uiTransition,
-                      "inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900",
-                      "hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100 dark:hover:bg-emerald-900/40",
-                    )}
-                  >
-                    Converti
-                  </Link>
                 </div>
               </td>
             </tr>
@@ -557,12 +587,12 @@ export function FollowUpView({
         variant="muted"
         title="Inbox da triage"
         count={inbox.length}
-        description={`Ingressi in stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non ancora convertiti. Archivia per toglierli dalla coda; Converti apre il dettaglio con il modulo di creazione richiesta.`}
+        description={`Ingressi in stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non ancora convertiti. Clicca una riga per aprire il dettaglio e convertire; Archivia per toglierla dalla coda.`}
       >
         {inbox.length === 0 ? (
           <EmptyRow
             title="Nessun ingresso da triage"
-            hint="Gli elementi in stato Nuovo o Esaminato, non ancora convertiti in richiesta, compariranno qui."
+            hint="Gli elementi in stato Nuovo o Esaminato, non ancora convertiti, compariranno qui. Apri una riga per procedere alla conversione."
           />
         ) : (
           <InboxBlock items={inbox} />
