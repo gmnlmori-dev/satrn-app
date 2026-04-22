@@ -13,6 +13,10 @@ import {
 import { cn } from "@/lib/cn";
 import { uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
 
+export const metadata = {
+  title: "Dashboard",
+};
+
 export default async function DashboardPage() {
   const [
     counts,
@@ -27,7 +31,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div className="space-y-5 md:space-y-6">
+    <div className="space-y-6 md:space-y-7">
       <DashboardHeader />
 
       {totalRequests === 0 ? (

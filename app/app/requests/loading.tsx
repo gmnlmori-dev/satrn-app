@@ -13,10 +13,10 @@ function SkeletonLine({ className }: { className?: string }) {
 
 export default function RequestsLoading() {
   return (
-    <div className="space-y-6" aria-busy aria-live="polite">
+    <div className="space-y-6 md:space-y-7" aria-busy aria-live="polite">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="min-w-0 space-y-2">
-          <SkeletonLine className="h-7 w-56 max-w-full" />
+          <SkeletonLine className="h-8 w-56 max-w-full" />
           <SkeletonLine className="h-4 w-full max-w-xl" />
         </div>
         <SkeletonLine className="h-10 w-28 shrink-0 self-start" />

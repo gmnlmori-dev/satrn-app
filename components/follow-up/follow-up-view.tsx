@@ -28,7 +28,7 @@ import { inboxStatusLabel, statusLabel } from "@/lib/labels";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
 import { uiBtnIcon, uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
-import { uiFormLabel } from "@/lib/typography";
+import { uiFormLabel, uiPageLead } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestStatus } from "@/types/request";
 
@@ -158,7 +158,7 @@ function Section({
           ) : null}
         </div>
         {description ? (
-          <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          <p className={cn(uiPageLead, "mt-1.5")}>
             {description}
           </p>
         ) : null}

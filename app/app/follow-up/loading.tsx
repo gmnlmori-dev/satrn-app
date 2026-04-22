@@ -13,7 +13,7 @@ function SkeletonLine({ className }: { className?: string }) {
 
 export default function FollowUpLoading() {
   return (
-    <div className="space-y-8" aria-busy aria-live="polite">
+    <div className="space-y-6 md:space-y-8" aria-busy aria-live="polite">
       <div className="space-y-2">
         <SkeletonLine className="h-8 w-48 max-w-full" />
         <SkeletonLine className="h-4 w-full max-w-2xl" />

@@ -2,7 +2,7 @@ import { InboxListTable } from "@/components/inbox/inbox-list-table";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
 import { getInboxItems } from "@/lib/supabase/inbox-queries";
 import { cn } from "@/lib/cn";
-import { uiPageLead } from "@/lib/typography";
+import { uiPageLead, uiPageTitle } from "@/lib/typography";
 
 export const metadata = {
   title: "Inbox",
@@ -12,9 +12,9 @@ export default async function InboxPage() {
   const items = await getInboxItems();
 
   return (
-    <div className="space-y-5 md:space-y-6">
+    <div className="space-y-6 md:space-y-7">
       <header className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className={uiPageTitle}>
           Inbox
         </h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>

@@ -13,13 +13,10 @@ function SkeletonLine({ className }: { className?: string }) {
 
 export default function InboxLoading() {
   return (
-    <div className="space-y-6" aria-busy aria-live="polite">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-2">
-          <SkeletonLine className="h-8 w-48 max-w-full" />
-          <SkeletonLine className="h-4 w-full max-w-xl" />
-        </div>
-        <SkeletonLine className="h-10 w-36 shrink-0" />
+    <div className="space-y-6 md:space-y-7" aria-busy aria-live="polite">
+      <header className="min-w-0 space-y-2">
+        <SkeletonLine className="h-8 w-48 max-w-full" />
+        <SkeletonLine className="h-4 w-full max-w-xl" />
       </header>
       <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="divide-y divide-slate-100 dark:divide-slate-800">

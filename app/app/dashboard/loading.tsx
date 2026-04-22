@@ -13,7 +13,7 @@ function Sk({ className }: { className?: string }) {
 
 export default function DashboardLoading() {
   return (
-    <div className="space-y-5 md:space-y-6" aria-busy aria-live="polite">
+    <div className="space-y-6 md:space-y-7" aria-busy aria-live="polite">
       <div className="space-y-2">
         <Sk className="h-8 w-48 max-w-full" />
         <Sk className="h-4 w-full max-w-md" />

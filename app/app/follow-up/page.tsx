@@ -7,7 +7,7 @@ import {
   getUpcomingRequests,
 } from "@/lib/supabase/follow-up-queries";
 import { cn } from "@/lib/cn";
-import { uiPageLead } from "@/lib/typography";
+import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 
 export const metadata = {
   title: "Da seguire",
@@ -27,7 +27,7 @@ export default async function FollowUpPage() {
     <div className="space-y-6 md:space-y-8">
       <FollowUpHashScroll />
       <header className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className={uiPageTitle}>
           Da seguire
         </h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
@@ -36,7 +36,7 @@ export default async function FollowUpPage() {
         </p>
         <dl className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-200/80 pt-4 dark:border-slate-800">
           <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <dt className={uiOverline}>
               In coda richieste
             </dt>
             <dd className="mt-0.5 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
@@ -44,7 +44,7 @@ export default async function FollowUpPage() {
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <dt className={uiOverline}>
               In ritardo
             </dt>
             <dd
@@ -59,7 +59,7 @@ export default async function FollowUpPage() {
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <dt className={uiOverline}>
               Inbox triage
             </dt>
             <dd className="mt-0.5 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">

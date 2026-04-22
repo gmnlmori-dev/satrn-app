@@ -26,7 +26,13 @@ import {
   uiBtnSecondary,
   uiTransition,
 } from "@/lib/ui-classes";
-import { uiFilterLabel, uiOverline, uiSectionHeading } from "@/lib/typography";
+import {
+  uiFilterLabel,
+  uiOverline,
+  uiPageLead,
+  uiPageTitleDetail,
+  uiSectionHeading,
+} from "@/lib/typography";
 import { createRequestNote } from "@/lib/actions/create-request-note";
 import { updateRequestDetails } from "@/lib/actions/update-request-details";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
@@ -314,10 +320,10 @@ export function RequestDetailWorkspace({
       <header className="rounded-xl border border-slate-200/70 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900/45 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-balance text-xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100 md:text-2xl md:leading-tight">
+            <h1 className={uiPageTitleDetail}>
               {request.title}
             </h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            <p className={cn(uiPageLead, "mt-1.5")}>
               <span className="font-medium text-slate-700 dark:text-slate-300">
                 {request.companyName}
               </span>
@@ -326,7 +332,7 @@ export function RequestDetailWorkspace({
               </span>
               {request.contactName}
             </p>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            <p className={cn(uiPageLead, "mt-1")}>
               <span className="text-slate-500 dark:text-slate-500">
                 Ultimo aggiornamento
               </span>

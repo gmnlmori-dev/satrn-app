@@ -23,8 +23,8 @@ import {
   type SortOption,
   type ToolbarFilters,
 } from "@/lib/requests-query";
-import { uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
-import { uiPageLead } from "@/lib/typography";
+import { uiBtnSecondary } from "@/lib/ui-classes";
+import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 
 function StatDot() {
   return (
@@ -55,7 +55,7 @@ function QueueOverview({
         "dark:border-slate-800/80 dark:bg-slate-900/50 dark:text-slate-400"
       )}
     >
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-500">
+      <p className={uiOverline}>
         Panoramica coda
       </p>
       <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:gap-x-3">
@@ -143,12 +143,12 @@ export function RequestsWorkspace({ requests }: { requests: Request[] }) {
 
   if (total === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 md:space-y-7">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0 space-y-1">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 className={uiPageTitle}>
               Scrivania richieste
-            </h2>
+            </h1>
             <p className={cn(uiPageLead, "max-w-xl")}>
               Cerca e filtra l’elenco, poi apri una riga per il dettaglio.
             </p>
@@ -156,10 +156,8 @@ export function RequestsWorkspace({ requests }: { requests: Request[] }) {
           <Link
             href="/app/dashboard"
             className={cn(
-              uiTransition,
-              uiFocusRingOffset,
-              "shrink-0 self-start rounded-lg border border-slate-200/90 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm",
-              "hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
+              uiBtnSecondary,
+              "inline-flex shrink-0 self-start items-center justify-center rounded-lg px-4 py-2.5 text-sm",
             )}
           >
             Dashboard
@@ -171,12 +169,12 @@ export function RequestsWorkspace({ requests }: { requests: Request[] }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-7">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="min-w-0 space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className={uiPageTitle}>
             Scrivania richieste
-          </h2>
+          </h1>
           <p className={cn(uiPageLead, "max-w-xl")}>
             Cerca e filtra l’elenco, poi apri una riga per il dettaglio.
           </p>
@@ -184,10 +182,8 @@ export function RequestsWorkspace({ requests }: { requests: Request[] }) {
         <Link
           href="/app/dashboard"
           className={cn(
-            uiTransition,
-            uiFocusRingOffset,
-            "shrink-0 self-start rounded-lg border border-slate-200/90 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm",
-            "hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/80"
+            uiBtnSecondary,
+            "inline-flex shrink-0 self-start items-center justify-center rounded-lg px-4 py-2.5 text-sm",
           )}
         >
           Dashboard

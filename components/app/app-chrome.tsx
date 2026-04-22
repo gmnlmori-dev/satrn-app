@@ -187,6 +187,12 @@ function breadcrumbsForPath(
       { label: "Nuovo inbox" },
     ];
   }
+  if (normalized === "/app/requests/new") {
+    return [
+      { label: "Richieste", href: "/app/requests" },
+      { label: "Nuova richiesta" },
+    ];
+  }
 
   const segments = normalized.split("/").filter(Boolean);
   const isRequestDetail =

@@ -6,11 +6,8 @@ import { useState } from "react";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/cn";
-import {
-  uiBtnPrimary,
-  uiFocusRingOffset,
-  uiTransition,
-} from "@/lib/ui-classes";
+import { uiBtnPrimary, uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
+import { uiFormLabel, uiPageLead, uiPageTitle } from "@/lib/typography";
 
 export function LoginForm() {
   const router = useRouter();
@@ -52,19 +49,16 @@ export function LoginForm() {
       </div>
 
       <SurfaceCard className="w-full max-w-md shadow-sm">
-        <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className={uiPageTitle}>
           Accesso
         </h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <p className={cn(uiPageLead, "mt-1.5")}>
           Accedi con email e password per usare l&apos;app.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label
-              htmlFor="login-email"
-              className="block text-sm font-medium text-slate-800 dark:text-slate-200"
-            >
+            <label htmlFor="login-email" className={uiFormLabel}>
               Email
             </label>
             <input
@@ -85,10 +79,7 @@ export function LoginForm() {
             />
           </div>
           <div>
-            <label
-              htmlFor="login-password"
-              className="block text-sm font-medium text-slate-800 dark:text-slate-200"
-            >
+            <label htmlFor="login-password" className={uiFormLabel}>
               Password
             </label>
             <input

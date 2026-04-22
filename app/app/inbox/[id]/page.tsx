@@ -9,7 +9,7 @@ import { inboxStatusLabel } from "@/lib/labels";
 import { getInboxItemById } from "@/lib/supabase/inbox-queries";
 import { cn } from "@/lib/cn";
 import { uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
-import { uiFormLabel, uiPageLead } from "@/lib/typography";
+import { uiFormLabel, uiPageLead, uiPageTitle } from "@/lib/typography";
 
 export async function generateMetadata({
   params,
@@ -32,9 +32,9 @@ export default async function InboxDetailPage({
   if (!item) notFound();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-7">
       <header className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className={uiPageTitle}>
           {item.subject || "Senza oggetto"}
         </h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>

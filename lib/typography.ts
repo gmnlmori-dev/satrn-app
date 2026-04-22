@@ -20,3 +20,13 @@ export const uiFormLabel =
 /** Sottotitolo sotto titolo pagina (dashboard, scrivania, …) */
 export const uiPageLead =
   "text-[15px] leading-relaxed text-slate-600 dark:text-slate-400";
+
+/** Titolo principale pagina (h1) sotto la top bar */
+export const uiPageTitle =
+  "text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100";
+
+/**
+ * Titolo dettaglio (testate lunghe): stessi pesi e colori di uiPageTitle, mobile più compatto.
+ */
+export const uiPageTitleDetail =
+  "text-balance text-xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100 md:text-2xl md:leading-tight";
