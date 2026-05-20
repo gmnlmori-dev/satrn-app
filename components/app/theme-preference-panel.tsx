@@ -28,7 +28,7 @@ const options: { value: ThemeMode; label: string; description: string }[] = [
 ];
 
 export function ThemePreferencePanel({ className }: { className?: string }) {
-  const [mode, setMode] = useState<ThemeMode>(DEFAULT_THEME_FALLBACK);
+  const [mode, setMode] = useState<ThemeMode>(DEFAULT_THEME);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
