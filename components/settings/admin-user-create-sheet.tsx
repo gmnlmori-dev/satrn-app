@@ -18,7 +18,7 @@ export function AdminUserCreateSheet({
       open={open}
       onClose={onClose}
       title="Nuovo utente"
-      description="Crea un account Supabase Auth collegato al profilo interno."
+      description="Crea un account di accesso senza uscire dalla schermata corrente."
     >
       <AdminUserCreateForm
         onCancel={onClose}

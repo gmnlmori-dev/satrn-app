@@ -4,7 +4,7 @@ import { useId } from "react";
 import { appRoleLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 import { uiControl } from "@/lib/ui-classes";
-import { uiFormLabel } from "@/lib/typography";
+import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 import type { AppRole } from "@/types/profile";
 
 export const ADMIN_USER_ROLES: AppRole[] = ["admin", "manager", "operator"];
@@ -13,6 +13,21 @@ export const adminUserInputClass = cn(uiControl, "py-2.5 text-[15px]");
 
 export function RequiredMark() {
   return <span className="text-danger">*</span>;
+}
+
+export function AdminFormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="py-5 first:pt-0">
+      <h3 className={cn(uiSectionHeading, "mb-3")}>{title}</h3>
+      {children}
+    </section>
+  );
 }
 
 export function AdminUserRoleFields({

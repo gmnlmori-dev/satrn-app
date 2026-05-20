@@ -4,6 +4,7 @@ import { useState } from "react";
 import { adminSetUserPassword } from "@/lib/actions/admin-set-user-password";
 import { adminUpdateProfile } from "@/lib/actions/update-profile-admin";
 import {
+  AdminFormSection,
   AdminUserRoleFields,
   RequiredMark,
   adminUserInputClass,
@@ -11,7 +12,7 @@ import {
 } from "@/components/settings/admin-user-form-fields";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary } from "@/lib/ui-classes";
-import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
+import { uiFormLabel } from "@/lib/typography";
 import type { AppRole, ProfileSummary } from "@/types/profile";
 
 export function AdminUserEditForm({
@@ -78,109 +79,121 @@ export function AdminUserEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col px-4 sm:px-5">
-      <div className="min-h-0 flex-1 space-y-5 pb-4">
-        <div>
-          <label htmlFor={p("fullName")} className={uiFormLabel}>
-            Nome
-          </label>
-          <input
-            id={p("fullName")}
-            name="fullName"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            disabled={pending}
-            className={adminUserInputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor={p("email")} className={uiFormLabel}>
-            Email <RequiredMark />
-          </label>
-          <input
-            id={p("email")}
-            name="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={pending}
-            className={adminUserInputClass}
-          />
-        </div>
-        <AdminUserRoleFields
-          idPrefix={p("fields")}
-          role={role}
-          isActive={isActive}
-          onRoleChange={setRole}
-          onActiveChange={setIsActive}
-          disabled={pending}
-        />
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col pr-4 sm:pr-5">
+        <div className="min-h-0 flex-1 divide-y divide-line-default overflow-y-auto pb-4 pr-3.5 sm:pr-5">
+          <AdminFormSection title="Profilo">
+            <div className="space-y-3">
+              <div>
+                <label htmlFor={p("fullName")} className={uiFormLabel}>
+                  Nome visualizzato
+                </label>
+                <input
+                  id={p("fullName")}
+                  name="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  disabled={pending}
+                  className={adminUserInputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor={p("email")} className={uiFormLabel}>
+                  Email <RequiredMark />
+                </label>
+                <input
+                  id={p("email")}
+                  name="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={pending}
+                  className={adminUserInputClass}
+                />
+              </div>
+            </div>
+          </AdminFormSection>
 
-        <section>
-          <h3 className={cn(uiSectionHeading, "mb-3")}>Password</h3>
-          <p className="mb-3 text-sm text-fg-secondary">
-            Lascia vuoto per non modificare la password di accesso.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor={p("password")} className={uiFormLabel}>
-                Nuova password
-              </label>
-              <input
-                id={p("password")}
-                name="password"
-                type="password"
-                minLength={8}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={pending}
-                className={adminUserInputClass}
-              />
+          <AdminFormSection title="Permessi">
+            <AdminUserRoleFields
+              idPrefix={p("fields")}
+              role={role}
+              isActive={isActive}
+              onRoleChange={setRole}
+              onActiveChange={setIsActive}
+              disabled={pending}
+            />
+          </AdminFormSection>
+
+          <AdminFormSection title="Password">
+            <p className="mb-3 text-sm leading-relaxed text-fg-secondary">
+              Lascia vuoto per non modificare la password di accesso.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor={p("password")} className={uiFormLabel}>
+                  Nuova password
+                </label>
+                <input
+                  id={p("password")}
+                  name="password"
+                  type="password"
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={pending}
+                  className={adminUserInputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor={p("passwordConfirm")} className={uiFormLabel}>
+                  Conferma password
+                </label>
+                <input
+                  id={p("passwordConfirm")}
+                  name="passwordConfirm"
+                  type="password"
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  disabled={pending}
+                  className={adminUserInputClass}
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor={p("passwordConfirm")} className={uiFormLabel}>
-                Conferma password
-              </label>
-              <input
-                id={p("passwordConfirm")}
-                name="passwordConfirm"
-                type="password"
-                minLength={8}
-                autoComplete="new-password"
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                disabled={pending}
-                className={adminUserInputClass}
-              />
-            </div>
+          </AdminFormSection>
+        </div>
+
+        <div className="shrink-0 border-t border-line-default bg-surface pr-3.5 sm:pr-5 pt-4">
+          {error ? (
+            <p
+              role="alert"
+              className="mb-3 text-sm leading-relaxed text-danger"
+            >
+              {error}
+            </p>
+          ) : null}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+            <button
+              type="button"
+              className={cn(uiBtnSecondary, "w-full sm:w-auto")}
+              onClick={onCancel}
+              disabled={pending}
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              aria-busy={pending}
+              className={cn(uiBtnPrimary, pending && "cursor-wait opacity-90")}
+            >
+              {pending ? "Salvataggio…" : "Salva modifiche"}
+            </button>
           </div>
-        </section>
-      </div>
-
-      <div className="shrink-0 border-t border-line-default py-4">
-        {error ? (
-          <p role="alert" className="mb-3 text-sm text-danger">
-            {error}
-          </p>
-        ) : null}
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-          <button
-            type="button"
-            className={cn(uiBtnSecondary, "w-full sm:w-auto")}
-            onClick={onCancel}
-            disabled={pending}
-          >
-            Annulla
-          </button>
-          <button
-            type="submit"
-            disabled={pending}
-            className={cn(uiBtnPrimary, "w-full sm:w-auto", pending && "cursor-wait opacity-90")}
-          >
-            {pending ? "Salvataggio…" : "Salva modifiche"}
-          </button>
         </div>
       </div>
     </form>

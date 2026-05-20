@@ -5,11 +5,9 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { uiBtnIcon } from "@/lib/ui-classes";
 
+/** Allineato a new-request-slide-over / inbox-new-slide-over */
 const BELOW_TOP_BAR = "top-12";
 const SLIDE_EASE = "duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]";
-/** Sopra sidebar/top bar (z-50) — il pannello è portato su document.body. */
-const OVERLAY_Z = "z-[60]";
-const PANEL_Z = "z-[70]";
 
 export function AdminSlideOver({
   open,
@@ -80,18 +78,21 @@ export function AdminSlideOver({
         type="button"
         aria-label="Chiudi pannello"
         className={cn(
-          "fixed bottom-0 right-0",
-          OVERLAY_Z,
+          "fixed bottom-0 right-0 z-40",
           BELOW_TOP_BAR,
           "left-0 md:left-52",
-          "bg-canvas/70 transition-opacity",
+          "bg-canvas/70",
+          "transition-opacity",
           SLIDE_EASE,
           "motion-reduce:transition-none",
-          entered ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+          entered
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0",
           "motion-reduce:pointer-events-auto motion-reduce:opacity-100",
         )}
         onClick={onClose}
       />
+
       <div
         ref={panelRef}
         role="dialog"
@@ -99,14 +100,14 @@ export function AdminSlideOver({
         aria-labelledby={titleId}
         className={cn(
           "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)]",
-          PANEL_Z,
           BELOW_TOP_BAR,
-          "w-full max-w-xl md:w-[min(32rem,calc(100vw-13rem))] md:max-w-none",
+          "z-[55] w-full max-w-xl md:z-[45] md:max-w-none md:w-[min(51.25rem,100vw)]",
           "transition-transform",
           SLIDE_EASE,
-          "motion-reduce:translate-x-0 motion-reduce:transition-none",
-          entered ? "translate-x-0" : "translate-x-full md:-translate-x-full",
-          "left-0 md:left-52",
+          "motion-reduce:transition-none motion-reduce:translate-x-0",
+          entered
+            ? "translate-x-0"
+            : "translate-x-full md:-translate-x-full",
         )}
       >
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-4 sm:pr-5 md:pl-[calc(14rem+1.25rem)]">
@@ -146,6 +147,7 @@ export function AdminSlideOver({
               </svg>
             </button>
           </header>
+
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:pt-4">
             {children}
           </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { adminCreateUser } from "@/lib/actions/admin-create-user";
 import {
+  AdminFormSection,
   AdminUserRoleFields,
   RequiredMark,
   adminUserInputClass,
@@ -58,99 +59,116 @@ export function AdminUserCreateForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col px-4 sm:px-5">
-      <div className="min-h-0 flex-1 space-y-4 pb-4">
-        <div>
-          <label htmlFor={p("email")} className={uiFormLabel}>
-            Email <RequiredMark />
-          </label>
-          <input
-            id={p("email")}
-            name="email"
-            type="email"
-            required
-            autoComplete="off"
-            disabled={pending}
-            className={adminUserInputClass}
-          />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label htmlFor={p("password")} className={uiFormLabel}>
-              Password <RequiredMark />
-            </label>
-            <input
-              id={p("password")}
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              disabled={pending}
-              className={adminUserInputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor={p("passwordConfirm")} className={uiFormLabel}>
-              Conferma password <RequiredMark />
-            </label>
-            <input
-              id={p("passwordConfirm")}
-              name="passwordConfirm"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              disabled={pending}
-              className={adminUserInputClass}
-            />
-          </div>
-        </div>
-        <div>
-          <label htmlFor={p("fullName")} className={uiFormLabel}>
-            Nome
-          </label>
-          <input
-            id={p("fullName")}
-            name="fullName"
-            autoComplete="name"
-            disabled={pending}
-            className={adminUserInputClass}
-            placeholder="Nome visualizzato"
-          />
-        </div>
-        <AdminUserRoleFields
-          idPrefix={p("fields")}
-          role={role}
-          isActive={isActive}
-          onRoleChange={setRole}
-          onActiveChange={setIsActive}
-          disabled={pending}
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col pr-4 sm:pr-5">
+        <div className="min-h-0 flex-1 divide-y divide-line-default overflow-y-auto pb-4 pr-3.5 sm:pr-5">
+          <AdminFormSection title="Accesso">
+            <div className="space-y-3">
+              <div>
+                <label htmlFor={p("email")} className={uiFormLabel}>
+                  Email <RequiredMark />
+                </label>
+                <input
+                  id={p("email")}
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="off"
+                  disabled={pending}
+                  className={adminUserInputClass}
+                  placeholder="nome@azienda.it"
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor={p("password")} className={uiFormLabel}>
+                    Password <RequiredMark />
+                  </label>
+                  <input
+                    id={p("password")}
+                    name="password"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    disabled={pending}
+                    className={adminUserInputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor={p("passwordConfirm")} className={uiFormLabel}>
+                    Conferma password <RequiredMark />
+                  </label>
+                  <input
+                    id={p("passwordConfirm")}
+                    name="passwordConfirm"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    disabled={pending}
+                    className={adminUserInputClass}
+                  />
+                </div>
+              </div>
+            </div>
+          </AdminFormSection>
 
-      <div className="shrink-0 border-t border-line-default py-4">
-        {error ? (
-          <p role="alert" className="mb-3 text-sm text-danger">
-            {error}
-          </p>
-        ) : null}
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-          <button
-            type="button"
-            className={cn(uiBtnSecondary, "w-full sm:w-auto")}
-            onClick={onCancel}
-            disabled={pending}
-          >
-            Annulla
-          </button>
-          <button
-            type="submit"
-            disabled={pending}
-            className={cn(uiBtnPrimary, "w-full sm:w-auto", pending && "cursor-wait opacity-90")}
-          >
-            {pending ? "Creazione…" : "Crea utente"}
-          </button>
+          <AdminFormSection title="Profilo">
+            <div>
+              <label htmlFor={p("fullName")} className={uiFormLabel}>
+                Nome visualizzato
+              </label>
+              <input
+                id={p("fullName")}
+                name="fullName"
+                autoComplete="name"
+                disabled={pending}
+                className={adminUserInputClass}
+                placeholder="Es. Mario Rossi"
+              />
+            </div>
+          </AdminFormSection>
+
+          <AdminFormSection title="Permessi">
+            <AdminUserRoleFields
+              idPrefix={p("fields")}
+              role={role}
+              isActive={isActive}
+              onRoleChange={setRole}
+              onActiveChange={setIsActive}
+              disabled={pending}
+            />
+          </AdminFormSection>
+        </div>
+
+        <div className="shrink-0 border-t border-line-default bg-surface pr-3.5 sm:pr-5 pt-4">
+          {error ? (
+            <p
+              role="alert"
+              className="mb-3 text-sm leading-relaxed text-danger"
+            >
+              {error}
+            </p>
+          ) : null}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+            <button
+              type="button"
+              className={cn(uiBtnSecondary, "w-full sm:w-auto")}
+              onClick={onCancel}
+              disabled={pending}
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              aria-busy={pending}
+              className={cn(uiBtnPrimary, pending && "cursor-wait opacity-90")}
+            >
+              {pending ? "Creazione…" : "Crea utente"}
+            </button>
+          </div>
         </div>
       </div>
     </form>

@@ -22,7 +22,7 @@ export function AdminUserEditSheet({
       open={open}
       onClose={onClose}
       title="Modifica utente"
-      description={user.email || user.userId}
+      description="Aggiorna profilo, permessi o password di accesso."
     >
       <AdminUserEditForm
         user={user}
