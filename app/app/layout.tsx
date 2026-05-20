@@ -2,6 +2,9 @@ import { AppChrome } from "@/components/app/app-chrome";
 import { CurrentUserProvider } from "@/components/app/current-user-context";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 
+/** Sessione/profilo via cookie: il segmento non è staticamente generabile in build. */
+export const dynamic = "force-dynamic";
+
 export default async function AppSectionLayout({
   children,
 }: {
