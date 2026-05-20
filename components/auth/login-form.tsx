@@ -44,7 +44,7 @@ export function LoginForm({ inactive }: { inactive?: boolean }) {
           alt="Satrn"
           width={200}
           height={66}
-          className="h-9 w-auto object-contain object-center brightness-0 invert"
+          className="logo-on-dark h-9 w-auto object-contain object-center"
           priority
         />
       </div>
