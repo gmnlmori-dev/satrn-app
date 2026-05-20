@@ -43,7 +43,7 @@ $$;
 CREATE TRIGGER profiles_set_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW
-  EXECUTE PROCEDURE public.profiles_set_updated_at ();
+  EXECUTE FUNCTION public.profiles_set_updated_at ();
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -119,7 +119,7 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
-  EXECUTE PROCEDURE public.handle_new_user ();
+  EXECUTE FUNCTION public.handle_new_user ();
 
 -- ---------------------------------------------------------------------------
 -- Backfill profili per utenti già presenti
