@@ -1,32 +1,22 @@
-/**
- * Token tipografici condivisi (gerarchia, leggibilità).
- * Usare con cn() nei componenti.
- */
 export const uiOverline =
-  "text-xs font-semibold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400";
+  "text-[11px] font-semibold uppercase tracking-[0.08em] text-muted";
 
-/** Etichette filtri / toolbar (maiuscoletto, leggibile) */
 export const uiFilterLabel =
-  "mb-1 block text-xs font-semibold uppercase tracking-[0.05em] text-slate-600 dark:text-slate-400";
+  "mb-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-secondary";
 
-/** Titoletti sezione in card / dettaglio */
 export const uiSectionHeading =
-  "text-xs font-semibold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400";
+  "text-[11px] font-semibold uppercase tracking-[0.06em] text-muted";
 
-/** Etichette form (case naturale) */
 export const uiFormLabel =
-  "mb-1 block text-sm font-medium leading-snug text-slate-700 dark:text-slate-300";
+  "mb-1 block text-sm font-medium leading-snug text-secondary";
 
-/** Sottotitolo sotto titolo pagina (dashboard, scrivania, …) */
 export const uiPageLead =
-  "text-[15px] leading-relaxed text-slate-600 dark:text-slate-400";
+  "text-sm leading-relaxed text-secondary";
 
-/** Titolo principale pagina (h1) sotto la top bar */
 export const uiPageTitle =
-  "text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100";
+  "text-xl font-semibold tracking-tight text-primary";
 
-/**
- * Titolo dettaglio (testate lunghe): stessi pesi e colori di uiPageTitle, mobile più compatto.
- */
 export const uiPageTitleDetail =
-  "text-balance text-xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100 md:text-2xl md:leading-tight";
+  "text-balance text-lg font-semibold leading-tight tracking-tight text-primary md:text-xl";
+
+export const uiMono = "font-mono text-[13px] tabular-nums text-secondary";

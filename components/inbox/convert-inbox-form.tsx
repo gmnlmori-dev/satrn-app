@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { convertInboxToRequest } from "@/lib/actions/convert-inbox-to-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
-import { SurfaceCard } from "@/components/ui/surface-card";
+import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiTransition } from "@/lib/ui-classes";
@@ -78,7 +78,7 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
   }
 
   return (
-    <SurfaceCard className="border-emerald-200/50 dark:border-emerald-900/30">
+    <Panel className="border-emerald-200/50 dark:border-emerald-900/30">
       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
         Converti in richiesta
       </p>
@@ -278,6 +278,6 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
           </button>
         </div>
       </form>
-    </SurfaceCard>
+    </Panel>
   );
 }

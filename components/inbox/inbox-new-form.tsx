@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { createInboxItem } from "@/lib/actions/create-inbox-item";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
-import { SurfaceCard } from "@/components/ui/surface-card";
+import { Panel } from "@/components/ui/panel";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
@@ -213,6 +213,6 @@ export function InboxNewForm({
   }
 
   return (
-    <SurfaceCard className="mx-auto max-w-2xl">{formInner}</SurfaceCard>
+    <Panel className="mx-auto max-w-2xl">{formInner}</Panel>
   );
 }

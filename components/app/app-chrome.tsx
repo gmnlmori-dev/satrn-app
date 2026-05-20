@@ -5,11 +5,16 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
+import { ThemeToggle } from "@/components/app/theme-toggle";
 import {
+  uiBtnGhost,
   uiBtnIcon,
   uiFocusRingInset,
+  uiNavActive,
+  uiNavItem,
   uiTransition,
 } from "@/lib/ui-classes";
+import { uiMono } from "@/lib/typography";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
 import { fetchInboxSubjectForBreadcrumb } from "@/lib/actions/inbox-breadcrumb";
 import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb";
@@ -45,9 +50,7 @@ function SidebarNavGlyph({
   if (kind === "followup") {
     const cls = cn(
       "h-4 w-4 shrink-0",
-      active
-        ? "text-white dark:text-slate-900"
-        : "text-slate-500 dark:text-slate-500",
+      active ? "text-accent" : "text-muted",
     );
     return (
       <svg
@@ -69,9 +72,7 @@ function SidebarNavGlyph({
   if (kind === "inbox") {
     const cls = cn(
       "h-4 w-4 shrink-0",
-      active
-        ? "text-white dark:text-slate-900"
-        : "text-slate-500 dark:text-slate-500",
+      active ? "text-accent" : "text-muted",
     );
     return (
       <svg
@@ -92,9 +93,7 @@ function SidebarNavGlyph({
   }
   const cls = cn(
     "h-4 w-4 shrink-0",
-    active
-      ? "text-white dark:text-slate-900"
-      : "text-slate-500 dark:text-slate-500"
+    active ? "text-accent" : "text-muted"
   );
   if (kind === "home") {
     return (
@@ -283,24 +282,26 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
       <div className="inline-flex min-w-0 max-w-full items-center gap-2">
         <div
           aria-label="Percorso pagina"
-          className="flex min-w-0 max-w-full items-center gap-1.5 text-base font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100"
+          className="flex min-w-0 max-w-full items-center gap-1.5 text-sm font-medium leading-tight text-primary"
         >
           {crumbs.map((crumb, idx) => (
             <span key={`${crumb.label}-${idx}`} className="inline-flex min-w-0 items-center gap-1.5">
               {idx > 0 ? (
-                <span className="shrink-0 text-slate-400 dark:text-slate-500" aria-hidden>
-                  &gt;
+                <span className="shrink-0 text-muted" aria-hidden>
+                  /
                 </span>
               ) : null}
               {crumb.href ? (
                 <Link
                   href={crumb.href}
-                  className="max-w-[18rem] truncate text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline dark:text-slate-300 dark:hover:text-slate-100"
+                  className="max-w-[18rem] truncate text-secondary underline-offset-2 hover:text-primary hover:underline"
                 >
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="max-w-[24rem] truncate">{crumb.label}</span>
+                <span className={cn("max-w-[24rem] truncate", idx === crumbs.length - 1 && crumbs.length > 1 && uiMono)}>
+                  {crumb.label}
+                </span>
               )}
             </span>
           ))}
@@ -310,8 +311,7 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
             role="status"
             aria-live="polite"
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium leading-none text-emerald-800 transition-opacity",
-              "dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300",
+              "inline-flex items-center gap-1.5 rounded-md border border-success/30 bg-success-muted px-2 py-0.5 text-[11px] font-medium leading-none text-success transition-opacity",
               topBarSavePulse
                 ? "opacity-100"
                 : "pointer-events-none opacity-0"
@@ -319,7 +319,7 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
           >
             <span
               aria-hidden
-              className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"
+              className="h-1.5 w-1.5 rounded-full bg-success"
             />
             Salvato
           </span>
@@ -358,7 +358,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <CreateRequestProvider open={openNewRequest}>
       <DetailSaveFeedbackProvider>
-      <div className="flex h-screen h-dvh min-h-0 flex-row overflow-hidden bg-slate-50 dark:bg-slate-950">
+      <div className="flex h-screen h-dvh min-h-0 flex-row overflow-hidden bg-app">
         <Suspense fallback={null}>
           <NewRequestQuerySync onOpen={openNewRequest} />
         </Suspense>
@@ -379,23 +379,22 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             aria-label="Chiudi menu"
-            className="fixed inset-0 z-40 bg-slate-900/40 md:hidden"
+            className="fixed inset-0 z-40 bg-app/80 backdrop-blur-sm md:hidden"
             onClick={() => setMenuOpen(false)}
           />
         ) : null}
 
         <aside
           className={cn(
-            "z-50 flex w-56 shrink-0 flex-col border-r border-slate-200/90 bg-white transition-transform duration-200 ease-out",
+            "z-50 flex w-52 shrink-0 flex-col border-r border-border-subtle bg-sidebar transition-transform duration-200 ease-out",
             "fixed inset-y-0 left-0 md:relative md:inset-auto md:translate-x-0",
             "md:h-full md:overflow-hidden",
-            "dark:border-slate-800 dark:bg-slate-900",
             menuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
           )}
         >
           <div
             className={cn(
-              "sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b border-slate-200/90 bg-white px-3 dark:border-slate-800 dark:bg-slate-900",
+              "sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b border-border-subtle bg-sidebar px-3",
               TOP_BAR_H
             )}
           >
@@ -418,7 +417,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5">
-            <div className="mb-2 border-b border-slate-200/90 pb-2 dark:border-slate-800">
+            <div className="mb-2 border-b border-border-subtle pb-2">
               <button
                 type="button"
                 aria-expanded={createOpen}
@@ -427,14 +426,13 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 className={cn(
                   uiTransition,
                   uiFocusRingInset,
-                  "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[15px] font-medium leading-snug",
-                  "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                  "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
+                  "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium leading-snug",
+                  "text-secondary hover:bg-panel-hover hover:text-primary"
                 )}
               >
                 <span className="inline-flex min-w-0 items-center gap-2">
                   <svg
-                    className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-500"
+                    className="h-4 w-4 shrink-0 text-muted"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={1.75}
@@ -451,7 +449,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 </span>
                 <svg
                   className={cn(
-                    "h-4 w-4 shrink-0 text-slate-500 transition-transform dark:text-slate-400",
+                    "h-4 w-4 shrink-0 text-muted transition-transform",
                     createOpen && "rotate-180"
                   )}
                   fill="none"
@@ -478,9 +476,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                     className={cn(
                       uiTransition,
                       uiFocusRingInset,
-                      "w-full rounded-md px-2.5 py-1.5 text-left text-[15px] font-medium leading-snug",
-                      "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                      "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                      "text-secondary hover:bg-panel-hover hover:text-primary"
                     )}
                   >
                     Nuova richiesta
@@ -494,9 +491,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                     className={cn(
                       uiTransition,
                       uiFocusRingInset,
-                      "w-full rounded-md px-2.5 py-1.5 text-left text-[15px] font-medium leading-snug",
-                      "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                      "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                      "text-secondary hover:bg-panel-hover hover:text-primary"
                     )}
                   >
                     Nuovo inbox
@@ -526,18 +522,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
                   className={cn(
-                    uiTransition,
-                    "inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-[15px] font-medium leading-snug",
-                    active
-                      ? cn(
-                          "bg-slate-900 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/35",
-                          "dark:bg-slate-100 dark:text-slate-900 dark:focus-visible:ring-slate-900/20"
-                        )
-                      : cn(
-                          uiFocusRingInset,
-                          "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                          "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
-                        )
+                    active ? cn(uiNavActive, "pl-3") : uiNavItem,
                   )}
                 >
                   <SidebarNavGlyph kind={item.glyph} active={active} />
@@ -550,26 +535,17 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 href="/app/settings/users"
                 onClick={() => setMenuOpen(false)}
                 className={cn(
-                  uiTransition,
-                  "inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-[15px] font-medium leading-snug",
                   pathname?.startsWith("/app/settings")
-                    ? cn(
-                        "bg-slate-900 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/35",
-                        "dark:bg-slate-100 dark:text-slate-900 dark:focus-visible:ring-slate-900/20",
-                      )
-                    : cn(
-                        uiFocusRingInset,
-                        "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                        "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100",
-                      ),
+                    ? cn(uiNavActive, "pl-3")
+                    : uiNavItem,
                 )}
               >
                 <svg
                   className={cn(
                     "h-4 w-4 shrink-0",
                     pathname?.startsWith("/app/settings")
-                      ? "text-white dark:text-slate-900"
-                      : "text-slate-500 dark:text-slate-500",
+                      ? "text-accent"
+                      : "text-muted",
                   )}
                   fill="none"
                   viewBox="0 0 24 24"
@@ -587,11 +563,17 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               </Link>
             ) : null}
           </nav>
-          <div className="shrink-0 border-t border-slate-200/90 p-2.5 dark:border-slate-800">
+          <div className="shrink-0 border-t border-border-subtle p-2.5">
+            {me ? (
+              <p className="mb-2 truncate px-1 text-xs text-muted">
+                <span className="font-medium text-secondary">
+                  {me.fullName || me.email}
+                </span>
+                <span className="text-muted"> · {me.role}</span>
+              </p>
+            ) : null}
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs leading-snug text-slate-500 dark:text-slate-400">
-                Satrn
-              </span>
+              <ThemeToggle />
               <button
                 type="button"
                 onClick={async () => {
@@ -600,13 +582,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                   router.push("/login");
                   router.refresh();
                 }}
-                className={cn(
-                  uiTransition,
-                  uiFocusRingInset,
-                  "shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-slate-600",
-                  "hover:bg-slate-100 hover:text-slate-900",
-                  "dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                )}
+                className={cn(uiBtnGhost, "shrink-0 px-2 py-1 text-xs")}
               >
                 Esci
               </button>
@@ -617,7 +593,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <header
             className={cn(
-              "sticky top-0 z-50 flex shrink-0 items-center gap-3 border-b border-slate-200/90 bg-white px-3 sm:px-4 dark:border-slate-800 dark:bg-slate-900",
+              "sticky top-0 z-50 flex shrink-0 items-center gap-3 border-b border-border-subtle bg-app/80 px-3 backdrop-blur-md sm:px-4",
               TOP_BAR_H
             )}
           >
@@ -646,7 +622,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           </header>
 
           <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
-            <div className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-5 sm:py-6 md:px-6 md:py-7">
+            <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
               {children}
             </div>
           </main>

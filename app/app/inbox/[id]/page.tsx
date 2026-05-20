@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ConvertInboxForm } from "@/components/inbox/convert-inbox-form";
 import { InboxStatusControls } from "@/components/inbox/inbox-status-controls";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
-import { SurfaceCard } from "@/components/ui/surface-card";
+import { Panel } from "@/components/ui/panel";
 import { formatDateTime } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
 import { getInboxItemById } from "@/lib/supabase/inbox-queries";
@@ -43,7 +43,7 @@ export default async function InboxDetailPage({
         </p>
       </header>
 
-      <SurfaceCard>
+      <Panel>
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <div>
@@ -97,9 +97,9 @@ export default async function InboxDetailPage({
             </Link>
           </div>
         ) : null}
-      </SurfaceCard>
+      </Panel>
 
-      <SurfaceCard className={cn(!item.linkedRequestId && "pb-5")}>
+      <Panel className={cn(!item.linkedRequestId && "pb-5")}>
         <h2 className="text-sm font-semibold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
           Contenuto grezzo
         </h2>
@@ -119,7 +119,7 @@ export default async function InboxDetailPage({
             description="Il contenuto grezzo non è presente. Puoi aggiornare l’ingresso se ti serve recuperare il messaggio originale."
           />
         )}
-      </SurfaceCard>
+      </Panel>
 
       {!item.linkedRequestId ? <ConvertInboxForm item={item} /> : null}
     </div>

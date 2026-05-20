@@ -27,7 +27,17 @@ import { formatDateTime, fromDatetimeLocalValue, toDatetimeLocalValue } from "@/
 import { inboxStatusLabel, statusLabel } from "@/lib/labels";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
-import { uiBtnIcon, uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
+import {
+  uiBtnIcon,
+  uiBtnPrimary,
+  uiBtnSecondary,
+  uiControl,
+  uiTransition,
+} from "@/lib/ui-classes";
+import {
+  dataTableThClass,
+  dataTableRowClass,
+} from "@/lib/table-ui";
 import { uiFormLabel, uiPageLead } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestStatus } from "@/types/request";
@@ -40,20 +50,14 @@ const QUICK_STATUSES: RequestStatus[] = [
   "closed",
 ];
 
-const datetimeInputClass = cn(
-  uiTransition,
-  "w-full rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 text-[15px] leading-snug text-slate-900",
-  "focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/[0.06]",
-  "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-600 dark:focus:ring-slate-100/10",
-);
+const datetimeInputClass = uiControl;
 
-const tableHeadCell =
-  "border-b border-slate-200/80 bg-slate-50/90 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400";
+const tableHeadCell = dataTableThClass;
 
 const tableRowInteractive = cn(
-  uiTransition,
-  "cursor-pointer border-b border-slate-100 outline-none last:border-b-0 dark:border-slate-800/80",
-  "focus-visible:bg-slate-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-900/10 dark:focus-visible:bg-slate-900/50 dark:focus-visible:ring-slate-100/15",
+  dataTableRowClass,
+  "cursor-pointer outline-none",
+  "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus",
 );
 
 /** Allineato allo slide-over «Nuova richiesta»: area sotto top bar, a destra della sidebar su md+. */
@@ -63,9 +67,8 @@ function followUpOverlayBackdropClassName() {
   return cn(
     "pointer-events-auto fixed bottom-0 right-0 z-[58] cursor-default border-0 p-0",
     BELOW_TOP_BAR,
-    "left-0 md:left-56",
-    "bg-gradient-to-r from-slate-900/5 via-slate-900/12 to-slate-900/20",
-    "dark:from-slate-950/18 dark:via-slate-950/28 dark:to-slate-950/38",
+    "left-0 md:left-52",
+    "bg-app/60 backdrop-blur-sm",
   );
 }
 
@@ -127,23 +130,19 @@ function Section({
 }) {
   const bar =
     variant === "danger"
-      ? "border-rose-200/80 bg-rose-50/40 dark:border-rose-900/40 dark:bg-rose-950/20"
-      : variant === "muted"
-        ? "border-slate-200/70 dark:border-slate-800"
-        : "border-slate-200/80 dark:border-slate-800";
+      ? "border-danger/30 bg-danger-muted/50"
+      : "border-border-subtle bg-panel";
 
   const countStyles =
     variant === "danger"
-      ? "bg-rose-600/10 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200"
-      : variant === "default"
-        ? "bg-slate-900/8 text-slate-800 dark:bg-slate-100/10 dark:text-slate-200"
-        : "bg-slate-900/6 text-slate-700 dark:bg-slate-100/8 dark:text-slate-300";
+      ? "bg-danger-muted text-danger"
+      : "bg-accent-muted text-accent";
 
   return (
     <section id={anchorId} className="scroll-mt-24 space-y-4">
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="text-lg font-semibold tracking-tight text-primary">
             {title}
           </h2>
           {count !== undefined ? (

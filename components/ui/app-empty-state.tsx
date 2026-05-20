@@ -2,8 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const iconWrap = cn(
-  "mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm ring-1 ring-slate-200",
-  "dark:bg-slate-800 dark:text-slate-500 dark:ring-slate-700",
+  "mb-3 flex h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-panel text-muted",
 );
 
 function IconInbox() {
@@ -52,9 +51,7 @@ type Props = {
   title: string;
   description: ReactNode;
   icon?: AppEmptyStateIcon;
-  /** Contenuto sotto la descrizione (link, pulsanti) */
   children?: ReactNode;
-  /** Meno padding, centrato — per pannelli dashboard o sezioni compatte */
   compact?: boolean;
   className?: string;
 };
@@ -77,9 +74,6 @@ function renderIcon(kind: AppEmptyStateIcon) {
   }
 }
 
-/**
- * Empty state coerente in tutta l’app (bordo tratteggiato, icona opzionale, titolo + testo).
- */
 export function AppEmptyState({
   title,
   description,
@@ -92,22 +86,25 @@ export function AppEmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200/80 bg-slate-50/70 text-center dark:border-slate-700/90 dark:bg-slate-900/35",
+        "flex flex-col items-center justify-center rounded-lg border border-dashed border-border-default bg-inset text-center",
         compact ? "px-4 py-7 sm:px-5" : "px-6 py-10 sm:py-11",
         className,
       )}
     >
       {showIcon ? <div className={iconWrap}>{renderIcon(icon)}</div> : null}
-      <p className="text-base font-medium text-slate-900 dark:text-slate-100">{title}</p>
-      <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+      <p className="text-base font-medium text-primary">{title}</p>
+      <p className="mt-2 max-w-md text-sm leading-relaxed text-secondary">
         {description}
       </p>
-      {children ? <div className="mt-6 flex flex-wrap items-center justify-center gap-2">{children}</div> : null}
+      {children ? (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-/** Blocco compatto per sezioni interne (timeline, note) senza icona. */
 export function AppEmptyHint({
   title,
   description,
@@ -120,12 +117,12 @@ export function AppEmptyHint({
   return (
     <div
       className={cn(
-        "rounded-lg border border-dashed border-slate-200/90 bg-slate-50/50 px-4 py-6 text-center dark:border-slate-700 dark:bg-slate-950/20",
+        "rounded-lg border border-dashed border-border-subtle bg-inset px-4 py-6 text-center",
         className,
       )}
     >
-      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{title}</p>
-      <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-500">{description}</p>
+      <p className="text-sm font-medium text-primary">{title}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-muted">{description}</p>
     </div>
   );
 }

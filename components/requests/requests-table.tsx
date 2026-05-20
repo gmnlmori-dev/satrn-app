@@ -9,16 +9,19 @@ import { cn } from "@/lib/cn";
 import {
   dataTableColSepClass,
   dataTableHeadRowClass,
+  dataTableRowClass,
   dataTableShellClass,
+  dataTableTdClass,
   dataTableThClass,
 } from "@/lib/table-ui";
+import { uiMono } from "@/lib/typography";
 import { uiTransition } from "@/lib/ui-classes";
 const clampTwoLines =
   "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 const priorityBarClass: Record<RequestPriority, string> = {
   high: "bg-rose-300/75 dark:bg-rose-500/45",
   medium: "bg-amber-300/75 dark:bg-amber-500/45",
-  low: "bg-slate-300/85 dark:bg-slate-500/50",
+  low: "bg-muted/50",
 };
 
 function Row({
@@ -50,16 +53,13 @@ function Row({
       onClick={go}
       onKeyDown={onKeyDown}
       className={cn(
-        uiTransition,
-        "group min-h-[5.25rem] cursor-pointer border-b border-slate-100/90 last:border-b-0",
-        isOdd
-          ? "bg-slate-50/55 dark:bg-slate-800/22"
-          : "bg-white dark:bg-slate-900/35",
-        "hover:bg-slate-100/75 focus-visible:bg-slate-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-900/10",
-        "dark:hover:bg-slate-700/35 dark:focus-visible:bg-slate-700/40 dark:focus-visible:ring-slate-100/12"
+        dataTableRowClass,
+        "group min-h-[4.5rem] cursor-pointer",
+        isOdd && "bg-inset/50",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus",
       )}
     >
-      <td className="relative overflow-hidden px-4 py-3 align-middle sm:px-5">
+      <td className={cn(dataTableTdClass, "relative overflow-hidden")}>
         <span
           aria-hidden
           className={cn(
@@ -69,20 +69,20 @@ function Row({
         />
         <span
           className={cn(
-            "block pl-2 text-[15px] font-medium leading-snug text-slate-900 underline-offset-2 group-hover:underline dark:text-slate-100",
+            "block pl-2 text-sm font-medium leading-snug text-primary underline-offset-2 group-hover:underline",
             clampTwoLines
           )}
           title={r.title}
         >
           {r.title}
         </span>
-        <p className="mt-1 truncate text-xs text-slate-600 sm:hidden dark:text-slate-400">
+        <p className="mt-1 truncate text-xs text-muted sm:hidden">
           {r.companyName}
         </p>
       </td>
       <td
         className={cn(
-          "hidden overflow-hidden px-4 py-3 align-middle text-[15px] leading-snug text-slate-800 sm:table-cell sm:px-5 dark:text-slate-200",
+          "hidden overflow-hidden px-4 py-3 align-middle text-[15px] leading-snug text-secondary sm:table-cell sm:px-5",
           dataTableColSepClass
         )}
       >
@@ -97,7 +97,7 @@ function Row({
         )}
       >
         <div
-          className="truncate whitespace-nowrap text-[15px] font-medium leading-snug text-slate-900 dark:text-slate-100"
+          className="truncate whitespace-nowrap text-[15px] font-medium leading-snug text-primary"
           title={r.contactName}
         >
           {r.contactName}
@@ -114,7 +114,7 @@ function Row({
       >
         <span
           className={cn(
-            "block text-sm leading-snug text-slate-700 dark:text-slate-300",
+            "block text-sm leading-snug text-secondary",
             clampTwoLines,
           )}
           title={r.assignedToLabel ?? "Non assegnata"}
@@ -130,7 +130,7 @@ function Row({
       >
         <span
           className={cn(
-            "block text-sm leading-relaxed text-slate-700 dark:text-slate-300",
+            "block text-sm leading-relaxed text-secondary",
             clampTwoLines
           )}
           title={r.nextAction}
@@ -145,7 +145,7 @@ function Row({
         )}
       >
         <time
-          className="block text-sm font-medium tabular-nums leading-snug text-slate-800 dark:text-slate-200"
+          className="block text-sm font-medium tabular-nums leading-snug text-primary"
           dateTime={r.updatedAt}
           title={formatDateTime(r.updatedAt)}
         >

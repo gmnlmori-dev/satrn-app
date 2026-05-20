@@ -6,17 +6,12 @@ import { priorityLabel, statusLabel } from "@/lib/labels";
 import type { SortOption, ToolbarFilters } from "@/lib/requests-query";
 import { filtersActive } from "@/lib/requests-query";
 import { cn } from "@/lib/cn";
-import { uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
+import { uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 
-const filterLabelClass =
-  "mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400";
+import { uiFilterLabel } from "@/lib/typography";
 
-const controlClass = cn(
-  uiTransition,
-  "w-full min-w-0 rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 text-[15px] leading-snug text-slate-900",
-  "focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/[0.06]",
-  "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-600 dark:focus:ring-slate-100/10"
-);
+const filterLabelClass = uiFilterLabel;
+const controlClass = uiControl;
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "updated_desc", label: "Aggiornato · più recenti" },

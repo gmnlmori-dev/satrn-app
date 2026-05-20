@@ -1,19 +1,26 @@
 import { cn } from "@/lib/cn";
 
-/** Contenitore comune per tabelle dati (scroll orizzontale, bordo, sfondo). */
 export const dataTableShellClass = cn(
-  "w-full overflow-x-auto rounded-xl border border-slate-200/70 bg-white",
-  "dark:border-slate-800 dark:bg-slate-900/40",
+  "w-full overflow-x-auto rounded-lg border border-border-subtle bg-panel",
 );
 
 export const dataTableHeadRowClass = cn(
-  "border-b border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80",
+  "border-b border-border-subtle bg-inset",
 );
 
 export const dataTableThClass = cn(
-  "px-4 py-3 text-left text-xs font-medium tracking-normal text-slate-500 sm:px-5 dark:text-slate-400",
+  "px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.05em] text-muted sm:px-5",
 );
 
 export const dataTableColSepClass = cn(
-  "border-l border-slate-200/60 dark:border-slate-800/75",
+  "border-l border-border-subtle",
+);
+
+export const dataTableRowClass = cn(
+  "border-b border-border-subtle transition-colors last:border-b-0",
+  "hover:bg-panel-hover",
+);
+
+export const dataTableTdClass = cn(
+  "px-4 py-2.5 align-middle text-sm text-primary sm:px-5",
 );

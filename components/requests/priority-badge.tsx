@@ -3,10 +3,9 @@ import { priorityLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 
 const styles: Record<RequestPriority, string> = {
-  high: "bg-rose-50 text-rose-800 ring-rose-200/80 dark:bg-rose-950/40 dark:text-rose-200 dark:ring-rose-900",
-  medium:
-    "bg-orange-50 text-orange-900 ring-orange-200/80 dark:bg-orange-950/40 dark:text-orange-200 dark:ring-orange-900",
-  low: "bg-slate-50 text-slate-700 ring-slate-200/80 dark:bg-slate-800/80 dark:text-slate-300 dark:ring-slate-600",
+  high: "border-danger/30 bg-danger-muted text-danger",
+  medium: "border-warning/30 bg-warning-muted text-warning",
+  low: "border-border-default bg-inset text-muted",
 };
 
 export function PriorityBadge({
@@ -19,9 +18,9 @@ export function PriorityBadge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-tight ring-1 ring-inset",
+        "inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-tight",
         styles[priority],
-        className
+        className,
       )}
     >
       {priorityLabel[priority]}

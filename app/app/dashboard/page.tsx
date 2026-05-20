@@ -48,7 +48,7 @@ export default async function DashboardPage() {
             className={cn(
               uiTransition,
               uiFocusRingOffset,
-              "rounded-md text-sm font-semibold text-slate-800 underline-offset-2 hover:underline dark:text-slate-200",
+              "rounded-md text-sm font-semibold text-accent underline-offset-2 hover:underline",
             )}
           >
             Apri Da seguire
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
             className={cn(
               uiTransition,
               uiFocusRingOffset,
-              "rounded-md text-sm font-semibold text-slate-800 underline-offset-2 hover:underline dark:text-slate-200",
+              "rounded-md text-sm font-semibold text-accent underline-offset-2 hover:underline",
             )}
           >
             Vai all&apos;inbox

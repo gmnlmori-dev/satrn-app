@@ -30,7 +30,7 @@ import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 function StatDot() {
   return (
     <span
-      className="hidden text-slate-300 sm:inline dark:text-slate-600"
+          className="hidden text-muted sm:inline"
       aria-hidden
     >
       ·
@@ -52,8 +52,7 @@ function QueueOverview({
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200/60 bg-slate-50/90 px-4 py-3 text-sm leading-relaxed text-slate-600",
-        "dark:border-slate-800/80 dark:bg-slate-900/50 dark:text-slate-400"
+        "rounded-lg border border-border-subtle bg-inset px-4 py-3 text-sm leading-relaxed text-secondary"
       )}
     >
       <p className={uiOverline}>
@@ -61,28 +60,28 @@ function QueueOverview({
       </p>
       <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:gap-x-3">
         <span>
-          <span className="tabular-nums font-semibold text-slate-900 dark:text-slate-100">
+          <span className="tabular-nums font-semibold text-primary">
             {total}
           </span>{" "}
           totali
         </span>
         <StatDot />
         <span>
-          <span className="tabular-nums font-semibold text-slate-900 dark:text-slate-100">
+          <span className="tabular-nums font-semibold text-primary">
             {aperte}
           </span>{" "}
           aperte
         </span>
         <StatDot />
         <span>
-          <span className="tabular-nums font-semibold text-slate-900 dark:text-slate-100">
+          <span className="tabular-nums font-semibold text-primary">
             {nuove}
           </span>{" "}
           nuove
         </span>
         <StatDot />
         <span>
-          <span className="tabular-nums font-semibold text-slate-900 dark:text-slate-100">
+          <span className="tabular-nums font-semibold text-primary">
             {oggi}
           </span>{" "}
           scadenze oggi
@@ -94,8 +93,8 @@ function QueueOverview({
 
 function PriorityLegend() {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-      <span className="font-medium text-slate-600 dark:text-slate-300">Priorità</span>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+      <span className="font-medium text-secondary">Priorità</span>
       <span className="inline-flex items-center gap-1.5">
         <span
           aria-hidden
@@ -230,12 +229,12 @@ export function RequestsWorkspace({
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h3
               id="requests-results-heading"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+              className="text-sm font-medium text-secondary"
             >
               Elenco
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              <span className="tabular-nums font-semibold text-slate-800 dark:text-slate-200">
+            <p className="text-sm text-muted">
+              <span className="tabular-nums font-semibold text-primary">
                 {processed.length}
               </span>
               {processed.length === total

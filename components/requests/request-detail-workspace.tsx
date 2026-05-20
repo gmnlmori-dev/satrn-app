@@ -25,6 +25,7 @@ import {
   uiBtnIcon,
   uiBtnPrimary,
   uiBtnSecondary,
+  uiControl,
   uiTransition,
 } from "@/lib/ui-classes";
 import {
@@ -39,7 +40,7 @@ import { updateRequestAssignment } from "@/lib/actions/update-request-assignment
 import { updateRequestDetails } from "@/lib/actions/update-request-details";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
-import { SurfaceCard } from "@/components/ui/surface-card";
+import { Panel } from "@/components/ui/panel";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { PriorityBadge } from "@/components/requests/priority-badge";
@@ -57,19 +58,8 @@ const STATUSES: RequestStatus[] = [
 
 const PRIORITIES: RequestPriority[] = ["high", "medium", "low"];
 
-const controlClass = cn(
-  uiTransition,
-  "w-full min-w-0 rounded-lg border border-slate-200/90 bg-white px-2.5 py-2.5 text-[15px] leading-snug text-slate-900",
-  "focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/[0.06]",
-  "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-600 dark:focus:ring-slate-100/10"
-);
-
-const inputClass = cn(
-  uiTransition,
-  "w-full rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 text-[15px] leading-snug text-slate-900",
-  "placeholder:text-slate-500 focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/[0.06]",
-  "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-600 dark:focus:ring-slate-100/10"
-);
+const controlClass = cn(uiControl, "px-2.5 py-2.5");
+const inputClass = uiControl;
 
 type Props = {
   initialRequest: Request;
@@ -364,7 +354,7 @@ export function RequestDetailWorkspace({
 
   return (
     <div className="w-full space-y-6 md:space-y-7">
-      <header className="rounded-xl border border-slate-200/70 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900/45 sm:px-5">
+      <header className="rounded-lg border border-border-subtle bg-panel px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h1 className={uiPageTitleDetail}>
@@ -401,7 +391,7 @@ export function RequestDetailWorkspace({
         </div>
       </header>
 
-      <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
+      <Panel>
         <h2 className={uiSectionHeading}>Operativo</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
           Stato, priorità e assegnazione interna alla coda.
@@ -498,9 +488,9 @@ export function RequestDetailWorkspace({
             </p>
           ) : null}
         </div>
-      </SurfaceCard>
+      </Panel>
 
-      <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
+      <Panel>
         <h2 className={uiSectionHeading}>Prossima azione</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
           Scadenza facoltativa. Usa &quot;Salva&quot; per confermare le modifiche.
@@ -582,9 +572,9 @@ export function RequestDetailWorkspace({
             </button>
           ) : null}
         </div>
-      </SurfaceCard>
+      </Panel>
 
-      <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
+      <Panel>
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className={uiSectionHeading}>Anagrafica e contesto</h2>
@@ -625,9 +615,9 @@ export function RequestDetailWorkspace({
             </p>
           )}
         </div>
-      </SurfaceCard>
+      </Panel>
 
-      <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
+      <Panel>
         <h2 className={uiSectionHeading}>Attività</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
           Creazione, modifiche a stato e priorità, assegnazione, prossima azione e note — in ordine cronologico.
@@ -684,9 +674,9 @@ export function RequestDetailWorkspace({
             ))}
           </ol>
         )}
-      </SurfaceCard>
+      </Panel>
 
-      <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
+      <Panel>
         <h2 className={uiSectionHeading}>Note e cronologia</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
           Note operative e aggiornamenti che aggiungi qui sotto; le voci più recenti sono in cima.
@@ -845,7 +835,7 @@ export function RequestDetailWorkspace({
             </div>
           )}
         </div>
-      </SurfaceCard>
+      </Panel>
 
       {editOpen ? (
         <EditDetailsSheet

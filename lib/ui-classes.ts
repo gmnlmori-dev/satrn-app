@@ -1,70 +1,69 @@
 import { cn } from "@/lib/cn";
 
-/**
- * Token UI condivisi (focus, transizioni leggere). Usare con cn().
- */
 export const uiTransition = "transition-colors duration-150";
 
 export const uiFocusRingInset =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-900/12 dark:focus-visible:ring-slate-100/15";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus";
 
 export const uiFocusRingOffset =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-slate-300/25 dark:focus-visible:ring-offset-slate-950";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-app";
 
-/** CTA principale: resta nettamente più forte del secondario. */
+export const uiControl = cn(
+  uiTransition,
+  "w-full min-w-0 rounded-md border border-border-default bg-inset px-3 py-2 text-sm leading-snug text-primary",
+  "placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-ring-focus",
+);
+
 export const uiBtnPrimary = cn(
   uiTransition,
   uiFocusRingOffset,
-  "rounded-md bg-slate-900 px-4 py-2.5 text-sm font-semibold leading-snug text-white shadow-sm",
-  "hover:bg-slate-800",
-  "dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white",
-  "disabled:cursor-not-allowed disabled:opacity-[0.42] disabled:shadow-none",
-  "disabled:hover:bg-slate-900 dark:disabled:hover:bg-slate-100",
-  "aria-busy:cursor-wait aria-busy:opacity-[0.88]"
+  "rounded-md bg-primary px-4 py-2 text-sm font-semibold leading-snug text-app shadow-sm",
+  "hover:opacity-90",
+  "disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none",
+  "aria-busy:cursor-wait aria-busy:opacity-85",
 );
 
-/**
- * Azione secondaria con bordo: deve risultare chiaramente cliccabile, non “spenta”.
- * Usare con `disabled` per stato non disponibile (colori espliciti, no solo opacity).
- */
 export const uiBtnSecondary = cn(
   uiTransition,
   uiFocusRingOffset,
-  "rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold leading-snug text-slate-800 shadow-sm",
-  "hover:border-slate-400 hover:bg-slate-50",
-  "active:bg-slate-100/90",
-  "dark:border-slate-500 dark:bg-slate-900 dark:text-slate-100",
-  "dark:hover:border-slate-400 dark:hover:bg-slate-800",
-  "dark:active:bg-slate-800",
-  "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none",
-  "disabled:hover:border-slate-200 disabled:hover:bg-slate-100",
-  "dark:disabled:border-slate-800 dark:disabled:bg-slate-950 dark:disabled:text-slate-600",
-  "dark:disabled:hover:border-slate-800 dark:disabled:hover:bg-slate-950",
-  "aria-busy:cursor-wait aria-busy:border-slate-400 dark:aria-busy:border-slate-400"
+  "rounded-md border border-border-default bg-panel px-3 py-2 text-sm font-semibold leading-snug text-primary shadow-sm",
+  "hover:border-border-default hover:bg-panel-hover",
+  "disabled:cursor-not-allowed disabled:border-border-subtle disabled:bg-inset disabled:text-muted disabled:shadow-none",
+  "aria-busy:cursor-wait",
 );
 
-/**
- * Azione terziaria (Annulla inline, testo + hover): più definita del solo link grigio.
- */
 export const uiBtnGhost = cn(
   uiTransition,
   uiFocusRingInset,
-  "rounded-md border border-transparent bg-transparent px-3 py-2.5 text-sm font-semibold text-slate-800",
-  "hover:border-slate-200 hover:bg-slate-50",
-  "dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800/90",
-  "disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:border-transparent disabled:hover:bg-transparent",
-  "dark:disabled:text-slate-600 dark:disabled:hover:bg-transparent"
+  "rounded-md border border-transparent bg-transparent px-3 py-2 text-sm font-semibold text-secondary",
+  "hover:border-border-subtle hover:bg-panel-hover hover:text-primary",
+  "disabled:cursor-not-allowed disabled:text-muted disabled:hover:border-transparent disabled:hover:bg-transparent",
 );
 
-/** Pulsanti solo icona (menu, chiudi): stesso linguaggio del secondario, formato compatto. */
 export const uiBtnIcon = cn(
   uiTransition,
   uiFocusRingInset,
-  "inline-flex items-center justify-center rounded-md border border-slate-300 bg-white text-slate-800 shadow-sm",
-  "hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900",
-  "active:bg-slate-100/90",
-  "dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200",
-  "dark:hover:border-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-50",
-  "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100",
-  "disabled:hover:bg-slate-100 dark:disabled:border-slate-800 dark:disabled:bg-slate-950 dark:disabled:text-slate-600"
+  "inline-flex items-center justify-center rounded-md border border-border-default bg-panel text-secondary shadow-sm",
+  "hover:border-border-default hover:bg-panel-hover hover:text-primary",
+  "disabled:cursor-not-allowed disabled:border-border-subtle disabled:bg-inset disabled:text-muted",
+);
+
+export const uiBtnDanger = cn(
+  uiTransition,
+  uiFocusRingOffset,
+  "rounded-md border border-danger/30 bg-danger-muted px-3 py-2 text-sm font-semibold text-danger",
+  "hover:bg-danger/20",
+  "disabled:cursor-not-allowed disabled:opacity-40",
+);
+
+export const uiNavActive = cn(
+  "relative bg-accent-muted text-primary",
+  "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-accent",
+);
+
+export const uiNavItem = cn(
+  uiTransition,
+  uiFocusRingInset,
+  "inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium text-secondary",
+  "hover:bg-panel-hover hover:text-primary",
 );

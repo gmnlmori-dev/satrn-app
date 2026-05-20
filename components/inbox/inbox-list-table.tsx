@@ -8,7 +8,9 @@ import { cn } from "@/lib/cn";
 import {
   dataTableColSepClass,
   dataTableHeadRowClass,
+  dataTableRowClass,
   dataTableShellClass,
+  dataTableTdClass,
   dataTableThClass,
 } from "@/lib/table-ui";
 import { uiTransition } from "@/lib/ui-classes";
@@ -36,20 +38,17 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
       onClick={go}
       onKeyDown={onKeyDown}
       className={cn(
-        uiTransition,
-        "group min-h-[4.5rem] cursor-pointer border-b border-slate-100/90 last:border-b-0",
-        isOdd
-          ? "bg-slate-50/55 dark:bg-slate-800/22"
-          : "bg-white dark:bg-slate-900/35",
-        "hover:bg-slate-100/75 focus-visible:bg-slate-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-900/10",
-        "dark:hover:bg-slate-700/35 dark:focus-visible:bg-slate-700/40 dark:focus-visible:ring-slate-100/12",
+        dataTableRowClass,
+        "group min-h-[4.5rem] cursor-pointer",
+        isOdd && "bg-inset/50",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus",
       )}
     >
-      <td className="px-4 py-3 align-middle sm:px-5">
-        <span className="block text-[15px] font-medium leading-snug text-slate-900 underline-offset-2 group-hover:underline dark:text-slate-100">
+      <td className={dataTableTdClass}>
+        <span className="block text-sm font-medium leading-snug text-primary underline-offset-2 group-hover:underline">
           {r.subject || "(Senza oggetto)"}
         </span>
-        <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-400">
+        <p className="mt-0.5 truncate text-xs text-muted">
           {[r.source, r.senderName, r.senderEmail].filter(Boolean).join(" · ") ||
             "—"}
         </p>
@@ -57,10 +56,13 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
       <td className={cn("hidden px-4 py-3 align-middle sm:table-cell sm:px-5", dataTableColSepClass)}>
         <InboxStatusBadge status={r.status} />
       </td>
-      <td className={cn(
-        "hidden px-4 py-3 align-middle text-sm tabular-nums text-slate-600 md:table-cell sm:px-5 dark:text-slate-400",
-        dataTableColSepClass,
-      )}>
+      <td
+        className={cn(
+          dataTableTdClass,
+          "hidden text-muted md:table-cell",
+          dataTableColSepClass,
+        )}
+      >
         {formatDateTime(r.createdAt)}
       </td>
     </tr>
@@ -102,7 +104,7 @@ export function InboxListTable({ items }: { items: InboxItem[] }) {
         </tbody>
       </table>
       </div>
-      <div className="border-t border-slate-200/80 px-4 py-2.5 text-right text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500 sm:hidden">
+      <div className="border-t border-border-subtle px-4 py-2.5 text-right text-xs text-muted sm:hidden">
         Tocca una riga per aprire il dettaglio.
       </div>
     </div>

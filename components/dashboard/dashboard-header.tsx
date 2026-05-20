@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { Panel } from "@/components/ui/panel";
 import { cn } from "@/lib/cn";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 
 export function DashboardHeader() {
   return (
-    <div className="rounded-xl border border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900/50">
-      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+    <Panel>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="min-w-0">
           <h1 className={uiPageTitle}>
             Home operativa
@@ -37,6 +38,6 @@ export function DashboardHeader() {
           </Link>
         </div>
       </div>
-    </div>
+    </Panel>
   );
 }
