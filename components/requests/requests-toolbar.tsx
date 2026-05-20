@@ -11,6 +11,8 @@ import { uiControl, uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
 import { uiFilterLabel } from "@/lib/typography";
 import { uiPanel } from "@/lib/surfaces";
 
+export type RequestsViewMode = "list" | "calendar";
+
 type Props = {
   toolbar: ToolbarFilters;
   onToolbarChange: (t: ToolbarFilters) => void;
@@ -21,6 +23,7 @@ type Props = {
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
   myAssignedCount: number;
+  viewMode: RequestsViewMode;
 };
 
 const assignSegments: { value: AssignScopeFilter; label: string }[] = [
@@ -39,11 +42,13 @@ export function RequestsToolbar({
   currentUserId,
   assigneeOptions,
   myAssignedCount,
+  viewMode,
 }: Props) {
   const filtersPanelId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const showResetHint =
-    filtersActive(toolbar) || sort !== "updated_desc";
+    filtersActive(toolbar) ||
+    (viewMode === "list" && sort !== "updated_desc");
 
   const assignValue =
     toolbar.assignScope === "user" ? "all" : toolbar.assignScope;
@@ -124,7 +129,9 @@ export function RequestsToolbar({
             "text-sm font-medium text-fg-primary hover:bg-elevated",
           )}
         >
-          <span>Filtri e ordinamento</span>
+          <span>
+            {viewMode === "calendar" ? "Filtri" : "Filtri e ordinamento"}
+          </span>
           <span className="flex min-w-0 items-center gap-2">
             {showResetHint ? (
               <span className="rounded-md border border-warning/30 bg-warning-muted px-2 py-0.5 text-[11px] font-medium text-warning">
@@ -166,6 +173,7 @@ export function RequestsToolbar({
               onSortChange={onSortChange}
               onReset={onReset}
               assigneeOptions={assigneeOptions}
+              hideSort={viewMode === "calendar"}
             />
           </div>
         ) : null}

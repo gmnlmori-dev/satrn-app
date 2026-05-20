@@ -40,6 +40,7 @@ type Props = {
   onSortChange: (s: SortOption) => void;
   onReset: () => void;
   assigneeOptions: AssigneeOption[];
+  hideSort?: boolean;
 };
 
 export function RequestsFilters({
@@ -50,9 +51,10 @@ export function RequestsFilters({
   onSortChange,
   onReset,
   assigneeOptions,
+  hideSort = false,
 }: Props) {
   const resetDisabled =
-    !filtersActive(filters) && sort === "updated_desc";
+    !filtersActive(filters) && (hideSort || sort === "updated_desc");
 
   return (
     <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
@@ -179,23 +181,25 @@ export function RequestsFilters({
         </select>
       </div>
 
-      <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-2">
-        <label htmlFor="req-sort" className={filterLabelClass}>
-          Ordina per
-        </label>
-        <select
-          id="req-sort"
-          className={controlClass}
-          value={sort}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-        >
-          {sortOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {hideSort ? null : (
+        <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-2">
+          <label htmlFor="req-sort" className={filterLabelClass}>
+            Ordina per
+          </label>
+          <select
+            id="req-sort"
+            className={controlClass}
+            value={sort}
+            onChange={(e) => onSortChange(e.target.value as SortOption)}
+          >
+            {sortOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex min-w-0 items-end sm:col-span-2 lg:col-span-4 xl:col-span-1">
         <button

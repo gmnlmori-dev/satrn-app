@@ -1,16 +1,23 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Request } from "@/types/request";
 import type { AssigneeOption } from "@/types/profile";
 import {
   RequestsDatabaseEmptyState,
   RequestsEmptyState,
 } from "@/components/requests/requests-empty-state";
+import { RequestsCalendar } from "@/components/requests/requests-calendar";
 import { RequestsTable } from "@/components/requests/requests-table";
-import { RequestsToolbar } from "@/components/requests/requests-toolbar";
+import {
+  RequestsToolbar,
+  type RequestsViewMode,
+} from "@/components/requests/requests-toolbar";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/cn";
+import { monthParamFromDate } from "@/lib/date";
 import {
   countByStatus,
   countDueToday,
@@ -26,6 +33,10 @@ import {
 } from "@/lib/requests-query";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
+
+function viewFromSearchParam(raw: string | null): RequestsViewMode {
+  return raw === "calendar" ? "calendar" : "list";
+}
 
 function StatDot() {
   return (
@@ -129,8 +140,22 @@ export function RequestsWorkspace({
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
 }) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const urlView = searchParams.get("view");
+  const urlMonth = searchParams.get("month");
+
   const [toolbar, setToolbar] = useState<ToolbarFilters>(defaultToolbarFilters());
   const [sort, setSort] = useState<SortOption>("updated_desc");
+  const [viewMode, setViewMode] = useState<RequestsViewMode>(() =>
+    viewFromSearchParam(urlView),
+  );
+
+  useEffect(() => {
+    setViewMode(viewFromSearchParam(urlView));
+  }, [urlView]);
 
   const sources = useMemo(() => collectSources(requests), [requests]);
 
@@ -142,12 +167,62 @@ export function RequestsWorkspace({
     [requests, currentUserId],
   );
 
-  const processed = useMemo(() => {
-    const matched = filterByToolbar(requests, toolbar, {
-      currentUserId,
-    });
-    return sortRequests(matched, sort);
-  }, [requests, toolbar, sort, currentUserId]);
+  const filtered = useMemo(
+    () =>
+      filterByToolbar(requests, toolbar, {
+        currentUserId,
+      }),
+    [requests, toolbar, currentUserId],
+  );
+
+  const forList = useMemo(
+    () => sortRequests(filtered, sort),
+    [filtered, sort],
+  );
+
+  const forCalendar = useMemo(
+    () => filtered.filter((r) => r.nextActionAt != null),
+    [filtered],
+  );
+
+  const withoutDeadlineCount = filtered.length - forCalendar.length;
+
+  const replaceSearch = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const q = params.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
+
+  const setView = useCallback(
+    (mode: RequestsViewMode) => {
+      setViewMode(mode);
+      replaceSearch((params) => {
+        if (mode === "calendar") {
+          params.set("view", "calendar");
+          if (!params.get("month")) {
+            params.set("month", monthParamFromDate(new Date()));
+          }
+        } else {
+          params.delete("view");
+        }
+      });
+    },
+    [replaceSearch],
+  );
+
+  const onMonthParamChange = useCallback(
+    (month: string) => {
+      replaceSearch((params) => {
+        params.set("view", "calendar");
+        params.set("month", month);
+      });
+    },
+    [replaceSearch],
+  );
 
   const resetAll = useCallback(() => {
     setToolbar(defaultToolbarFilters());
@@ -220,30 +295,56 @@ export function RequestsWorkspace({
         currentUserId={currentUserId}
         assigneeOptions={assigneeOptions}
         myAssignedCount={myAssignedCount}
+        viewMode={viewMode}
       />
 
-      {processed.length === 0 ? (
+      {filtered.length === 0 ? (
         <RequestsEmptyState onReset={resetAll} />
       ) : (
         <section className="space-y-3" aria-labelledby="requests-results-heading">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <h3
-              id="requests-results-heading"
-              className="text-sm font-medium text-fg-secondary"
-            >
-              Elenco
-            </h3>
-            <p className="text-sm text-fg-tertiary">
-              <span className="tabular-nums font-semibold text-fg-primary">
-                {processed.length}
-              </span>
-              {processed.length === total
-                ? " richieste"
-                : ` su ${total} richieste`}
-            </p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              <h3
+                id="requests-results-heading"
+                className="text-sm font-medium text-fg-secondary"
+              >
+                {viewMode === "calendar" ? "Calendario" : "Elenco"}
+              </h3>
+              <SegmentedControl
+                ariaLabel="Vista risultati"
+                value={viewMode}
+                options={[
+                  { value: "list", label: "Elenco" },
+                  { value: "calendar", label: "Calendario" },
+                ]}
+                onChange={setView}
+              />
+            </div>
+            {viewMode === "list" ? (
+              <p className="text-sm text-fg-tertiary">
+                <span className="tabular-nums font-semibold text-fg-primary">
+                  {forList.length}
+                </span>
+                {forList.length === total
+                  ? " richieste"
+                  : ` su ${total} richieste`}
+              </p>
+            ) : null}
           </div>
+
           <PriorityLegend />
-          <RequestsTable requests={processed} />
+
+          {viewMode === "list" ? (
+            <RequestsTable requests={forList} />
+          ) : (
+            <RequestsCalendar
+              requests={forCalendar}
+              filteredCount={filtered.length}
+              withoutDeadlineCount={withoutDeadlineCount}
+              monthParam={urlMonth}
+              onMonthParamChange={onMonthParamChange}
+            />
+          )}
         </section>
       )}
     </div>

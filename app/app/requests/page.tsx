@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { RequestsWorkspace } from "@/components/requests/requests-workspace";
 import {
   getActiveAssigneeOptions,
@@ -16,10 +17,12 @@ export default async function RequestsPage() {
     getActiveAssigneeOptions(),
   ]);
   return (
-    <RequestsWorkspace
-      requests={requests}
-      currentUserId={profile?.userId ?? ""}
-      assigneeOptions={assignees}
-    />
+    <Suspense fallback={null}>
+      <RequestsWorkspace
+        requests={requests}
+        currentUserId={profile?.userId ?? ""}
+        assigneeOptions={assignees}
+      />
+    </Suspense>
   );
 }
