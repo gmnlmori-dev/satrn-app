@@ -105,7 +105,7 @@ function MonthCell({
           <button
             type="button"
             onClick={() =>
-              onMore({ date: cell.date, requests })
+              onMore({ date: cell.date, requests: events })
             }
             className={cn(
               uiTransition,
