@@ -9,3 +9,15 @@ export function getSupabasePublicEnv(): { url: string; key: string } {
   }
   return { url, key };
 }
+
+/** Service role — solo server (Server Actions admin). Mai esporre al client. */
+export function getSupabaseServiceRoleEnv(): { url: string; serviceRoleKey: string } {
+  const { url } = getSupabasePublicEnv();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error(
+      "Manca SUPABASE_SERVICE_ROLE_KEY (Supabase → Project Settings → API → service_role).",
+    );
+  }
+  return { url, serviceRoleKey };
+}

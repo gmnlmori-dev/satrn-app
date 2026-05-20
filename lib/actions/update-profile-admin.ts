@@ -1,9 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { canManageUsers } from "@/lib/permissions";
 import type { AppRole } from "@/types/profile";
-import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
+import { assertAdminActor } from "@/lib/actions/admin-auth-guard";
+import {
+  assertSelfAdminGuards,
+  mapAdminAuthError,
+  validateEmail,
+} from "@/lib/actions/admin-auth-errors";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AdminUpdateProfileResult =
@@ -21,26 +26,17 @@ export async function adminUpdateProfile(params: {
   role?: AppRole;
   is_active?: boolean;
   full_name?: string;
+  email?: string;
 }): Promise<AdminUpdateProfileResult> {
-  const actor = await getCurrentProfileSummary();
-  if (!actor?.userId || !actor.isActive) {
-    return { ok: false, message: "Sessione non valida." };
-  }
-  if (!canManageUsers(actor.role)) {
-    return { ok: false, message: "Solo l’admin può gestire utenti e ruoli." };
-  }
+  const guard = await assertAdminActor();
+  if (!guard.ok) return guard;
+  const actor = guard.actor;
 
-  if (params.userId === actor.userId) {
-    if (params.is_active === false) {
-      return { ok: false, message: "Non puoi disattivare il tuo stesso utente admin." };
-    }
-    if (params.role !== undefined && params.role !== "admin") {
-      return {
-        ok: false,
-        message: "Non puoi rimuovere il ruolo admin a te stesso.",
-      };
-    }
-  }
+  const selfErr = assertSelfAdminGuards(actor.userId, params.userId, {
+    role: params.role,
+    is_active: params.is_active,
+  });
+  if (selfErr) return { ok: false, message: selfErr };
 
   const supabase = await createSupabaseServerClient();
   const patch: Record<string, unknown> = {};
@@ -57,6 +53,22 @@ export async function adminUpdateProfile(params: {
   if (params.full_name !== undefined) {
     patch.full_name =
       typeof params.full_name === "string" ? params.full_name.trim() : "";
+  }
+
+  if (params.email !== undefined) {
+    const emailErr = validateEmail(params.email);
+    if (emailErr) return { ok: false, message: emailErr };
+    const newEmail = params.email.trim();
+
+    const admin = createSupabaseAdminClient();
+    const { error: authErr } = await admin.auth.admin.updateUserById(
+      params.userId,
+      { email: newEmail },
+    );
+    if (authErr) {
+      return { ok: false, message: mapAdminAuthError(authErr.message) };
+    }
+    patch.email = newEmail;
   }
 
   if (Object.keys(patch).length === 0) {

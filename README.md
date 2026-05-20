@@ -1,5 +1,11 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Variabili d’ambiente
+
+Oltre a `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, la gestione utenti admin (creazione account e password) richiede sul **server**:
+
+- `SUPABASE_SERVICE_ROLE_KEY` — chiave `service_role` da Supabase → Project Settings → API (non esporla al client).
+
 ## Getting Started
 
 First, run the development server:

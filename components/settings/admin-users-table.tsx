@@ -1,138 +1,148 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { adminUpdateProfile } from "@/lib/actions/update-profile-admin";
+import { AdminUserCreateSheet } from "@/components/settings/admin-user-create-sheet";
+import { AdminUserEditSheet } from "@/components/settings/admin-user-edit-sheet";
 import { appRoleLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
-import { uiControl, uiTransition } from "@/lib/ui-classes";
+import { uiBtnPrimary, uiBtnSecondary } from "@/lib/ui-classes";
 import {
   dataTableHeadRowClass,
   dataTableShellClass,
   dataTableTdClass,
 } from "@/lib/table-ui";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
-import type { AppRole, ProfileSummary } from "@/types/profile";
-
-const ROLES: AppRole[] = ["admin", "manager", "operator"];
-
-const controlClass = cn(uiControl, "max-w-[14rem]");
+import type { ProfileSummary } from "@/types/profile";
 
 export function AdminUsersTable({
   profiles,
 }: {
   profiles: ProfileSummary[];
 }) {
-  const router = useRouter();
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-
-  async function apply(userId: string, patch: { role?: AppRole; is_active?: boolean }) {
-    setError(null);
-    setInfo(null);
-    setPendingId(userId);
-    const r = await adminUpdateProfile({ userId, ...patch });
-    setPendingId(null);
-    if (!r.ok) setError(r.message);
-    else {
-      setInfo("Modifiche salvate.");
-      router.refresh();
-    }
-  }
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editUser, setEditUser] = useState<ProfileSummary | null>(null);
 
   return (
     <div className="space-y-6">
-      <header className="min-w-0">
-        <h1 className={uiPageTitle}>Utenti</h1>
-        <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-          Ruoli minimi interni — solo gli admin modificano questo elenco dal client.
-          Per il primo deploy promuovi un admin dalla console SQL Supabase se serve.
-        </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className={uiPageTitle}>Utenti</h1>
+          <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
+            Crea account collegati a Supabase Auth, modifica profilo e imposta
+            le password di accesso. Solo gli admin gestiscono questo elenco.
+          </p>
+        </div>
+        <button
+          type="button"
+          className={cn(uiBtnPrimary, "shrink-0 self-start")}
+          onClick={() => setCreateOpen(true)}
+        >
+          Nuovo utente
+        </button>
       </header>
-
-      {error ? (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
-      {info ? (
-        <p className="text-sm text-success" role="status">
-          {info}
-        </p>
-      ) : null}
 
       <div className={dataTableShellClass}>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] table-fixed border-collapse text-left text-sm">
+          <table className="w-full min-w-[640px] table-fixed border-collapse text-left text-sm">
             <thead>
               <tr className={dataTableHeadRowClass}>
-                <th scope="col" className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
+                <th
+                  scope="col"
+                  className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
+                >
                   Nome
                 </th>
-                <th scope="col" className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
+                <th
+                  scope="col"
+                  className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
+                >
                   Email
                 </th>
-                <th scope="col" className="w-[13rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
+                <th
+                  scope="col"
+                  className="w-[8rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
+                >
                   Ruolo
                 </th>
-                <th scope="col" className="w-[10rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
-                  Attivo
+                <th
+                  scope="col"
+                  className="w-[7rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
+                >
+                  Stato
+                </th>
+                <th
+                  scope="col"
+                  className="w-[7rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
+                >
+                  Azioni
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line-default">
-              {profiles.map((u) => {
-                const busy = pendingId === u.userId;
-                return (
-                  <tr key={u.userId} className={busy ? "opacity-75" : ""}>
+              {profiles.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-8 text-center text-sm text-fg-tertiary md:px-5"
+                  >
+                    Nessun utente. Crea il primo con «Nuovo utente».
+                  </td>
+                </tr>
+              ) : (
+                profiles.map((u) => (
+                  <tr key={u.userId}>
                     <td className={cn(dataTableTdClass, "font-medium")}>
                       {u.fullName?.trim() || "—"}
                     </td>
-                    <td className={cn(dataTableTdClass, "break-all text-fg-secondary")}>
+                    <td
+                      className={cn(
+                        dataTableTdClass,
+                        "break-all text-fg-secondary",
+                      )}
+                    >
                       {u.email || "—"}
                     </td>
                     <td className={dataTableTdClass}>
-                      <label className="sr-only" htmlFor={`role-${u.userId}`}>
-                        Ruolo per {u.email}
-                      </label>
-                      <select
-                        id={`role-${u.userId}`}
-                        className={controlClass}
-                        disabled={busy}
-                        value={u.role}
-                        onChange={(e) =>
-                          void apply(u.userId, { role: e.target.value as AppRole })
-                        }
-                      >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {appRoleLabel[r]}
-                          </option>
-                        ))}
-                      </select>
+                      <span className="text-sm text-fg-primary">
+                        {appRoleLabel[u.role]}
+                      </span>
                     </td>
                     <td className={dataTableTdClass}>
-                      <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-fg-primary">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-line-default accent-accent"
-                          checked={u.isActive}
-                          disabled={busy}
-                          onChange={(e) =>
-                            void apply(u.userId, { is_active: e.target.checked })
-                          }
-                        />
-                        {u.isActive ? "Account attivo" : "Disattivato"}
-                      </label>
+                      <span
+                        className={cn(
+                          "text-sm",
+                          u.isActive ? "text-success" : "text-fg-tertiary",
+                        )}
+                      >
+                        {u.isActive ? "Attivo" : "Disattivato"}
+                      </span>
+                    </td>
+                    <td className={dataTableTdClass}>
+                      <button
+                        type="button"
+                        className={cn(uiBtnSecondary, "px-2.5 py-1 text-xs")}
+                        onClick={() => setEditUser(u)}
+                      >
+                        Modifica
+                      </button>
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      <AdminUserCreateSheet
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+      />
+      <AdminUserEditSheet
+        open={editUser !== null}
+        user={editUser}
+        onClose={() => setEditUser(null)}
+      />
     </div>
   );
 }
