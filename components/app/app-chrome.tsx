@@ -10,8 +10,10 @@ import {
   uiFocusRingInset,
   uiTransition,
 } from "@/lib/ui-classes";
-import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb";
+import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
 import { fetchInboxSubjectForBreadcrumb } from "@/lib/actions/inbox-breadcrumb";
+import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb";
+import { canManageUsers } from "@/lib/permissions";
 import { CreateRequestProvider } from "@/components/app/create-request-context";
 import {
   DetailSaveFeedbackProvider,
@@ -193,6 +195,7 @@ function breadcrumbsForPath(
       { label: "Nuova richiesta" },
     ];
   }
+  if (normalized === "/app/settings/users") return [{ label: "Utenti" }];
 
   const segments = normalized.split("/").filter(Boolean);
   const isRequestDetail =
@@ -329,6 +332,7 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const me = useOptionalCurrentProfile();
   const [menuOpen, setMenuOpen] = useState(false);
   const [newRequestOpen, setNewRequestOpen] = useState(false);
   const [newInboxOpen, setNewInboxOpen] = useState(false);
@@ -541,6 +545,47 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {canManageUsers(me?.role ?? "operator") ? (
+              <Link
+                href="/app/settings/users"
+                onClick={() => setMenuOpen(false)}
+                className={cn(
+                  uiTransition,
+                  "inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-[15px] font-medium leading-snug",
+                  pathname?.startsWith("/app/settings")
+                    ? cn(
+                        "bg-slate-900 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/35",
+                        "dark:bg-slate-100 dark:text-slate-900 dark:focus-visible:ring-slate-900/20",
+                      )
+                    : cn(
+                        uiFocusRingInset,
+                        "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                        "dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100",
+                      ),
+                )}
+              >
+                <svg
+                  className={cn(
+                    "h-4 w-4 shrink-0",
+                    pathname?.startsWith("/app/settings")
+                      ? "text-white dark:text-slate-900"
+                      : "text-slate-500 dark:text-slate-500",
+                  )}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.75}
+                  stroke="currentColor"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.733-3.065 4.126 4.126 0 0 1-7.734-3.062 9.366 9.366 0 0 1 17.986-5.063 4.125 4.125 0 0 1-11.974 15.974Z"
+                  />
+                </svg>
+                Utenti
+              </Link>
+            ) : null}
           </nav>
           <div className="shrink-0 border-t border-slate-200/90 p-2.5 dark:border-slate-800">
             <div className="flex items-center justify-between gap-2">

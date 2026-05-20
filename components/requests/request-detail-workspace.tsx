@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { RequestActivity } from "@/types/activity";
+import type { AssigneeOption } from "@/types/profile";
 import type { Request, RequestNote, RequestPriority, RequestStatus } from "@/types/request";
 import { activityTypeLabel, priorityLabel, statusLabel } from "@/lib/labels";
 import {
@@ -34,6 +35,7 @@ import {
   uiSectionHeading,
 } from "@/lib/typography";
 import { createRequestNote } from "@/lib/actions/create-request-note";
+import { updateRequestAssignment } from "@/lib/actions/update-request-assignment";
 import { updateRequestDetails } from "@/lib/actions/update-request-details";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
@@ -73,6 +75,9 @@ type Props = {
   initialRequest: Request;
   initialNotes: RequestNote[];
   initialActivities: RequestActivity[];
+  /** Admin e manager possono riassegnare. */
+  canAssignRequests: boolean;
+  assigneeOptions: AssigneeOption[];
 };
 
 /**
@@ -82,13 +87,16 @@ export function RequestDetailWorkspace({
   initialRequest,
   initialNotes,
   initialActivities,
+  canAssignRequests,
+  assigneeOptions,
 }: Props) {
   const router = useRouter();
   const [request, setRequest] = useState<Request>(initialRequest);
   const [notes, setNotes] = useState<RequestNote[]>(initialNotes);
   const [activities, setActivities] =
     useState<RequestActivity[]>(initialActivities);
-  const [editOpen, setEditOpen] = useState(false);
+  const [assignmentBusy, setAssignmentBusy] = useState(false);
+  const [assignmentErr, setAssignmentErr] = useState<string | null>(null);
   const [composerBody, setComposerBody] = useState("");
   const { pulseTopBar } = useDetailSaveFeedback();
   const [nextSaveUi, setNextSaveUi] = useState<"idle" | "saving" | "saved">(
@@ -201,6 +209,44 @@ export function RequestDetailWorkspace({
       router.refresh();
     },
     [patchRequest, request.priority, request.id, showFeedback, router]
+  );
+
+  const onAssignmentChange = useCallback(
+    async (raw: string) => {
+      if (!canAssignRequests || assignmentBusy) return;
+      const nextId = raw === "" ? null : raw;
+      setAssignmentBusy(true);
+      setAssignmentErr(null);
+      const res = await updateRequestAssignment(request.id, nextId);
+      setAssignmentBusy(false);
+      if (!res.ok) {
+        setAssignmentErr(res.message);
+        return;
+      }
+      const label =
+        res.assignedUserId === null
+          ? null
+          : assigneeOptions.find((x) => x.userId === res.assignedUserId)?.label ??
+            request.assignedToLabel ??
+            null;
+      patchRequest({
+        assignedUserId: res.assignedUserId,
+        assignedAt: res.assignedAt,
+        assignedToLabel: label,
+      });
+      showFeedback();
+      router.refresh();
+    },
+    [
+      canAssignRequests,
+      assignmentBusy,
+      request.id,
+      request.assignedToLabel,
+      assigneeOptions,
+      patchRequest,
+      showFeedback,
+      router,
+    ],
   );
 
   const saveNextAction = useCallback(async () => {
@@ -357,7 +403,7 @@ export function RequestDetailWorkspace({
       <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
         <h2 className={uiSectionHeading}>Operativo</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Stato e priorità della coda.
+          Stato, priorità e assegnazione interna alla coda.
         </p>
         {operationalError ? (
           <p
@@ -376,7 +422,7 @@ export function RequestDetailWorkspace({
               id="detail-status"
               className={cn(controlClass, "mt-1.5 w-full min-w-[12rem]")}
               value={request.status}
-              disabled={opBusy || nextSaveUi === "saving"}
+              disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
               onChange={(e) => void onStatus(e.target.value as RequestStatus)}
             >
               {STATUSES.map((s) => (
@@ -394,7 +440,7 @@ export function RequestDetailWorkspace({
               id="detail-priority"
               className={cn(controlClass, "mt-1.5 w-full min-w-[10rem]")}
               value={request.priority}
-              disabled={opBusy || nextSaveUi === "saving"}
+              disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
               onChange={(e) => void onPriority(e.target.value as RequestPriority)}
             >
               {PRIORITIES.map((p) => (
@@ -404,6 +450,52 @@ export function RequestDetailWorkspace({
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="mt-7 border-t border-slate-100 pt-6 dark:border-slate-800">
+          <label htmlFor="detail-assignee" className={uiFilterLabel}>
+            Assegnato a
+          </label>
+          {assignmentErr ? (
+            <p
+              role="alert"
+              className="mt-2 text-sm leading-relaxed text-rose-700 dark:text-rose-300"
+            >
+              {assignmentErr}
+            </p>
+          ) : null}
+          {canAssignRequests ? (
+            <select
+              id="detail-assignee"
+              className={cn(controlClass, "mt-1.5 w-full min-w-[12rem] sm:max-w-md")}
+              disabled={assignmentBusy || opBusy || nextSaveUi === "saving"}
+              value={request.assignedUserId ?? ""}
+              onChange={(e) => void onAssignmentChange(e.target.value)}
+            >
+              <option value="">Non assegnata</option>
+              {assigneeOptions.map((o) => (
+                <option key={o.userId} value={o.userId}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="mt-1.5">
+              <p className={cn(controlClass, "flex min-h-[2.75rem] items-center bg-slate-50/80 dark:bg-slate-950/40")}>
+                <span className="truncate font-medium">
+                  {request.assignedToLabel ?? "Non assegnata"}
+                </span>
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+                Solo admin e manager possono modificare l’assegnazione.
+              </p>
+            </div>
+          )}
+          {request.assignedAt ? (
+            <p className="mt-2 text-xs tabular-nums text-slate-500 dark:text-slate-500">
+              Assegnata il {formatDateTime(request.assignedAt)}
+            </p>
+          ) : null}
         </div>
       </SurfaceCard>
 
@@ -423,7 +515,7 @@ export function RequestDetailWorkspace({
               rows={4}
               value={nextDraft}
               onChange={(e) => setNextDraft(e.target.value)}
-              disabled={opBusy || nextSaveUi === "saving"}
+              disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
               className={cn(inputClass, "mt-1.5 min-h-[6rem] resize-y")}
               placeholder="Prossimo passo operativo…"
             />
@@ -439,14 +531,14 @@ export function RequestDetailWorkspace({
                 type="datetime-local"
                 value={nextAtDraft}
                 onChange={(e) => setNextAtDraft(e.target.value)}
-                disabled={opBusy || nextSaveUi === "saving"}
+                disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
                 className={cn(inputClass, "min-w-0 flex-1 sm:max-w-[20rem]")}
               />
               {nextAtDraft !== "" || request.nextActionAt !== null ? (
                 <button
                   type="button"
                   onClick={() => setNextAtDraft("")}
-                  disabled={opBusy || nextSaveUi === "saving"}
+                  disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
                   className={cn(uiBtnSecondary, "shrink-0")}
                 >
                   Rimuovi scadenza
@@ -537,7 +629,7 @@ export function RequestDetailWorkspace({
       <SurfaceCard className="border-slate-200/70 dark:border-slate-800">
         <h2 className={uiSectionHeading}>Attività</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Creazione, modifiche a stato e priorità, prossima azione e note — in ordine cronologico.
+          Creazione, modifiche a stato e priorità, assegnazione, prossima azione e note — in ordine cronologico.
         </p>
         {activities.length === 0 ? (
           <div className="mt-5">

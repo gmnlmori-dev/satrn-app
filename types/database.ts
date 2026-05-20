@@ -1,6 +1,18 @@
 import type { RequestActivityType } from "@/types/activity";
+import type { AppRole } from "@/types/profile";
 import type { InboxItemStatus } from "@/types/inbox";
 import type { RequestPriority, RequestStatus } from "@/types/request";
+
+/** Riga tabella `public.profiles`. */
+export type ProfileRow = {
+  user_id: string;
+  email: string;
+  full_name: string;
+  role: AppRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 /** Riga tabella `public.requests` (snake_case come in Postgres). */
 export type RequestRow = {
@@ -18,6 +30,17 @@ export type RequestRow = {
   last_interaction_at: string;
   created_at: string;
   updated_at: string;
+  assigned_user_id: string | null;
+  assigned_at: string | null;
+};
+
+/** Risultato select con FK verso profiles (alias `assignee`). */
+export type RequestRowWithAssignee = RequestRow & {
+  assignee?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
 };
 
 /** Riga tabella `public.request_activities`. */

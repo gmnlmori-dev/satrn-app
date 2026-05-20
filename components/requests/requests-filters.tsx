@@ -1,5 +1,6 @@
 "use client";
 
+import type { AssigneeOption } from "@/types/profile";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 import { priorityLabel, statusLabel } from "@/lib/labels";
 import type { SortOption, ToolbarFilters } from "@/lib/requests-query";
@@ -43,6 +44,7 @@ type Props = {
   sort: SortOption;
   onSortChange: (s: SortOption) => void;
   onReset: () => void;
+  assigneeOptions: AssigneeOption[];
 };
 
 export function RequestsFilters({
@@ -52,12 +54,64 @@ export function RequestsFilters({
   sort,
   onSortChange,
   onReset,
+  assigneeOptions,
 }: Props) {
   const resetDisabled =
     !filtersActive(filters) && sort === "updated_desc";
 
   return (
-    <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+    <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+      <div className="min-w-0 sm:col-span-1">
+        <label htmlFor="req-filter-assign-scope" className={filterLabelClass}>
+          Assegnatario
+        </label>
+        <select
+          id="req-filter-assign-scope"
+          className={controlClass}
+          value={filters.assignScope}
+          onChange={(e) => {
+            const assignScope = e.target.value as ToolbarFilters["assignScope"];
+            onFiltersChange({
+              ...filters,
+              assignScope,
+              assignUserId:
+                assignScope === "user" ? filters.assignUserId : "",
+            });
+          }}
+        >
+          <option value="all">Tutte le richieste</option>
+          <option value="mine">Solo le mie</option>
+          <option value="unassigned">Senza assegnatario</option>
+          <option value="user">Utente specifico…</option>
+        </select>
+      </div>
+
+      {filters.assignScope === "user" ? (
+        <div className="min-w-0 sm:col-span-1">
+          <label htmlFor="req-filter-assign-user" className={filterLabelClass}>
+            Utente
+          </label>
+          <select
+            id="req-filter-assign-user"
+            className={controlClass}
+            value={filters.assignUserId}
+            onChange={(e) =>
+              onFiltersChange({
+                ...filters,
+                assignUserId: e.target.value,
+              })
+            }
+          >
+            <option value="">Scegli…</option>
+            {assigneeOptions.map((o) => (
+              <option key={o.userId} value={o.userId}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
       <div className="min-w-0 sm:col-span-1">
         <label htmlFor="req-filter-status" className={filterLabelClass}>
           Stato

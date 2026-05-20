@@ -4,6 +4,11 @@ export const metadata = {
   title: "Accesso",
 };
 
-export default function LoginPage() {
-  return <LoginForm />;
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reason?: string }>;
+}) {
+  const { reason } = await searchParams;
+  return <LoginForm inactive={reason === "inactive"} />;
 }

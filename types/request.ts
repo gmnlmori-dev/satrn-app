@@ -22,6 +22,11 @@ export interface Request {
   lastInteractionAt: string;
   createdAt: string;
   updatedAt: string;
+  /** Utente assegnato (`profiles.user_id`), se presente */
+  assignedUserId: string | null;
+  assignedAt: string | null;
+  /** Nome mostrato in UI (priorità `full_name`, altrimenti email) */
+  assignedToLabel: string | null;
 }
 
 export interface RequestNote {

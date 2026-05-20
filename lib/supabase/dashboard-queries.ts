@@ -1,7 +1,8 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import { requestActivityRowToActivity, requestRowToRequest } from "@/lib/supabase/mappers";
+import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { RequestActivityRow, RequestRow } from "@/types/database";
+import type { RequestActivityRow, RequestRowWithAssignee } from "@/types/database";
 import type { RequestActivity } from "@/types/activity";
 import type { Request } from "@/types/request";
 
@@ -100,13 +101,13 @@ export async function getRecentlyUpdatedRequests(
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("requests")
-    .select("*")
+    .select(REQUEST_SELECT_WITH_ASSIGNEE)
     .neq("status", "closed")
     .order("updated_at", { ascending: false })
     .limit(limit);
 
   assertNoError("getRecentlyUpdatedRequests", error);
-  return ((data ?? []) as RequestRow[]).map(requestRowToRequest);
+  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
 /** Almeno una richiesta nel DB (per empty state). */

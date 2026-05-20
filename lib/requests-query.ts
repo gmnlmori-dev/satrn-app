@@ -4,11 +4,15 @@ import type {
   RequestStatus,
 } from "@/types/request";
 
+export type AssignScopeFilter = "all" | "mine" | "unassigned" | "user";
+
 export type ToolbarFilters = {
   search: string;
   status: RequestStatus | "all";
   priority: RequestPriority | "all";
   source: string | "all";
+  assignScope: AssignScopeFilter;
+  assignUserId: string;
 };
 
 export const defaultToolbarFilters = (): ToolbarFilters => ({
@@ -16,6 +20,8 @@ export const defaultToolbarFilters = (): ToolbarFilters => ({
   status: "all",
   priority: "all",
   source: "all",
+  assignScope: "all",
+  assignUserId: "",
 });
 
 export function collectSources(requests: Request[]): string[] {
@@ -26,13 +32,36 @@ export function collectSources(requests: Request[]): string[] {
 
 export function filterByToolbar(
   requests: Request[],
-  f: ToolbarFilters
+  f: ToolbarFilters,
+  ctx: { currentUserId: string },
 ): Request[] {
   const q = f.search.trim().toLowerCase();
   return requests.filter((r) => {
     if (f.status !== "all" && r.status !== f.status) return false;
     if (f.priority !== "all" && r.priority !== f.priority) return false;
     if (f.source !== "all" && r.source !== f.source) return false;
+
+    switch (f.assignScope) {
+      case "mine":
+        if (
+          !ctx.currentUserId ||
+          r.assignedUserId !== ctx.currentUserId
+        ) {
+          return false;
+        }
+        break;
+      case "unassigned":
+        if (r.assignedUserId !== null) return false;
+        break;
+      case "user":
+        if (!f.assignUserId || r.assignedUserId !== f.assignUserId) {
+          return false;
+        }
+        break;
+      default:
+        break;
+    }
+
     if (!q) return true;
     const hay = [
       r.title,
@@ -42,6 +71,7 @@ export function filterByToolbar(
       r.nextAction,
       r.source,
       r.id,
+      r.assignedToLabel ?? "",
     ]
       .join(" ")
       .toLowerCase();
@@ -110,6 +140,8 @@ export function filtersActive(f: ToolbarFilters): boolean {
     f.search.trim().length > 0 ||
     f.status !== "all" ||
     f.priority !== "all" ||
-    f.source !== "all"
+    f.source !== "all" ||
+    f.assignScope !== "all" ||
+    (f.assignScope === "user" && f.assignUserId.trim().length > 0)
   );
 }

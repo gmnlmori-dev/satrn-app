@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import type { AssigneeOption } from "@/types/profile";
 import type { SortOption, ToolbarFilters } from "@/lib/requests-query";
 import { filtersActive } from "@/lib/requests-query";
 import { RequestsFilters } from "@/components/requests/requests-filters";
@@ -24,6 +25,8 @@ type Props = {
   sort: SortOption;
   onSortChange: (s: SortOption) => void;
   onReset: () => void;
+  currentUserId: string;
+  assigneeOptions: AssigneeOption[];
 };
 
 export function RequestsToolbar({
@@ -33,6 +36,8 @@ export function RequestsToolbar({
   sort,
   onSortChange,
   onReset,
+  currentUserId,
+  assigneeOptions,
 }: Props) {
   const filtersPanelId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -75,6 +80,76 @@ export function RequestsToolbar({
             }
             className={searchInputClass}
           />
+        </div>
+      </div>
+
+      <div className="border-t border-slate-100/90 px-4 py-3 sm:px-5 dark:border-slate-800/90">
+        <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+          Assegnazione · rapido
+        </p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtro assegnazione rapido">
+          <button
+            type="button"
+            className={cn(
+              uiTransition,
+              uiFocusRingInset,
+              "rounded-md border px-2.5 py-1.5 text-xs font-semibold",
+              toolbar.assignScope === "all"
+                ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                : "border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            )}
+            onClick={() =>
+              onToolbarChange({
+                ...toolbar,
+                assignScope: "all",
+                assignUserId: "",
+              })
+            }
+          >
+            Tutte
+          </button>
+          <button
+            type="button"
+            disabled={!currentUserId}
+            title={!currentUserId ? "Profilo non caricato" : undefined}
+            className={cn(
+              uiTransition,
+              uiFocusRingInset,
+              "rounded-md border px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-45",
+              toolbar.assignScope === "mine"
+                ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                : "border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            )}
+            onClick={() =>
+              onToolbarChange({
+                ...toolbar,
+                assignScope: "mine",
+                assignUserId: "",
+              })
+            }
+          >
+            Le mie
+          </button>
+          <button
+            type="button"
+            className={cn(
+              uiTransition,
+              uiFocusRingInset,
+              "rounded-md border px-2.5 py-1.5 text-xs font-semibold",
+              toolbar.assignScope === "unassigned"
+                ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                : "border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            )}
+            onClick={() =>
+              onToolbarChange({
+                ...toolbar,
+                assignScope: "unassigned",
+                assignUserId: "",
+              })
+            }
+          >
+            Non assegnate
+          </button>
         </div>
       </div>
 
@@ -134,6 +209,7 @@ export function RequestsToolbar({
               sort={sort}
               onSortChange={onSortChange}
               onReset={onReset}
+              assigneeOptions={assigneeOptions}
             />
             {showResetHint ? (
               <p className="mt-4 text-xs leading-relaxed text-slate-500 dark:text-slate-500">

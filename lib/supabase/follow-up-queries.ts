@@ -1,7 +1,8 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import { inboxItemRowToInboxItem, requestRowToRequest } from "@/lib/supabase/mappers";
+import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { InboxItemRow, RequestRow } from "@/types/database";
+import type { InboxItemRow, RequestRowWithAssignee } from "@/types/database";
 import type { InboxItem } from "@/types/inbox";
 import type { Request } from "@/types/request";
 
@@ -15,14 +16,14 @@ export async function getOverdueRequests(): Promise<Request[]> {
   const { startTodayIso } = getFollowUpWindowBounds();
   const { data, error } = await supabase
     .from("requests")
-    .select("*")
+    .select(REQUEST_SELECT_WITH_ASSIGNEE)
     .neq("status", "closed")
     .not("next_action_at", "is", null)
     .lt("next_action_at", startTodayIso)
     .order("next_action_at", { ascending: true });
 
   assertNoError("getOverdueRequests", error);
-  return ((data ?? []) as RequestRow[]).map(requestRowToRequest);
+  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
 /** Aperte con prossima azione oggi. */
@@ -31,14 +32,14 @@ export async function getFollowUpTodayRequests(): Promise<Request[]> {
   const { startTodayIso, startTomorrowIso } = getFollowUpWindowBounds();
   const { data, error } = await supabase
     .from("requests")
-    .select("*")
+    .select(REQUEST_SELECT_WITH_ASSIGNEE)
     .neq("status", "closed")
     .gte("next_action_at", startTodayIso)
     .lt("next_action_at", startTomorrowIso)
     .order("next_action_at", { ascending: true });
 
   assertNoError("getFollowUpTodayRequests", error);
-  return ((data ?? []) as RequestRow[]).map(requestRowToRequest);
+  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
 /** Aperte con prossima azione da domani fino a fine giornata tra 7 giorni (inclusi). */
@@ -47,7 +48,7 @@ export async function getUpcomingRequests(): Promise<Request[]> {
   const { startTomorrowIso, endWeekIso } = getFollowUpWindowBounds();
   const { data, error } = await supabase
     .from("requests")
-    .select("*")
+    .select(REQUEST_SELECT_WITH_ASSIGNEE)
     .neq("status", "closed")
     .not("next_action_at", "is", null)
     .gte("next_action_at", startTomorrowIso)
@@ -55,7 +56,7 @@ export async function getUpcomingRequests(): Promise<Request[]> {
     .order("next_action_at", { ascending: true });
 
   assertNoError("getUpcomingRequests", error);
-  return ((data ?? []) as RequestRow[]).map(requestRowToRequest);
+  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
 /** Inbox da triage: nuovo/esaminato, non convertito, non archiviato. */

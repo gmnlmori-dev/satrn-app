@@ -108,8 +108,24 @@ function Row({
       </td>
       <td
         className={cn(
+          "hidden overflow-hidden px-4 py-3 align-middle md:table-cell sm:px-5",
+          dataTableColSepClass,
+        )}
+      >
+        <span
+          className={cn(
+            "block text-sm leading-snug text-slate-700 dark:text-slate-300",
+            clampTwoLines,
+          )}
+          title={r.assignedToLabel ?? "Non assegnata"}
+        >
+          {r.assignedToLabel ?? "—"}
+        </span>
+      </td>
+      <td
+        className={cn(
           "hidden min-w-0 max-w-md overflow-hidden px-4 py-3 align-middle 2xl:table-cell sm:px-5",
-          dataTableColSepClass
+          dataTableColSepClass,
         )}
       >
         <span
@@ -143,34 +159,44 @@ function Row({
 export function RequestsTable({ requests }: { requests: Request[] }) {
   return (
     <div className={dataTableShellClass}>
-      <div className="w-full min-w-[640px]">
+      <div className="w-full min-w-[760px]">
         <table className="w-full table-fixed border-collapse text-left text-sm">
           <thead>
             <tr className={dataTableHeadRowClass}>
-              <th scope="col" className={cn("w-[26%] 2xl:w-[21%]", dataTableThClass)}>
+              <th scope="col" className={cn("w-[24%] 2xl:w-[19%]", dataTableThClass)}>
                 Richiesta
               </th>
               <th
                 scope="col"
-                className={cn("hidden w-[21%] 2xl:w-[17%] sm:table-cell", dataTableThClass, dataTableColSepClass)}
+                className={cn("hidden w-[18%] 2xl:w-[15%] sm:table-cell", dataTableThClass, dataTableColSepClass)}
               >
                 Azienda
               </th>
               <th
                 scope="col"
-                className={cn("hidden w-[19%] 2xl:w-[15%] md:table-cell", dataTableThClass, dataTableColSepClass)}
+                className={cn("hidden w-[15%] 2xl:w-[12%] md:table-cell", dataTableThClass, dataTableColSepClass)}
               >
                 Contatto
               </th>
-              <th scope="col" className={cn("w-[14%] 2xl:w-[12%]", dataTableThClass, dataTableColSepClass)}>
+              <th scope="col" className={cn("w-[12%] 2xl:w-[10%]", dataTableThClass, dataTableColSepClass)}>
                 Stato
               </th>
               <th
                 scope="col"
                 className={cn(
-                  "hidden w-[22%] 2xl:w-[21%] 2xl:table-cell",
+                  "hidden w-[13%] 2xl:w-[11%] md:table-cell",
                   dataTableThClass,
-                  dataTableColSepClass
+                  dataTableColSepClass,
+                )}
+              >
+                Assegnatario
+              </th>
+              <th
+                scope="col"
+                className={cn(
+                  "hidden w-[18%] 2xl:w-[16%] 2xl:table-cell",
+                  dataTableThClass,
+                  dataTableColSepClass,
                 )}
               >
                 Prossima azione
@@ -178,9 +204,9 @@ export function RequestsTable({ requests }: { requests: Request[] }) {
               <th
                 scope="col"
                 className={cn(
-                  "w-[20%] 2xl:w-[15%]",
+                  "w-[18%] 2xl:w-[15%]",
                   dataTableThClass,
-                  dataTableColSepClass
+                  dataTableColSepClass,
                 )}
               >
                 Aggiornato

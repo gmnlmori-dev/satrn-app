@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiPageLead, uiPageTitle } from "@/lib/typography";
 
-export function LoginForm() {
+export function LoginForm({ inactive }: { inactive?: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +49,15 @@ export function LoginForm() {
       </div>
 
       <SurfaceCard className="w-full max-w-md shadow-sm">
+        {inactive ? (
+          <p
+            role="alert"
+            className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/45 dark:text-amber-100"
+          >
+            Questo account è stato disattivato. Contatta un amministratore Satrn per
+            ripristinare l&apos;accesso.
+          </p>
+        ) : null}
         <h1 className={uiPageTitle}>
           Accesso
         </h1>

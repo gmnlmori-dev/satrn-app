@@ -1,5 +1,6 @@
 import type { RequestActivityType } from "@/types/activity";
 import type { InboxItemStatus } from "@/types/inbox";
+import type { AppRole } from "@/types/profile";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
 export const statusLabel: Record<RequestStatus, string> = {
@@ -28,6 +29,13 @@ export const activityTypeLabel: Record<RequestActivityType, string> = {
   status_changed: "Stato",
   priority_changed: "Priorità",
   next_action_updated: "Prossima azione",
+  assigned_user_changed: "Assegnazione",
   note_added: "Nota",
   converted_from_inbox: "Inbox",
+};
+
+export const appRoleLabel: Record<AppRole, string> = {
+  admin: "Admin",
+  manager: "Manager",
+  operator: "Operatore",
 };

@@ -2,7 +2,7 @@ import type {
   InboxItemRow,
   RequestActivityRow,
   RequestNoteRow,
-  RequestRow,
+  RequestRowWithAssignee,
 } from "@/types/database";
 import type { RequestActivity } from "@/types/activity";
 import type { InboxItem } from "@/types/inbox";
@@ -19,7 +19,17 @@ export function requestActivityRowToActivity(row: RequestActivityRow): RequestAc
   };
 }
 
-export function requestRowToRequest(row: RequestRow): Request {
+function assigneeDisplayName(
+  a: RequestRowWithAssignee["assignee"],
+): string | null {
+  if (!a) return null;
+  const name = (a.full_name ?? "").trim();
+  if (name) return name;
+  const mail = (a.email ?? "").trim();
+  return mail || null;
+}
+
+export function requestRowToRequest(row: RequestRowWithAssignee): Request {
   return {
     id: row.id,
     title: row.title,
@@ -35,6 +45,9 @@ export function requestRowToRequest(row: RequestRow): Request {
     lastInteractionAt: row.last_interaction_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    assignedUserId: row.assigned_user_id ?? null,
+    assignedAt: row.assigned_at ?? null,
+    assignedToLabel: assigneeDisplayName(row.assignee),
   };
 }
 

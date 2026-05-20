@@ -1,4 +1,6 @@
 -- Timeline attività per richiesta — esegui nel SQL Editor (richiede `public.requests`).
+-- Per aggiungere il tipo `assigned_user_changed` su DB già creati, vedi anche
+-- `supabase/sql/roles_profiles_assignment.sql` (ALTER TYPE … ADD VALUE).
 
 CREATE TYPE public.request_activity_type AS ENUM (
   'request_created',

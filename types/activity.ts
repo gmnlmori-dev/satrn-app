@@ -3,6 +3,7 @@ export type RequestActivityType =
   | "status_changed"
   | "priority_changed"
   | "next_action_updated"
+  | "assigned_user_changed"
   | "note_added"
   | "converted_from_inbox";
 

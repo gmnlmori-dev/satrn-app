@@ -61,6 +61,21 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
 
+  const { data: prof, error: profErr } = await supabase
+    .from("profiles")
+    .select("is_active")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!profErr && prof?.is_active === false) {
+    await supabase.auth.signOut();
+    const login = new URL("/login", request.url);
+    login.searchParams.set("reason", "inactive");
+    const redirect = NextResponse.redirect(login);
+    copyCookies(response, redirect);
+    return redirect;
+  }
+
   return response;
 }
 

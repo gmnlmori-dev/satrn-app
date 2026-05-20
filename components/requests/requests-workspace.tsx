@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Request } from "@/types/request";
+import type { AssigneeOption } from "@/types/profile";
 import {
   RequestsDatabaseEmptyState,
   RequestsEmptyState,
@@ -120,16 +121,26 @@ function PriorityLegend() {
   );
 }
 
-export function RequestsWorkspace({ requests }: { requests: Request[] }) {
+export function RequestsWorkspace({
+  requests,
+  currentUserId,
+  assigneeOptions,
+}: {
+  requests: Request[];
+  currentUserId: string;
+  assigneeOptions: AssigneeOption[];
+}) {
   const [toolbar, setToolbar] = useState<ToolbarFilters>(defaultToolbarFilters());
   const [sort, setSort] = useState<SortOption>("updated_desc");
 
   const sources = useMemo(() => collectSources(requests), [requests]);
 
   const processed = useMemo(() => {
-    const matched = filterByToolbar(requests, toolbar);
+    const matched = filterByToolbar(requests, toolbar, {
+      currentUserId,
+    });
     return sortRequests(matched, sort);
-  }, [requests, toolbar, sort]);
+  }, [requests, toolbar, sort, currentUserId]);
 
   const resetAll = useCallback(() => {
     setToolbar(defaultToolbarFilters());
@@ -199,6 +210,8 @@ export function RequestsWorkspace({ requests }: { requests: Request[] }) {
         sort={sort}
         onSortChange={setSort}
         onReset={resetAll}
+        currentUserId={currentUserId}
+        assigneeOptions={assigneeOptions}
       />
 
       {processed.length === 0 ? (
