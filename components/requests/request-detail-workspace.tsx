@@ -110,6 +110,7 @@ export function RequestDetailWorkspace({
   const [noteError, setNoteError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [detailSaving, setDetailSaving] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const nextSaveResetRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
