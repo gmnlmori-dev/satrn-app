@@ -135,6 +135,14 @@ export function RequestsWorkspace({
 
   const sources = useMemo(() => collectSources(requests), [requests]);
 
+  const myAssignedCount = useMemo(
+    () =>
+      currentUserId
+        ? requests.filter((r) => r.assignedUserId === currentUserId).length
+        : 0,
+    [requests, currentUserId],
+  );
+
   const processed = useMemo(() => {
     const matched = filterByToolbar(requests, toolbar, {
       currentUserId,
@@ -212,6 +220,7 @@ export function RequestsWorkspace({
         onReset={resetAll}
         currentUserId={currentUserId}
         assigneeOptions={assigneeOptions}
+        myAssignedCount={myAssignedCount}
       />
 
       {processed.length === 0 ? (

@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { DashboardMyWorkStrip } from "@/components/dashboard/dashboard-my-work-strip";
 import { DashboardOperationalStrip } from "@/components/dashboard/dashboard-operational-strip";
 import { DashboardRecentActivities } from "@/components/dashboard/dashboard-recent-activities";
 import { DashboardRecentPanel } from "@/components/dashboard/dashboard-panels";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
 import {
+  getDashboardMineCounts,
   getDashboardOperationalCounts,
   getRecentActivitiesGlobal,
   getRecentlyUpdatedRequests,
   getRequestsTotalCount,
 } from "@/lib/supabase/dashboard-queries";
+import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { cn } from "@/lib/cn";
 import { uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
 
@@ -18,17 +21,17 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-  const [
-    counts,
-    activities,
-    recentRequests,
-    totalRequests,
-  ] = await Promise.all([
-    getDashboardOperationalCounts(),
-    getRecentActivitiesGlobal(10),
-    getRecentlyUpdatedRequests(6),
-    getRequestsTotalCount(),
-  ]);
+  const profile = await getCurrentProfileSummary();
+  const userId = profile?.userId ?? "";
+
+  const [counts, mineCounts, activities, recentRequests, totalRequests] =
+    await Promise.all([
+      getDashboardOperationalCounts(),
+      getDashboardMineCounts(userId),
+      getRecentActivitiesGlobal(10),
+      getRecentlyUpdatedRequests(6),
+      getRequestsTotalCount(),
+    ]);
 
   return (
     <div className="space-y-6 md:space-y-7">
@@ -62,6 +65,8 @@ export default async function DashboardPage() {
           </Link>
         </AppEmptyState>
       ) : null}
+
+      {mineCounts ? <DashboardMyWorkStrip counts={mineCounts} /> : null}
 
       <DashboardOperationalStrip counts={counts} />
 

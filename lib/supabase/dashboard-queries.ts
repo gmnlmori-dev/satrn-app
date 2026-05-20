@@ -17,32 +17,53 @@ export type DashboardOperationalCounts = {
   inboxTriage: number;
 };
 
+export type DashboardMineCounts = {
+  overdue: number;
+  today: number;
+  upcomingWeek: number;
+};
+
+function requestCountQuery(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  bounds: ReturnType<typeof getFollowUpWindowBounds>,
+  window: "overdue" | "today" | "upcoming",
+  assignedUserId?: string,
+) {
+  const { startTodayIso, startTomorrowIso, endWeekIso } = bounds;
+  let q = supabase
+    .from("requests")
+    .select("*", { count: "exact", head: true })
+    .neq("status", "closed");
+
+  if (assignedUserId) {
+    q = q.eq("assigned_user_id", assignedUserId);
+  }
+
+  if (window === "overdue") {
+    return q
+      .not("next_action_at", "is", null)
+      .lt("next_action_at", startTodayIso);
+  }
+  if (window === "today") {
+    return q
+      .gte("next_action_at", startTodayIso)
+      .lt("next_action_at", startTomorrowIso);
+  }
+  return q
+    .not("next_action_at", "is", null)
+    .gte("next_action_at", startTomorrowIso)
+    .lte("next_action_at", endWeekIso);
+}
+
 /** Conteggi allineati alla vista «Da seguire» (stessi filtri). */
 export async function getDashboardOperationalCounts(): Promise<DashboardOperationalCounts> {
   const supabase = await createSupabaseServerClient();
-  const { startTodayIso, startTomorrowIso, endWeekIso } =
-    getFollowUpWindowBounds();
+  const bounds = getFollowUpWindowBounds();
 
   const [overdue, today, upcoming, inbox] = await Promise.all([
-    supabase
-      .from("requests")
-      .select("*", { count: "exact", head: true })
-      .neq("status", "closed")
-      .not("next_action_at", "is", null)
-      .lt("next_action_at", startTodayIso),
-    supabase
-      .from("requests")
-      .select("*", { count: "exact", head: true })
-      .neq("status", "closed")
-      .gte("next_action_at", startTodayIso)
-      .lt("next_action_at", startTomorrowIso),
-    supabase
-      .from("requests")
-      .select("*", { count: "exact", head: true })
-      .neq("status", "closed")
-      .not("next_action_at", "is", null)
-      .gte("next_action_at", startTomorrowIso)
-      .lte("next_action_at", endWeekIso),
+    requestCountQuery(supabase, bounds, "overdue"),
+    requestCountQuery(supabase, bounds, "today"),
+    requestCountQuery(supabase, bounds, "upcoming"),
     supabase
       .from("inbox_items")
       .select("*", { count: "exact", head: true })
@@ -60,6 +81,32 @@ export async function getDashboardOperationalCounts(): Promise<DashboardOperatio
     today: today.count ?? 0,
     upcomingWeek: upcoming.count ?? 0,
     inboxTriage: inbox.count ?? 0,
+  };
+}
+
+/** Stesse finestre temporali, solo richieste assegnate all’utente. */
+export async function getDashboardMineCounts(
+  userId: string,
+): Promise<DashboardMineCounts | null> {
+  if (!userId) return null;
+
+  const supabase = await createSupabaseServerClient();
+  const bounds = getFollowUpWindowBounds();
+
+  const [overdue, today, upcoming] = await Promise.all([
+    requestCountQuery(supabase, bounds, "overdue", userId),
+    requestCountQuery(supabase, bounds, "today", userId),
+    requestCountQuery(supabase, bounds, "upcoming", userId),
+  ]);
+
+  assertNoError("dashboard mine overdue count", overdue.error);
+  assertNoError("dashboard mine today count", today.error);
+  assertNoError("dashboard mine upcoming count", upcoming.error);
+
+  return {
+    overdue: overdue.count ?? 0,
+    today: today.count ?? 0,
+    upcomingWeek: upcoming.count ?? 0,
   };
 }
 

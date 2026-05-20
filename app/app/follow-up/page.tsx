@@ -1,11 +1,14 @@
+import { Suspense } from "react";
+import { FollowUpAssigneeScope } from "@/components/follow-up/follow-up-assignee-scope";
 import { FollowUpHashScroll } from "@/components/follow-up/follow-up-hash-scroll";
-import { FollowUpView } from "@/components/follow-up/follow-up-view";
 import {
   getFollowUpTodayRequests,
   getInboxTriageItems,
   getOverdueRequests,
   getUpcomingRequests,
 } from "@/lib/supabase/follow-up-queries";
+import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
+import { defaultFollowUpAssigneeScope } from "@/lib/request-assignee";
 import { cn } from "@/lib/cn";
 import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 
@@ -14,12 +17,17 @@ export const metadata = {
 };
 
 export default async function FollowUpPage() {
+  const profile = await getCurrentProfileSummary();
   const [overdue, today, upcoming, inbox] = await Promise.all([
     getOverdueRequests(),
     getFollowUpTodayRequests(),
     getUpcomingRequests(),
     getInboxTriageItems(),
   ]);
+
+  const defaultScope = profile
+    ? defaultFollowUpAssigneeScope(profile.role)
+    : "all";
 
   const totalQueue = overdue.length + today.length + upcoming.length;
 
@@ -68,12 +76,16 @@ export default async function FollowUpPage() {
           </div>
         </dl>
       </header>
-      <FollowUpView
-        overdue={overdue}
-        today={today}
-        upcoming={upcoming}
-        inbox={inbox}
-      />
+      <Suspense fallback={null}>
+        <FollowUpAssigneeScope
+          overdue={overdue}
+          today={today}
+          upcoming={upcoming}
+          inbox={inbox}
+          currentUserId={profile?.userId ?? ""}
+          defaultScope={defaultScope}
+        />
+      </Suspense>
     </div>
   );
 }

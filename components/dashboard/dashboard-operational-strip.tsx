@@ -44,7 +44,9 @@ export function DashboardOperationalStrip({
   ];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900/50">
+    <div className="space-y-2">
+      <p className={uiOverline}>Operatività generale</p>
+      <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900/50">
       <div className="grid divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4 dark:divide-slate-800">
         {cells.map((cell) => (
           <Link
@@ -66,6 +68,7 @@ export function DashboardOperationalStrip({
             </p>
           </Link>
         ))}
+      </div>
       </div>
     </div>
   );

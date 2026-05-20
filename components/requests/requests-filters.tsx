@@ -80,8 +80,8 @@ export function RequestsFilters({
           }}
         >
           <option value="all">Tutte le richieste</option>
-          <option value="mine">Solo le mie</option>
-          <option value="unassigned">Senza assegnatario</option>
+          <option value="mine">Le mie (assegnate a me)</option>
+          <option value="unassigned">Non assegnate</option>
           <option value="user">Utente specifico…</option>
         </select>
       </div>

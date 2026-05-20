@@ -27,6 +27,8 @@ type Props = {
   onReset: () => void;
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
+  /** Richieste assegnate all’utente corrente (badge su «Le mie»). */
+  myAssignedCount: number;
 };
 
 export function RequestsToolbar({
@@ -38,6 +40,7 @@ export function RequestsToolbar({
   onReset,
   currentUserId,
   assigneeOptions,
+  myAssignedCount,
 }: Props) {
   const filtersPanelId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -90,6 +93,40 @@ export function RequestsToolbar({
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filtro assegnazione rapido">
           <button
             type="button"
+            disabled={!currentUserId}
+            title={!currentUserId ? "Profilo non caricato" : undefined}
+            className={cn(
+              uiTransition,
+              uiFocusRingInset,
+              "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45",
+              toolbar.assignScope === "mine"
+                ? "border-slate-900 bg-slate-900 text-white shadow-sm dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                : "border-slate-900/25 bg-slate-900/[0.04] text-slate-900 hover:bg-slate-900/[0.08] dark:border-slate-100/20 dark:bg-slate-100/[0.06] dark:text-slate-100 dark:hover:bg-slate-100/10",
+            )}
+            onClick={() =>
+              onToolbarChange({
+                ...toolbar,
+                assignScope: "mine",
+                assignUserId: "",
+              })
+            }
+          >
+            Le mie
+            {currentUserId && myAssignedCount > 0 ? (
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums",
+                  toolbar.assignScope === "mine"
+                    ? "bg-white/20 text-white dark:bg-slate-900/15 dark:text-slate-900"
+                    : "bg-slate-900/10 text-slate-800 dark:bg-slate-100/15 dark:text-slate-100",
+                )}
+              >
+                {myAssignedCount}
+              </span>
+            ) : null}
+          </button>
+          <button
+            type="button"
             className={cn(
               uiTransition,
               uiFocusRingInset,
@@ -107,28 +144,6 @@ export function RequestsToolbar({
             }
           >
             Tutte
-          </button>
-          <button
-            type="button"
-            disabled={!currentUserId}
-            title={!currentUserId ? "Profilo non caricato" : undefined}
-            className={cn(
-              uiTransition,
-              uiFocusRingInset,
-              "rounded-md border px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-45",
-              toolbar.assignScope === "mine"
-                ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                : "border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            )}
-            onClick={() =>
-              onToolbarChange({
-                ...toolbar,
-                assignScope: "mine",
-                assignUserId: "",
-              })
-            }
-          >
-            Le mie
           </button>
           <button
             type="button"
