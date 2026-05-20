@@ -9,6 +9,10 @@ import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 
 const inputClass = cn(uiControl, "py-2.5 text-[15px]");
 
+function RequiredMark() {
+  return <span className="text-danger">*</span>;
+}
+
 function FormSection({
   title,
   children,
@@ -76,7 +80,7 @@ export function NewRequestForm({
           <FormSection title="Richiesta">
             <div>
               <label htmlFor={p("title")} className={uiFormLabel}>
-                Titolo
+                Titolo <RequiredMark />
               </label>
               <input
                 id={p("title")}
@@ -99,7 +103,6 @@ export function NewRequestForm({
                 <input
                   id={p("companyName")}
                   name="companyName"
-                  required
                   disabled={pending}
                   autoComplete="organization"
                   className={inputClass}
@@ -125,7 +128,6 @@ export function NewRequestForm({
                 <input
                   id={p("contactName")}
                   name="contactName"
-                  required
                   disabled={pending}
                   autoComplete="name"
                   className={inputClass}
@@ -139,7 +141,6 @@ export function NewRequestForm({
                   id={p("contactEmail")}
                   name="contactEmail"
                   type="email"
-                  required
                   disabled={pending}
                   autoComplete="email"
                   className={inputClass}
@@ -195,7 +196,6 @@ export function NewRequestForm({
               <textarea
                 id={p("description")}
                 name="description"
-                required
                 disabled={pending}
                 rows={4}
                 className={cn(inputClass, "min-h-[100px] resize-y")}

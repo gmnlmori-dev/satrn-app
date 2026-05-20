@@ -19,9 +19,6 @@ export async function createInboxItem(
   if (!subject) {
     return { ok: false, message: "Il titolo (oggetto) è obbligatorio." };
   }
-  if (!raw_content) {
-    return { ok: false, message: "Il contenuto grezzo è obbligatorio." };
-  }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

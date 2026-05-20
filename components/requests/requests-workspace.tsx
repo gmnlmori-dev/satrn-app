@@ -301,25 +301,17 @@ export function RequestsWorkspace({
       {filtered.length === 0 ? (
         <RequestsEmptyState onReset={resetAll} />
       ) : (
-        <section className="space-y-3" aria-labelledby="requests-results-heading">
+        <section className="space-y-3" aria-label="Risultati richieste">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <h3
-                id="requests-results-heading"
-                className="text-sm font-medium text-fg-secondary"
-              >
-                {viewMode === "calendar" ? "Calendario" : "Elenco"}
-              </h3>
-              <SegmentedControl
-                ariaLabel="Vista risultati"
-                value={viewMode}
-                options={[
-                  { value: "list", label: "Elenco" },
-                  { value: "calendar", label: "Calendario" },
-                ]}
-                onChange={setView}
-              />
-            </div>
+            <SegmentedControl
+              ariaLabel="Vista risultati: Elenco o Calendario"
+              value={viewMode}
+              options={[
+                { value: "list", label: "Elenco" },
+                { value: "calendar", label: "Calendario" },
+              ]}
+              onChange={setView}
+            />
             {viewMode === "list" ? (
               <p className="text-sm text-fg-tertiary">
                 <span className="tabular-nums font-semibold text-fg-primary">

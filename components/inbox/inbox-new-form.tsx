@@ -156,12 +156,11 @@ export function InboxNewForm({
       <FormSection title="Contenuto grezzo">
         <div>
           <label htmlFor={p("rawContent")} className={uiFormLabel}>
-            Testo <span className="text-danger">*</span>
+            Testo
           </label>
           <textarea
             id={p("rawContent")}
             name="rawContent"
-            required
             maxLength={50000}
             disabled={pending}
             rows={10}

@@ -49,8 +49,8 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
   const status = parseStatus(String(fd.get("status") ?? ""));
   const priority = parsePriority(String(fd.get("priority") ?? ""));
 
-  if (!title || !company_name || !contact_name || !contact_email || !description) {
-    return { ok: false, message: "Compila tutti i campi obbligatori." };
+  if (!title) {
+    return { ok: false, message: "Il titolo è obbligatorio." };
   }
   if (!status || !priority) {
     return { ok: false, message: "Stato o priorità non validi." };
