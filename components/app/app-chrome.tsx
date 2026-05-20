@@ -8,7 +8,6 @@ import { cn } from "@/lib/cn";
 import {
   uiBtnGhost,
   uiBtnIcon,
-  uiBtnPrimary,
   uiFocusRingInset,
   uiNavActive,
   uiNavItem,
@@ -31,8 +30,7 @@ import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /** Altezza unica barra superiore (sidebar + header) per allineare i border orizzontali */
-const SIDEBAR_W = "w-[220px]";
-const TOP_BAR_H = "h-11";
+const TOP_BAR_H = "h-12";
 
 const nav = [
   { href: "/app/dashboard", label: "Dashboard", glyph: "home" as const },
@@ -337,7 +335,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [newRequestOpen, setNewRequestOpen] = useState(false);
   const [newInboxOpen, setNewInboxOpen] = useState(false);
-  const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const openNewRequest = useCallback(() => {
     setNewInboxOpen(false);
     setNewRequestOpen(true);
@@ -387,8 +385,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
         <aside
           className={cn(
-            "z-50 flex shrink-0 flex-col border-r border-line-default bg-sidebar transition-transform duration-200 ease-out",
-            SIDEBAR_W,
+            "z-50 flex w-52 shrink-0 flex-col border-r border-line-default bg-sidebar transition-transform duration-200 ease-out",
             "fixed inset-y-0 left-0 md:relative md:inset-auto md:translate-x-0",
             "md:h-full md:overflow-hidden",
             menuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -418,7 +415,90 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               />
             </Link>
           </div>
-          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-2">
+          <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5">
+            <div className="mb-2 border-b border-line-default pb-2">
+              <button
+                type="button"
+                aria-expanded={createOpen}
+                aria-controls="sidebar-create-submenu"
+                onClick={() => setCreateOpen((v) => !v)}
+                className={cn(
+                  uiTransition,
+                  uiFocusRingInset,
+                  "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium leading-snug",
+                  "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+                )}
+              >
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <svg
+                    className="h-4 w-4 shrink-0 text-fg-tertiary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.75}
+                    stroke="currentColor"
+                    aria-hidden
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4.5v15m7.5-7.5h-15"
+                    />
+                  </svg>
+                  <span className="truncate">Crea</span>
+                </span>
+                <svg
+                  className={cn(
+                    "h-4 w-4 shrink-0 text-fg-tertiary transition-transform",
+                    createOpen && "rotate-180",
+                  )}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                  />
+                </svg>
+              </button>
+              {createOpen ? (
+                <div id="sidebar-create-submenu" className="mt-0.5 space-y-0.5 pl-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openNewRequest();
+                    }}
+                    className={cn(
+                      uiTransition,
+                      uiFocusRingInset,
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                      "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+                    )}
+                  >
+                    Nuova richiesta
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openNewInbox();
+                    }}
+                    className={cn(
+                      uiTransition,
+                      uiFocusRingInset,
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                      "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+                    )}
+                  >
+                    Nuovo inbox
+                  </button>
+                </div>
+              ) : null}
+            </div>
             {nav.map((item) => {
               const isRequestsSection =
                 pathname === "/app/requests" ||
@@ -440,9 +520,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
-                  className={cn(
-                    active ? cn(uiNavActive, "pl-3") : uiNavItem,
-                  )}
+                  className={active ? uiNavActive : uiNavItem}
                 >
                   <SidebarNavGlyph kind={item.glyph} active={active} />
                   {item.label}
@@ -453,11 +531,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               <Link
                 href="/app/settings/users"
                 onClick={() => setMenuOpen(false)}
-                className={cn(
-                  pathname?.startsWith("/app/settings")
-                    ? cn(uiNavActive, "pl-3")
-                    : uiNavItem,
-                )}
+                className={
+                  pathname?.startsWith("/app/settings") ? uiNavActive : uiNavItem
+                }
               >
                 <svg
                   className={cn(
@@ -482,7 +558,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               </Link>
             ) : null}
           </nav>
-          <div className="shrink-0 border-t border-line-strong p-2.5">
+          <div className="shrink-0 border-t border-line-default p-2.5">
             {me ? (
               <p className="mb-2 truncate px-1 text-xs text-fg-tertiary">
                 <span className="font-medium text-fg-secondary">
@@ -535,59 +611,6 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               </svg>
             </button>
             <AppChromeTitleRow pathname={pathname ?? null} />
-            <div className="relative ml-auto shrink-0">
-              <button
-                type="button"
-                aria-expanded={newMenuOpen}
-                aria-haspopup="menu"
-                onClick={() => setNewMenuOpen((v) => !v)}
-                className={cn(uiBtnPrimary, "h-8 gap-1.5 px-3 py-1.5 text-[13px]")}
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Nuovo
-              </button>
-              {newMenuOpen ? (
-                <>
-                  <button
-                    type="button"
-                    aria-label="Chiudi menu"
-                    className="fixed inset-0 z-40 cursor-default"
-                    onClick={() => setNewMenuOpen(false)}
-                  />
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-full z-50 mt-1 min-w-[11rem] overflow-hidden rounded-[10px] border border-line-default bg-surface py-1 shadow-[var(--shadow-surface)]"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={cn(uiTransition, "block w-full px-3 py-2 text-left text-[13px] text-fg-primary hover:bg-elevated")}
-                      onClick={() => {
-                        setNewMenuOpen(false);
-                        setMenuOpen(false);
-                        openNewRequest();
-                      }}
-                    >
-                      Richiesta
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={cn(uiTransition, "block w-full px-3 py-2 text-left text-[13px] text-fg-primary hover:bg-elevated")}
-                      onClick={() => {
-                        setNewMenuOpen(false);
-                        setMenuOpen(false);
-                        openNewInbox();
-                      }}
-                    >
-                      Inbox
-                    </button>
-                  </div>
-                </>
-              ) : null}
-            </div>
           </header>
 
           <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">

@@ -61,13 +61,13 @@ const tableRowInteractive = cn(
 );
 
 /** Allineato allo slide-over «Nuova richiesta»: area sotto top bar, a destra della sidebar su md+. */
-const BELOW_TOP_BAR = "top-11";
+const BELOW_TOP_BAR = "top-12";
 
 function followUpOverlayBackdropClassName() {
   return cn(
     "pointer-events-auto fixed bottom-0 right-0 z-[58] cursor-default border-0 p-0",
     BELOW_TOP_BAR,
-    "left-0 md:left-[220px]",
+    "left-0 md:left-52",
     "bg-canvas/70",
   );
 }

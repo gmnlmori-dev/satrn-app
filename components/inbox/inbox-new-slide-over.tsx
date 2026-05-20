@@ -6,7 +6,7 @@ import { InboxNewForm } from "@/components/inbox/inbox-new-form";
 import { cn } from "@/lib/cn";
 import { uiBtnIcon } from "@/lib/ui-classes";
 
-const BELOW_TOP_BAR = "top-11";
+const BELOW_TOP_BAR = "top-12";
 const SLIDE_EASE = "duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
 export function InboxNewSlideOver({
@@ -70,7 +70,7 @@ export function InboxNewSlideOver({
         className={cn(
           "fixed bottom-0 right-0 z-40",
           BELOW_TOP_BAR,
-          "left-0 md:left-[220px]",
+          "left-0 md:left-52",
           "bg-canvas/70",
           "transition-opacity",
           SLIDE_EASE,

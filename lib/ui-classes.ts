@@ -56,14 +56,15 @@ export const uiBtnDanger = cn(
 );
 
 export const uiNavActive = cn(
-  "relative flex items-center gap-2 rounded-[8px] bg-accent-subtle pl-3 pr-2.5 text-fg-primary",
-  "before:absolute before:inset-y-1.5 before:left-0 before:w-[2px] before:rounded-full before:bg-accent",
+  uiTransition,
+  uiFocusRingInset,
+  "flex h-9 items-center gap-2.5 rounded-md bg-elevated px-2.5 text-[13px] font-medium text-fg-primary",
 );
 
 export const uiNavItem = cn(
   uiTransition,
   uiFocusRingInset,
-  "flex h-9 items-center gap-2 rounded-[8px] px-2.5 text-[13px] font-medium text-fg-secondary",
+  "flex h-9 items-center gap-2.5 rounded-md px-2.5 text-[13px] font-medium text-fg-secondary",
   "hover:bg-elevated hover:text-fg-primary",
 );
 

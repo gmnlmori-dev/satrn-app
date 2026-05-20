@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
-/* Dark-only — Apple layers × Cursor density */
+/* Dark-only — nero profondo, contrasto alto (non grigio VS Code) */
 :root {
-  --bg-canvas: #1e1e1e;
-  --bg-sidebar: #252526;
-  --bg-surface: #2d2d30;
-  --bg-elevated: #333333;
-  --bg-field: #1e1e1e;
+  --bg-canvas: #090909;
+  --bg-sidebar: #0f0f0f;
+  --bg-surface: #141414;
+  --bg-elevated: #1c1c1c;
+  --bg-field: #0a0a0a;
 
-  --line-default: #3e3e42;
-  --line-strong: #4a4a4f;
+  --line-default: #262626;
+  --line-strong: #333333;
 
-  --fg-primary: #e4e4e4;
-  --fg-secondary: #a0a0a0;
-  --fg-tertiary: #6e6e6e;
+  --fg-primary: #ededed;
+  --fg-secondary: #a3a3a3;
+  --fg-tertiary: #666666;
 
-  --accent: #3794ff;
-  --accent-subtle: #264f78;
-  --accent-muted: #1e3a5f;
+  --accent: #3b9eff;
+  --accent-subtle: #1a3352;
+  --accent-muted: #152a45;
   --accent-fg: #ffffff;
 
   --danger: #f14c4c;

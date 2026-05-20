@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import { uiBtnIcon } from "@/lib/ui-classes";
 
 /** Allineato a `TOP_BAR_H` in app-chrome (h-12) — non copre la top bar. */
-const BELOW_TOP_BAR = "top-11";
+const BELOW_TOP_BAR = "top-12";
 
 const SLIDE_EASE = "duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
