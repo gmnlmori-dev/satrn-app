@@ -6,7 +6,7 @@ import { InboxNewForm } from "@/components/inbox/inbox-new-form";
 import { cn } from "@/lib/cn";
 import { uiBtnIcon } from "@/lib/ui-classes";
 
-const BELOW_TOP_BAR = "top-12";
+const BELOW_TOP_BAR = "top-11";
 const SLIDE_EASE = "duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
 export function InboxNewSlideOver({
@@ -70,8 +70,8 @@ export function InboxNewSlideOver({
         className={cn(
           "fixed bottom-0 right-0 z-40",
           BELOW_TOP_BAR,
-          "left-0 md:left-52",
-          "bg-app/60 backdrop-blur-sm",
+          "left-0 md:left-[220px]",
+          "bg-canvas/70",
           "transition-opacity",
           SLIDE_EASE,
           "motion-reduce:transition-none",
@@ -89,7 +89,7 @@ export function InboxNewSlideOver({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-border-subtle bg-panel shadow-2xl",
+          "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)]",
           BELOW_TOP_BAR,
           "z-[55] w-full max-w-xl md:z-[45] md:max-w-none md:w-[min(51.25rem,100vw)]",
           "transition-transform",
@@ -101,15 +101,15 @@ export function InboxNewSlideOver({
         )}
       >
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-4 sm:pr-5 md:pl-[calc(14rem+1.25rem)]">
-          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border-subtle px-4 py-3.5 sm:px-5 sm:py-4">
+          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-line-default px-4 py-3.5 sm:px-5 sm:py-4">
             <div className="min-w-0 pr-2">
               <h2
                 id={titleId}
-                className="text-lg font-semibold tracking-tight text-primary"
+                className="text-lg font-semibold tracking-tight text-fg-primary"
               >
                 Nuovo inbox
               </h2>
-              <p className="mt-1 max-w-lg text-sm leading-relaxed text-secondary">
+              <p className="mt-1 max-w-lg text-sm leading-relaxed text-fg-secondary">
                 Registra un ingresso grezzo senza uscire dalla schermata corrente.
               </p>
             </div>

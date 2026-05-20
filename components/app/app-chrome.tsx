@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
-import { ThemeToggle } from "@/components/app/theme-toggle";
 import {
   uiBtnGhost,
   uiBtnIcon,
+  uiBtnPrimary,
   uiFocusRingInset,
   uiNavActive,
   uiNavItem,
@@ -31,7 +31,8 @@ import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /** Altezza unica barra superiore (sidebar + header) per allineare i border orizzontali */
-const TOP_BAR_H = "h-12";
+const SIDEBAR_W = "w-[220px]";
+const TOP_BAR_H = "h-11";
 
 const nav = [
   { href: "/app/dashboard", label: "Dashboard", glyph: "home" as const },
@@ -50,7 +51,7 @@ function SidebarNavGlyph({
   if (kind === "followup") {
     const cls = cn(
       "h-4 w-4 shrink-0",
-      active ? "text-accent" : "text-muted",
+      active ? "text-accent" : "text-fg-tertiary",
     );
     return (
       <svg
@@ -72,7 +73,7 @@ function SidebarNavGlyph({
   if (kind === "inbox") {
     const cls = cn(
       "h-4 w-4 shrink-0",
-      active ? "text-accent" : "text-muted",
+      active ? "text-accent" : "text-fg-tertiary",
     );
     return (
       <svg
@@ -93,7 +94,7 @@ function SidebarNavGlyph({
   }
   const cls = cn(
     "h-4 w-4 shrink-0",
-    active ? "text-accent" : "text-muted"
+    active ? "text-accent" : "text-fg-tertiary"
   );
   if (kind === "home") {
     return (
@@ -282,19 +283,19 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
       <div className="inline-flex min-w-0 max-w-full items-center gap-2">
         <div
           aria-label="Percorso pagina"
-          className="flex min-w-0 max-w-full items-center gap-1.5 text-sm font-medium leading-tight text-primary"
+          className="flex min-w-0 max-w-full items-center gap-1.5 text-sm font-medium leading-tight text-fg-primary"
         >
           {crumbs.map((crumb, idx) => (
             <span key={`${crumb.label}-${idx}`} className="inline-flex min-w-0 items-center gap-1.5">
               {idx > 0 ? (
-                <span className="shrink-0 text-muted" aria-hidden>
+                <span className="shrink-0 text-fg-tertiary" aria-hidden>
                   /
                 </span>
               ) : null}
               {crumb.href ? (
                 <Link
                   href={crumb.href}
-                  className="max-w-[18rem] truncate text-secondary underline-offset-2 hover:text-primary hover:underline"
+                  className="max-w-[18rem] truncate text-fg-secondary underline-offset-2 hover:text-accent hover:underline"
                 >
                   {crumb.label}
                 </Link>
@@ -336,7 +337,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [newRequestOpen, setNewRequestOpen] = useState(false);
   const [newInboxOpen, setNewInboxOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [newMenuOpen, setNewMenuOpen] = useState(false);
   const openNewRequest = useCallback(() => {
     setNewInboxOpen(false);
     setNewRequestOpen(true);
@@ -358,7 +359,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <CreateRequestProvider open={openNewRequest}>
       <DetailSaveFeedbackProvider>
-      <div className="flex h-screen h-dvh min-h-0 flex-row overflow-hidden bg-app">
+      <div className="flex h-screen h-dvh min-h-0 flex-row overflow-hidden bg-canvas">
         <Suspense fallback={null}>
           <NewRequestQuerySync onOpen={openNewRequest} />
         </Suspense>
@@ -379,14 +380,15 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             aria-label="Chiudi menu"
-            className="fixed inset-0 z-40 bg-app/80 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-canvas/90 md:hidden"
             onClick={() => setMenuOpen(false)}
           />
         ) : null}
 
         <aside
           className={cn(
-            "z-50 flex w-52 shrink-0 flex-col border-r border-border-subtle bg-sidebar transition-transform duration-200 ease-out",
+            "z-50 flex shrink-0 flex-col border-r border-line-default bg-sidebar transition-transform duration-200 ease-out",
+            SIDEBAR_W,
             "fixed inset-y-0 left-0 md:relative md:inset-auto md:translate-x-0",
             "md:h-full md:overflow-hidden",
             menuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -394,7 +396,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         >
           <div
             className={cn(
-              "sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b border-border-subtle bg-sidebar px-3",
+              "sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b border-line-default bg-sidebar px-3",
               TOP_BAR_H
             )}
           >
@@ -411,95 +413,12 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 alt="Satrn"
                 width={160}
                 height={53}
-                className="h-7 w-auto max-w-full object-contain object-left dark:brightness-0 dark:invert"
+                className="h-7 w-auto max-w-full object-contain object-left brightness-0 invert"
                 priority
               />
             </Link>
           </div>
-          <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5">
-            <div className="mb-2 border-b border-border-subtle pb-2">
-              <button
-                type="button"
-                aria-expanded={createOpen}
-                aria-controls="sidebar-create-submenu"
-                onClick={() => setCreateOpen((v) => !v)}
-                className={cn(
-                  uiTransition,
-                  uiFocusRingInset,
-                  "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium leading-snug",
-                  "text-secondary hover:bg-panel-hover hover:text-primary"
-                )}
-              >
-                <span className="inline-flex min-w-0 items-center gap-2">
-                  <svg
-                    className="h-4 w-4 shrink-0 text-muted"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.75}
-                    stroke="currentColor"
-                    aria-hidden
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
-                  </svg>
-                  <span className="truncate">Crea</span>
-                </span>
-                <svg
-                  className={cn(
-                    "h-4 w-4 shrink-0 text-muted transition-transform",
-                    createOpen && "rotate-180"
-                  )}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  aria-hidden
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                  />
-                </svg>
-              </button>
-              {createOpen ? (
-                <div id="sidebar-create-submenu" className="mt-0.5 space-y-0.5 pl-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openNewRequest();
-                    }}
-                    className={cn(
-                      uiTransition,
-                      uiFocusRingInset,
-                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
-                      "text-secondary hover:bg-panel-hover hover:text-primary"
-                    )}
-                  >
-                    Nuova richiesta
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openNewInbox();
-                    }}
-                    className={cn(
-                      uiTransition,
-                      uiFocusRingInset,
-                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
-                      "text-secondary hover:bg-panel-hover hover:text-primary"
-                    )}
-                  >
-                    Nuovo inbox
-                  </button>
-                </div>
-              ) : null}
-            </div>
+          <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-2">
             {nav.map((item) => {
               const isRequestsSection =
                 pathname === "/app/requests" ||
@@ -545,7 +464,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                     "h-4 w-4 shrink-0",
                     pathname?.startsWith("/app/settings")
                       ? "text-accent"
-                      : "text-muted",
+                      : "text-fg-tertiary",
                   )}
                   fill="none"
                   viewBox="0 0 24 24"
@@ -563,37 +482,34 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               </Link>
             ) : null}
           </nav>
-          <div className="shrink-0 border-t border-border-subtle p-2.5">
+          <div className="shrink-0 border-t border-line-strong p-2.5">
             {me ? (
-              <p className="mb-2 truncate px-1 text-xs text-muted">
-                <span className="font-medium text-secondary">
+              <p className="mb-2 truncate px-1 text-xs text-fg-tertiary">
+                <span className="font-medium text-fg-secondary">
                   {me.fullName || me.email}
                 </span>
-                <span className="text-muted"> · {me.role}</span>
+                <span> · {me.role}</span>
               </p>
             ) : null}
-            <div className="flex items-center justify-between gap-2">
-              <ThemeToggle />
-              <button
-                type="button"
-                onClick={async () => {
-                  const supabase = createSupabaseBrowserClient();
-                  await supabase.auth.signOut();
-                  router.push("/login");
-                  router.refresh();
-                }}
-                className={cn(uiBtnGhost, "shrink-0 px-2 py-1 text-xs")}
-              >
-                Esci
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                const supabase = createSupabaseBrowserClient();
+                await supabase.auth.signOut();
+                router.push("/login");
+                router.refresh();
+              }}
+              className={cn(uiBtnGhost, "w-full justify-center py-1.5 text-xs")}
+            >
+              Esci
+            </button>
           </div>
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <header
             className={cn(
-              "sticky top-0 z-50 flex shrink-0 items-center gap-3 border-b border-border-subtle bg-app/80 px-3 backdrop-blur-md sm:px-4",
+              "sticky top-0 z-50 flex shrink-0 items-center gap-3 border-b border-line-default bg-sidebar px-3 sm:px-4",
               TOP_BAR_H
             )}
           >
@@ -619,6 +535,59 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               </svg>
             </button>
             <AppChromeTitleRow pathname={pathname ?? null} />
+            <div className="relative ml-auto shrink-0">
+              <button
+                type="button"
+                aria-expanded={newMenuOpen}
+                aria-haspopup="menu"
+                onClick={() => setNewMenuOpen((v) => !v)}
+                className={cn(uiBtnPrimary, "h-8 gap-1.5 px-3 py-1.5 text-[13px]")}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Nuovo
+              </button>
+              {newMenuOpen ? (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Chiudi menu"
+                    className="fixed inset-0 z-40 cursor-default"
+                    onClick={() => setNewMenuOpen(false)}
+                  />
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full z-50 mt-1 min-w-[11rem] overflow-hidden rounded-[10px] border border-line-default bg-surface py-1 shadow-[var(--shadow-surface)]"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={cn(uiTransition, "block w-full px-3 py-2 text-left text-[13px] text-fg-primary hover:bg-elevated")}
+                      onClick={() => {
+                        setNewMenuOpen(false);
+                        setMenuOpen(false);
+                        openNewRequest();
+                      }}
+                    >
+                      Richiesta
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={cn(uiTransition, "block w-full px-3 py-2 text-left text-[13px] text-fg-primary hover:bg-elevated")}
+                      onClick={() => {
+                        setNewMenuOpen(false);
+                        setMenuOpen(false);
+                        openNewInbox();
+                      }}
+                    >
+                      Inbox
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
           </header>
 
           <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">

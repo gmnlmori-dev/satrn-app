@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { uiPanel, uiPanelElevated } from "@/lib/surfaces";
+import { uiCard, uiCardElevated } from "@/lib/surfaces";
 
 export function Panel({
   children,
@@ -15,7 +15,7 @@ export function Panel({
   return (
     <div
       className={cn(
-        elevated ? uiPanelElevated : uiPanel,
+        elevated ? uiCardElevated : uiCard,
         padding && "p-4 md:p-5",
         className,
       )}
@@ -25,7 +25,6 @@ export function Panel({
   );
 }
 
-/** @deprecated Use Panel */
 export function SurfaceCard({
   children,
   className,

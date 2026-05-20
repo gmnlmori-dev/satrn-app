@@ -73,8 +73,8 @@ export function FollowUpAssigneeScope({
       {showMine ? (
         <Panel padding className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-primary">Mostra richieste</p>
-            <p className="mt-0.5 text-xs text-muted">
+            <p className="text-sm font-medium text-fg-primary">Mostra richieste</p>
+            <p className="mt-0.5 text-xs text-fg-tertiary">
               {mineOnly
                 ? "Solo assegnate a te (inbox triage invariata)."
                 : "Tutta la coda team (inbox triage invariata)."}
@@ -93,8 +93,8 @@ export function FollowUpAssigneeScope({
       ) : null}
 
       {mineOnly ? (
-        <p className="text-sm text-secondary">
-          <span className="font-semibold tabular-nums text-primary">{queueTotal}</span>{" "}
+        <p className="text-sm text-fg-secondary">
+          <span className="font-semibold tabular-nums text-fg-primary">{queueTotal}</span>{" "}
           richieste assegnate a te in coda.
         </p>
       ) : null}

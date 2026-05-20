@@ -354,31 +354,31 @@ export function RequestDetailWorkspace({
 
   return (
     <div className="w-full space-y-6 md:space-y-7">
-      <header className="rounded-lg border border-border-subtle bg-panel px-4 py-4 sm:px-5">
+      <header className="rounded-[12px] border border-line-default bg-surface px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h1 className={uiPageTitleDetail}>
               {request.title}
             </h1>
             <p className={cn(uiPageLead, "mt-1.5")}>
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-fg-secondary">
                 {request.companyName}
               </span>
-              <span className="mx-1.5 text-slate-300 dark:text-slate-600" aria-hidden>
+              <span className="mx-1.5 text-fg-tertiary" aria-hidden>
                 ·
               </span>
               {request.contactName}
             </p>
             <p className={cn(uiPageLead, "mt-1")}>
-              <span className="text-slate-500 dark:text-slate-500">
+              <span className="text-fg-tertiary">
                 Ultimo aggiornamento
               </span>
-              <span className="mx-1.5 text-slate-300 dark:text-slate-600" aria-hidden>
+              <span className="mx-1.5 text-fg-tertiary" aria-hidden>
                 ·
               </span>
               <time
                 dateTime={request.updatedAt}
-                className="font-semibold tabular-nums text-slate-800 dark:text-slate-200"
+                className="font-semibold tabular-nums text-fg-primary"
               >
                 {formatDateTime(request.updatedAt)}
               </time>
@@ -391,15 +391,17 @@ export function RequestDetailWorkspace({
         </div>
       </header>
 
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-7">
+        <div className="space-y-6">
       <Panel>
         <h2 className={uiSectionHeading}>Operativo</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+        <p className="mt-1.5 text-sm leading-relaxed text-fg-secondary">
           Stato, priorità e assegnazione interna alla coda.
         </p>
         {operationalError ? (
           <p
             role="alert"
-            className="mt-3 text-sm leading-relaxed text-rose-700 dark:text-rose-300"
+            className="mt-3 text-sm leading-relaxed text-danger"
           >
             {operationalError}
           </p>
@@ -443,14 +445,14 @@ export function RequestDetailWorkspace({
           </div>
         </div>
 
-        <div className="mt-7 border-t border-slate-100 pt-6 dark:border-slate-800">
+        <div className="mt-7 border-t border-line-default pt-6">
           <label htmlFor="detail-assignee" className={uiFilterLabel}>
             Assegnato a
           </label>
           {assignmentErr ? (
             <p
               role="alert"
-              className="mt-2 text-sm leading-relaxed text-rose-700 dark:text-rose-300"
+              className="mt-2 text-sm leading-relaxed text-danger"
             >
               {assignmentErr}
             </p>
@@ -472,27 +474,26 @@ export function RequestDetailWorkspace({
             </select>
           ) : (
             <div className="mt-1.5">
-              <p className={cn(controlClass, "flex min-h-[2.75rem] items-center bg-slate-50/80 dark:bg-slate-950/40")}>
+              <p className={cn(controlClass, "flex min-h-[2.75rem] items-center bg-field")}>
                 <span className="truncate font-medium">
                   {request.assignedToLabel ?? "Non assegnata"}
                 </span>
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+              <p className="mt-2 text-xs leading-relaxed text-fg-tertiary">
                 Solo admin e manager possono modificare l’assegnazione.
               </p>
             </div>
           )}
           {request.assignedAt ? (
-            <p className="mt-2 text-xs tabular-nums text-slate-500 dark:text-slate-500">
+            <p className="mt-2 text-xs tabular-nums text-fg-tertiary">
               Assegnata il {formatDateTime(request.assignedAt)}
             </p>
           ) : null}
         </div>
-      </Panel>
 
-      <Panel>
+        <div className="mt-7 border-t border-line-default pt-6">
         <h2 className={uiSectionHeading}>Prossima azione</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+        <p className="mt-1.5 text-sm leading-relaxed text-fg-secondary">
           Scadenza facoltativa. Usa &quot;Salva&quot; per confermare le modifiche.
         </p>
 
@@ -539,7 +540,7 @@ export function RequestDetailWorkspace({
           </div>
         </div>
 
-        <div className="mt-7 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-5 dark:border-slate-800">
+        <div className="mt-7 flex flex-wrap items-center gap-2 border-t border-line-default pt-5">
           <button
             type="button"
             disabled={!nextDirty || nextSaveUi === "saving" || opBusy}
@@ -549,7 +550,7 @@ export function RequestDetailWorkspace({
               uiBtnPrimary,
               "min-w-[10.5rem] px-4 py-2.5",
               nextSaveUi === "saved"
-                ? "border border-emerald-600/30 bg-emerald-700 text-white hover:bg-emerald-700 disabled:opacity-100 disabled:hover:bg-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-800 dark:hover:bg-emerald-800 dark:disabled:hover:bg-emerald-800"
+                ? "border border-success/40 bg-success text-accent-fg hover:brightness-95 disabled:opacity-100"
                 : false
             )}
           >
@@ -572,13 +573,16 @@ export function RequestDetailWorkspace({
             </button>
           ) : null}
         </div>
+        </div>
       </Panel>
+        </div>
 
+        <div className="space-y-6">
       <Panel>
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className={uiSectionHeading}>Anagrafica e contesto</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            <p className="mt-1.5 text-sm leading-relaxed text-fg-secondary">
               Cliente, metadati e testo descrittivo.
             </p>
           </div>
@@ -597,20 +601,20 @@ export function RequestDetailWorkspace({
           {readOnlyFields.map((f) => (
             <div key={f.label}>
               <dt className={cn(uiFilterLabel, "mb-0")}>{f.label}</dt>
-              <dd className="mt-1.5 text-[15px] font-medium leading-snug text-slate-900 dark:text-slate-100">
+              <dd className="mt-1.5 text-[15px] font-medium leading-snug text-fg-primary">
                 {f.value}
               </dd>
             </div>
           ))}
         </dl>
-        <div className="mt-7 border-t border-slate-100 pt-6 dark:border-slate-800">
+        <div className="mt-7 border-t border-line-default pt-6">
           <h3 className={uiSectionHeading}>Descrizione</h3>
           {request.description?.trim() ? (
-            <p className="mt-2.5 text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
+            <p className="mt-2.5 text-[15px] leading-relaxed text-fg-secondary">
               {request.description}
             </p>
           ) : (
-            <p className="mt-2.5 text-sm italic text-slate-500 dark:text-slate-500">
+            <p className="mt-2.5 text-sm italic text-fg-tertiary">
               Nessuna descrizione testuale.
             </p>
           )}
@@ -619,7 +623,7 @@ export function RequestDetailWorkspace({
 
       <Panel>
         <h2 className={uiSectionHeading}>Attività</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+        <p className="mt-1.5 text-sm leading-relaxed text-fg-secondary">
           Creazione, modifiche a stato e priorità, assegnazione, prossima azione e note — in ordine cronologico.
         </p>
         {activities.length === 0 ? (
@@ -641,12 +645,12 @@ export function RequestDetailWorkspace({
               >
                 {idx < activities.length - 1 ? (
                   <span
-                    className="absolute bottom-0 left-[9px] top-5 w-px bg-slate-200/90 dark:bg-slate-700/90"
+                    className="absolute bottom-0 left-[9px] top-5 w-px bg-line-default"
                     aria-hidden
                   />
                 ) : null}
                 <div
-                  className="relative z-10 mt-1.5 h-2 w-2 shrink-0 rounded-full border border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-800"
+                  className="relative z-10 mt-1.5 h-2 w-2 shrink-0 rounded-full border border-line-default bg-elevated shadow-sm"
                   aria-hidden
                 />
                 <div className="min-w-0 flex-1">
@@ -654,19 +658,19 @@ export function RequestDetailWorkspace({
                     <span
                       className={cn(
                         uiOverline,
-                        "text-[10px] tracking-[0.08em] text-slate-500 dark:text-slate-500",
+                        "text-[10px] tracking-[0.08em] text-fg-tertiary",
                       )}
                     >
                       {activityTypeLabel[a.type]}
                     </span>
                     <time
                       dateTime={a.createdAt}
-                      className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-400"
+                      className="text-xs font-semibold tabular-nums text-fg-secondary"
                     >
                       {formatDateTime(a.createdAt)}
                     </time>
                   </div>
-                  <p className="mt-1.5 text-[15px] leading-snug text-slate-800 dark:text-slate-200">
+                  <p className="mt-1.5 text-[15px] leading-snug text-fg-primary">
                     {a.body}
                   </p>
                 </div>
@@ -678,19 +682,19 @@ export function RequestDetailWorkspace({
 
       <Panel>
         <h2 className={uiSectionHeading}>Note e cronologia</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+        <p className="mt-1.5 text-sm leading-relaxed text-fg-secondary">
           Note operative e aggiornamenti che aggiungi qui sotto; le voci più recenti sono in cima.
         </p>
 
         <form
-          className="mb-6 mt-6 rounded-lg border border-slate-200/90 bg-slate-50/90 p-3.5 dark:border-slate-700 dark:bg-slate-950/45 sm:p-4"
+          className="mb-6 mt-6 rounded-[10px] border border-line-default bg-canvas p-3.5 sm:p-4"
           onSubmit={(e) => {
             e.preventDefault();
             void submitNote();
           }}
           aria-label="Aggiungi nota operativa"
         >
-          <p className={cn(uiOverline, "mb-2.5 text-slate-500 dark:text-slate-500")}>
+          <p className={cn(uiOverline, "mb-2.5 text-fg-tertiary")}>
             Nuova voce
           </p>
           <label htmlFor="note-composer" className="sr-only">
@@ -718,13 +722,13 @@ export function RequestDetailWorkspace({
             disabled={noteSaveUi === "saving" || opBusy}
             className={cn(
               inputClass,
-              "min-h-[5.5rem] resize-y border-slate-200/90 bg-white dark:border-slate-600 dark:bg-slate-900"
+              "min-h-[5.5rem] resize-y"
             )}
           />
           {noteError ? (
             <p
               role="alert"
-              className="mt-3 text-sm leading-relaxed text-rose-700 dark:text-rose-300"
+              className="mt-3 text-sm leading-relaxed text-danger"
             >
               {noteError}
             </p>
@@ -740,7 +744,7 @@ export function RequestDetailWorkspace({
                 uiBtnPrimary,
                 "min-w-[7.5rem] px-4 py-2",
                 noteSaveUi === "saved"
-                  ? "border border-emerald-600/30 bg-emerald-700 text-white hover:bg-emerald-700 disabled:opacity-100 disabled:hover:bg-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-800 dark:hover:bg-emerald-800 dark:disabled:hover:bg-emerald-800"
+                  ? "border border-success/40 bg-success text-accent-fg hover:brightness-95 disabled:opacity-100"
                   : false
               )}
             >
@@ -759,7 +763,7 @@ export function RequestDetailWorkspace({
                 Annulla
               </button>
             ) : null}
-            <span className="ml-auto hidden text-xs text-slate-500 sm:inline dark:text-slate-500">
+            <span className="ml-auto hidden text-xs text-fg-tertiary sm:inline">
               Ctrl/⌘+Invio
             </span>
           </div>
@@ -768,17 +772,17 @@ export function RequestDetailWorkspace({
         <div
           role="region"
           aria-labelledby="request-notes-timeline"
-          className="border-t border-slate-100 pt-6 dark:border-slate-800"
+          className="border-t border-line-default pt-6"
         >
           <div className="mb-4 flex flex-wrap items-end justify-between gap-2 sm:mb-5">
             <p
               id="request-notes-timeline"
-              className={cn(uiOverline, "text-slate-500 dark:text-slate-500")}
+              className={cn(uiOverline, "text-fg-tertiary")}
             >
               Cronologia
             </p>
             {notes.length > 0 ? (
-              <span className="text-xs font-medium tabular-nums text-slate-500 dark:text-slate-500">
+              <span className="text-xs font-medium tabular-nums text-fg-tertiary">
                 {notes.length}{" "}
                 {notes.length === 1 ? "voce" : "voci"} · dal più recente
               </span>
@@ -793,7 +797,7 @@ export function RequestDetailWorkspace({
           ) : (
             <div className="relative">
               <div
-                className="pointer-events-none absolute bottom-4 left-2.5 top-3 w-px bg-slate-200/95 dark:bg-slate-700/90"
+                className="pointer-events-none absolute bottom-4 left-2.5 top-3 w-px bg-line-default"
                 aria-hidden
               />
               <ol className="relative m-0 list-none p-0" aria-label="Cronologia note operative">
@@ -806,26 +810,26 @@ export function RequestDetailWorkspace({
                       className="relative z-10 flex w-5 shrink-0 justify-center pt-1"
                       aria-hidden
                     >
-                      <span className="h-2.5 w-2.5 rounded-full border border-slate-300/80 bg-slate-100 shadow-sm ring-[3px] ring-white dark:border-slate-600 dark:bg-slate-700 dark:ring-slate-900" />
+                      <span className="h-2.5 w-2.5 rounded-full border border-line-default bg-elevated ring-[3px] ring-canvas" />
                     </div>
-                    <article className="min-w-0 flex-1 rounded-lg border border-slate-200/90 bg-white px-3.5 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-700/90 dark:bg-slate-900/40 dark:shadow-none sm:px-4 sm:py-4">
-                      <header className="flex flex-col gap-1 border-b border-slate-100 pb-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 dark:border-slate-800">
+                    <article className="min-w-0 flex-1 rounded-[10px] border border-line-default bg-surface px-3.5 py-3.5 sm:px-4 sm:py-4">
+                      <header className="flex flex-col gap-1 border-b border-line-default pb-2.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                         <span
                           className={cn(
                             uiOverline,
-                            "w-fit text-[10px] tracking-[0.08em] text-slate-500 dark:text-slate-500"
+                            "w-fit text-[10px] tracking-[0.08em] text-fg-tertiary"
                           )}
                         >
                           Nota operativa
                         </span>
                         <time
                           dateTime={n.createdAt}
-                          className="text-[13px] font-semibold tabular-nums tracking-tight text-slate-900 sm:text-sm dark:text-slate-100"
+                          className="text-[13px] font-semibold tabular-nums tracking-tight text-fg-primary sm:text-sm"
                         >
                           {formatDateTime(n.createdAt)}
                         </time>
                       </header>
-                      <p className="mt-3 whitespace-pre-wrap text-[15px] leading-[1.6] text-slate-800 dark:text-slate-200">
+                      <p className="mt-3 whitespace-pre-wrap text-[15px] leading-[1.6] text-fg-primary">
                         {n.body}
                       </p>
                     </article>
@@ -836,6 +840,8 @@ export function RequestDetailWorkspace({
           )}
         </div>
       </Panel>
+        </div>
+      </div>
 
       {editOpen ? (
         <EditDetailsSheet
@@ -905,7 +911,7 @@ function EditDetailsSheet({
       <button
         type="button"
         aria-label="Chiudi pannello"
-        className="absolute inset-0 bg-black/15 backdrop-blur-sm transition-opacity dark:bg-black/28"
+        className="absolute inset-0 bg-canvas/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       <div
@@ -913,20 +919,20 @@ function EditDetailsSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "relative flex h-[100dvh] w-full max-w-full flex-col border-l border-slate-200/80 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.16)]",
+          "relative flex h-[100dvh] w-full max-w-full flex-col border-l border-line-strong bg-surface shadow-[var(--shadow-surface)]",
           "sm:h-full sm:max-h-[100dvh] sm:max-w-xl lg:max-w-2xl",
-          "sm:rounded-l-2xl dark:border-slate-800 dark:bg-slate-900"
+          "sm:rounded-l-[12px]"
         )}
       >
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200/90 px-4 py-3.5 sm:px-5 sm:py-4 dark:border-slate-800">
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-line-default px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="min-w-0 pr-2">
             <h2
               id={titleId}
-              className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100"
+              className="text-lg font-semibold tracking-tight text-fg-primary"
             >
               Modifica dettagli
             </h2>
-            <p className="mt-1 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            <p className="mt-1 max-w-lg text-sm leading-relaxed text-fg-secondary">
               Annulla chiude senza salvare. Salva applica le modifiche al database.
             </p>
           </div>
@@ -970,7 +976,7 @@ function EditDetailsSheet({
             {saveError ? (
               <p
                 role="alert"
-                className="rounded-lg border border-rose-200/90 bg-rose-50/90 px-3 py-2.5 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-200"
+                className="rounded-[10px] border border-danger/30 bg-danger-muted px-3 py-2.5 text-sm text-danger"
               >
                 {saveError}
               </p>
@@ -1057,7 +1063,7 @@ function EditDetailsSheet({
               />
             </div>
           </div>
-          <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4">
+          <div className="shrink-0 border-t border-line-default bg-surface px-4 py-3.5 sm:px-5 sm:py-4">
             <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end sm:gap-3">
               <button
                 type="button"

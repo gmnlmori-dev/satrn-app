@@ -26,7 +26,7 @@ export function SegmentedControl<T extends string>({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex rounded-md border border-border-subtle bg-inset p-0.5",
+        "inline-flex rounded-[10px] border border-line-default bg-canvas p-0.5",
         className,
       )}
     >
@@ -40,10 +40,10 @@ export function SegmentedControl<T extends string>({
             className={cn(
               uiTransition,
               uiFocusRingInset,
-              "rounded-[5px] px-3 py-1.5 text-sm font-medium",
+              "rounded-[8px] px-3 py-1.5 text-[13px] font-medium",
               active
-                ? "bg-panel text-primary shadow-sm"
-                : "text-secondary hover:text-primary",
+                ? "bg-surface text-fg-primary shadow-sm"
+                : "text-fg-secondary hover:text-fg-primary",
             )}
           >
             {opt.label}

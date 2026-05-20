@@ -13,8 +13,7 @@ import {
   getRequestsTotalCount,
 } from "@/lib/supabase/dashboard-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
-import { cn } from "@/lib/cn";
-import { uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
+import { uiLink } from "@/lib/ui-classes";
 
 export const metadata = {
   title: "Dashboard",
@@ -34,46 +33,29 @@ export default async function DashboardPage() {
     ]);
 
   return (
-    <div className="space-y-6 md:space-y-7">
+    <div className="space-y-8">
       <DashboardHeader />
 
       {totalRequests === 0 ? (
         <AppEmptyState
           icon="queue"
-          title="Nessuna richiesta in coda"
-          description="Aggiungi la prima da Crea → Nuova richiesta nella barra laterale. Per messaggi o appunti non ancora strutturati usa Crea → Nuovo inbox."
+          title="Nessuna richiesta"
+          description="Crea la prima richiesta o usa l'inbox per triage."
         >
-          <Link
-            href="/app/follow-up"
-            className={cn(
-              uiTransition,
-              uiFocusRingOffset,
-              "rounded-md text-sm font-semibold text-accent underline-offset-2 hover:underline",
-            )}
-          >
-            Apri Da seguire
-          </Link>
-          <Link
-            href="/app/inbox"
-            className={cn(
-              uiTransition,
-              uiFocusRingOffset,
-              "rounded-md text-sm font-semibold text-accent underline-offset-2 hover:underline",
-            )}
-          >
-            Vai all&apos;inbox
+          <Link href="/app/follow-up" className={uiLink}>
+            Da seguire
           </Link>
         </AppEmptyState>
-      ) : null}
-
-      {mineCounts ? <DashboardMyWorkStrip counts={mineCounts} /> : null}
-
-      <DashboardOperationalStrip counts={counts} />
-
-      <div className="grid gap-4 md:gap-5 lg:grid-cols-2 lg:gap-6">
-        <DashboardRecentActivities items={activities} />
-        <DashboardRecentPanel items={recentRequests} />
-      </div>
+      ) : (
+        <>
+          {mineCounts ? <DashboardMyWorkStrip counts={mineCounts} /> : null}
+          <DashboardOperationalStrip counts={counts} />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <DashboardRecentActivities items={activities} />
+            <DashboardRecentPanel items={recentRequests} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

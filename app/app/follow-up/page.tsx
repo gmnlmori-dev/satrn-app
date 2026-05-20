@@ -42,12 +42,12 @@ export default async function FollowUpPage() {
           Ritardi, scadenze oggi e nei prossimi sette giorni, più inbox da triage
           — tutto in un unico elenco.
         </p>
-        <dl className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-border-subtle pt-4">
+        <dl className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-line-default pt-4">
           <div>
             <dt className={uiOverline}>
               In coda richieste
             </dt>
-            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-primary">
+            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
               {totalQueue}
             </dd>
           </div>
@@ -60,7 +60,7 @@ export default async function FollowUpPage() {
                 "mt-0.5 text-lg font-semibold tabular-nums",
                 overdue.length > 0
                   ? "text-danger"
-                  : "text-primary",
+                  : "text-fg-primary",
               )}
             >
               {overdue.length}
@@ -70,7 +70,7 @@ export default async function FollowUpPage() {
             <dt className={uiOverline}>
               Inbox triage
             </dt>
-            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-primary">
+            <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
               {inbox.length}
             </dd>
           </div>

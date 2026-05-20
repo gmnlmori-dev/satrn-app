@@ -4,15 +4,10 @@ import { useId, useState } from "react";
 import { createRequest } from "@/lib/actions/create-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { cn } from "@/lib/cn";
-import { uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
+import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 
-const inputClass = cn(
-  uiTransition,
-  "w-full rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 text-[15px] leading-snug text-slate-900",
-  "placeholder:text-slate-500 focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/[0.06]",
-  "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-600 dark:focus:ring-slate-100/10"
-);
+const inputClass = cn(uiControl, "py-2.5 text-[15px]");
 
 function FormSection({
   title,
@@ -77,7 +72,7 @@ export function NewRequestForm({
       className={cn("flex min-h-0 flex-1 flex-col", className)}
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col pr-4 sm:pr-5">
-        <div className="min-h-0 flex-1 divide-y divide-slate-200/90 overflow-y-auto pb-4 pr-3.5 sm:pr-5 dark:divide-slate-800">
+        <div className="min-h-0 flex-1 divide-y divide-line-default overflow-y-auto pb-4 pr-3.5 sm:pr-5">
           <FormSection title="Richiesta">
             <div>
               <label htmlFor={p("title")} className={uiFormLabel}>
@@ -226,7 +221,7 @@ export function NewRequestForm({
               <div>
                 <label htmlFor={p("nextActionAt")} className={uiFormLabel}>
                   Scadenza prossima azione{" "}
-                  <span className="font-normal text-slate-400">(opzionale)</span>
+                  <span className="font-normal text-fg-tertiary">(opzionale)</span>
                 </label>
                 <input
                   id={p("nextActionAt")}
@@ -240,11 +235,11 @@ export function NewRequestForm({
           </FormSection>
         </div>
 
-        <div className="shrink-0 border-t border-slate-200/90 bg-white pr-3.5 sm:pr-5 pt-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="shrink-0 border-t border-line-default bg-surface pr-3.5 sm:pr-5 pt-4">
           {error ? (
             <p
               role="alert"
-              className="mb-3 text-sm leading-relaxed text-rose-700 dark:text-rose-300"
+              className="mb-3 text-sm leading-relaxed text-danger"
             >
               {error}
             </p>

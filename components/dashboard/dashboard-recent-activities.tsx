@@ -5,8 +5,8 @@ import { formatDateTime } from "@/lib/date";
 import { cn } from "@/lib/cn";
 import { uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
-import { uiMono, uiOverline } from "@/lib/typography";
-import { uiPanel } from "@/lib/surfaces";
+import { uiCard } from "@/lib/surfaces";
+import { uiCaption, uiMono, uiSectionTitle } from "@/lib/typography";
 
 export function DashboardRecentActivities({
   items,
@@ -14,48 +14,32 @@ export function DashboardRecentActivities({
   items: DashboardActivityItem[];
 }) {
   return (
-    <div className={cn(uiPanel, "flex min-h-0 flex-col overflow-hidden")}>
-      <div className="border-b border-border-subtle px-4 py-3.5 md:px-5">
-        <p className={uiOverline}>Timeline</p>
-        <h2 className="mt-1 text-base font-semibold tracking-tight text-primary md:text-lg">
-          Attività recenti
-        </h2>
-        <p className="mt-1 text-sm leading-relaxed text-secondary">
-          Ultime mosse registrate sulle richieste.
-        </p>
+    <div className={cn(uiCard, "flex min-h-0 flex-col overflow-hidden")}>
+      <div className="border-b border-line-default px-4 py-3 md:px-5">
+        <h2 className={uiSectionTitle}>Timeline</h2>
+        <p className="mt-1 text-sm text-fg-secondary">Ultime azioni sulle richieste.</p>
       </div>
-      <div className="flex-1 px-4 py-4 md:px-5 md:py-5">
+      <div className="flex-1 p-4 md:p-5">
         {items.length === 0 ? (
-          <AppEmptyHint
-            title="Ancora nessuna attività"
-            description="Creazioni, aggiornamenti di stato e note appariranno qui."
-          />
+          <AppEmptyHint title="Vuota" description="Le attività registrate compariranno qui." />
         ) : (
-          <ul className="divide-y divide-border-subtle">
+          <ul className="divide-y divide-line-default">
             {items.map((a) => (
               <li key={a.id}>
                 <Link
                   href={`/app/requests/${a.requestId}`}
-                  className={cn(
-                    uiTransition,
-                    uiFocusRingInset,
-                    "group -mx-2 block rounded-lg px-2 py-3 first:pt-0 last:pb-0 hover:bg-panel-hover",
-                  )}
+                  className={cn(uiTransition, uiFocusRingInset, "group -mx-2 block rounded-[8px] px-2 py-3 hover:bg-elevated")}
                 >
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className={cn(uiOverline, "text-[10px]")}>
-                      {activityTypeLabel[a.type]}
-                    </span>
-                    <time dateTime={a.createdAt} className={cn(uiMono, "text-xs")}>
+                  <div className="flex justify-between gap-2">
+                    <span className={uiCaption}>{activityTypeLabel[a.type]}</span>
+                    <time dateTime={a.createdAt} className={uiMono}>
                       {formatDateTime(a.createdAt)}
                     </time>
                   </div>
                   {a.requestTitle ? (
-                    <p className="mt-1 truncate text-xs text-muted">{a.requestTitle}</p>
+                    <p className="mt-0.5 truncate text-xs text-fg-tertiary">{a.requestTitle}</p>
                   ) : null}
-                  <p className="mt-1.5 text-sm leading-snug text-primary underline-offset-2 group-hover:underline">
-                    {a.body}
-                  </p>
+                  <p className="mt-1 text-sm text-fg-primary group-hover:text-accent">{a.body}</p>
                 </Link>
               </li>
             ))}

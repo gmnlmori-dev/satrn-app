@@ -30,7 +30,7 @@ import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 function StatDot() {
   return (
     <span
-          className="hidden text-muted sm:inline"
+          className="hidden text-fg-tertiary sm:inline"
       aria-hidden
     >
       ·
@@ -52,7 +52,7 @@ function QueueOverview({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border-subtle bg-inset px-4 py-3 text-sm leading-relaxed text-secondary"
+        "text-sm leading-relaxed text-fg-secondary"
       )}
     >
       <p className={uiOverline}>
@@ -60,28 +60,28 @@ function QueueOverview({
       </p>
       <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:gap-x-3">
         <span>
-          <span className="tabular-nums font-semibold text-primary">
+          <span className="tabular-nums font-semibold text-fg-primary">
             {total}
           </span>{" "}
           totali
         </span>
         <StatDot />
         <span>
-          <span className="tabular-nums font-semibold text-primary">
+          <span className="tabular-nums font-semibold text-fg-primary">
             {aperte}
           </span>{" "}
           aperte
         </span>
         <StatDot />
         <span>
-          <span className="tabular-nums font-semibold text-primary">
+          <span className="tabular-nums font-semibold text-fg-primary">
             {nuove}
           </span>{" "}
           nuove
         </span>
         <StatDot />
         <span>
-          <span className="tabular-nums font-semibold text-primary">
+          <span className="tabular-nums font-semibold text-fg-primary">
             {oggi}
           </span>{" "}
           scadenze oggi
@@ -93,26 +93,26 @@ function QueueOverview({
 
 function PriorityLegend() {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-      <span className="font-medium text-secondary">Priorità</span>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-tertiary">
+      <span className="font-medium text-fg-secondary">Priorità</span>
       <span className="inline-flex items-center gap-1.5">
         <span
           aria-hidden
-          className="h-2.5 w-1 rounded-full bg-rose-300/75 dark:bg-rose-500/45"
+          className="h-2.5 w-1 rounded-full bg-danger"
         />
         Alta
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span
           aria-hidden
-          className="h-2.5 w-1 rounded-full bg-amber-300/75 dark:bg-amber-500/45"
+          className="h-2.5 w-1 rounded-full bg-warning"
         />
         Media
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span
           aria-hidden
-          className="h-2.5 w-1 rounded-full bg-slate-300/85 dark:bg-slate-500/50"
+          className="h-2.5 w-1 rounded-full bg-fg-tertiary"
         />
         Bassa
       </span>
@@ -229,12 +229,12 @@ export function RequestsWorkspace({
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h3
               id="requests-results-heading"
-              className="text-sm font-medium text-secondary"
+              className="text-sm font-medium text-fg-secondary"
             >
               Elenco
             </h3>
-            <p className="text-sm text-muted">
-              <span className="tabular-nums font-semibold text-primary">
+            <p className="text-sm text-fg-tertiary">
+              <span className="tabular-nums font-semibold text-fg-primary">
                 {processed.length}
               </span>
               {processed.length === total

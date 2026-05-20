@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { uiCard } from "@/lib/surfaces";
 
 const iconWrap = cn(
-  "mb-3 flex h-10 w-10 items-center justify-center rounded-lg border border-border-subtle bg-panel text-muted",
+  "mb-3 flex h-10 w-10 items-center justify-center rounded-[10px] border border-line-default bg-field text-fg-tertiary",
 );
 
 function IconInbox() {
@@ -47,15 +48,6 @@ function IconCalendar() {
 
 export type AppEmptyStateIcon = "inbox" | "queue" | "search" | "activity" | "calendar" | "none";
 
-type Props = {
-  title: string;
-  description: ReactNode;
-  icon?: AppEmptyStateIcon;
-  children?: ReactNode;
-  compact?: boolean;
-  className?: string;
-};
-
 function renderIcon(kind: AppEmptyStateIcon) {
   switch (kind) {
     case "none":
@@ -68,7 +60,6 @@ function renderIcon(kind: AppEmptyStateIcon) {
       return <IconActivity />;
     case "calendar":
       return <IconCalendar />;
-    case "inbox":
     default:
       return <IconInbox />;
   }
@@ -81,23 +72,31 @@ export function AppEmptyState({
   children,
   compact,
   className,
-}: Props) {
+}: {
+  title: string;
+  description: ReactNode;
+  icon?: AppEmptyStateIcon;
+  children?: ReactNode;
+  compact?: boolean;
+  className?: string;
+}) {
   const showIcon = icon !== "none";
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-dashed border-border-default bg-inset text-center",
-        compact ? "px-4 py-7 sm:px-5" : "px-6 py-10 sm:py-11",
+        uiCard,
+        "flex flex-col items-center justify-center border-dashed text-center",
+        compact ? "px-4 py-8" : "px-6 py-10",
         className,
       )}
     >
       {showIcon ? <div className={iconWrap}>{renderIcon(icon)}</div> : null}
-      <p className="text-base font-medium text-primary">{title}</p>
-      <p className="mt-2 max-w-md text-sm leading-relaxed text-secondary">
+      <p className="text-[15px] font-medium text-fg-primary">{title}</p>
+      <p className="mt-2 max-w-md text-sm leading-relaxed text-fg-secondary">
         {description}
       </p>
       {children ? (
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           {children}
         </div>
       ) : null}
@@ -117,12 +116,12 @@ export function AppEmptyHint({
   return (
     <div
       className={cn(
-        "rounded-lg border border-dashed border-border-subtle bg-inset px-4 py-6 text-center",
+        "rounded-[10px] border border-dashed border-line-default bg-field px-4 py-5 text-center",
         className,
       )}
     >
-      <p className="text-sm font-medium text-primary">{title}</p>
-      <p className="mt-1.5 text-sm leading-relaxed text-muted">{description}</p>
+      <p className="text-sm font-medium text-fg-primary">{title}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-fg-tertiary">{description}</p>
     </div>
   );
 }

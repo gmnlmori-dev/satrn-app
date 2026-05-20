@@ -37,14 +37,14 @@ export function LoginForm({ inactive }: { inactive?: boolean }) {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-app px-4 py-10">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-canvas px-4 py-10">
       <div className="mb-8">
         <Image
           src="/logo.svg"
           alt="Satrn"
           width={200}
           height={66}
-          className="h-9 w-auto object-contain object-center dark:brightness-0 dark:invert"
+          className="h-9 w-auto object-contain object-center brightness-0 invert"
           priority
         />
       </div>

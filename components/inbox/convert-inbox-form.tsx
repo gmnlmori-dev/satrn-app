@@ -7,15 +7,10 @@ import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-con
 import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
 import { cn } from "@/lib/cn";
-import { uiBtnPrimary, uiTransition } from "@/lib/ui-classes";
+import { uiBtnPrimary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 
-const inputClass = cn(
-  uiTransition,
-  "w-full rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 text-[15px] leading-snug text-slate-900",
-  "placeholder:text-slate-500 focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/[0.06]",
-  "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-600 dark:focus:ring-slate-100/10",
-);
+const inputClass = cn(uiControl, "py-2.5 text-[15px]");
 
 function FormSection({
   title,
@@ -78,17 +73,17 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
   }
 
   return (
-    <Panel className="border-emerald-200/50 dark:border-emerald-900/30">
-      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+    <Panel className="border-success/30">
+      <p className="text-sm font-semibold text-fg-primary">
         Converti in richiesta
       </p>
-      <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+      <p className="mt-1 text-sm leading-relaxed text-fg-secondary">
         I campi sono precompilati dall&apos;ingresso; completa o modifica prima di salvare.
       </p>
 
       <form
         onSubmit={handleSubmit}
-        className="mt-4 divide-y divide-slate-200/90 dark:divide-slate-800"
+        className="mt-4 divide-y divide-line-default"
       >
         <FormSection title="Richiesta">
           <div>
@@ -241,7 +236,7 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
             <div>
               <label htmlFor={p("nextActionAt")} className={uiFormLabel}>
                 Scadenza prossima azione{" "}
-                <span className="font-normal text-slate-400">(opzionale)</span>
+                <span className="font-normal text-fg-tertiary">(opzionale)</span>
               </label>
               <input
                 id={p("nextActionAt")}
@@ -259,7 +254,7 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
           {error ? (
             <p
               role="alert"
-              className="mr-auto text-sm leading-relaxed text-rose-700 dark:text-rose-300"
+              className="mr-auto text-sm leading-relaxed text-danger"
             >
               {error}
             </p>

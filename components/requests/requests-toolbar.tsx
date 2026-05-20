@@ -56,7 +56,7 @@ export function RequestsToolbar({
         </label>
         <div className="relative mt-1">
           <span
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted"
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-tertiary"
             aria-hidden
           >
             <svg
@@ -87,8 +87,8 @@ export function RequestsToolbar({
         </div>
       </div>
 
-      <div className="border-t border-border-subtle px-4 py-3 sm:px-5">
-        <p className="mb-2 text-xs font-medium text-muted">Assegnazione</p>
+      <div className="border-t border-line-default px-4 py-3 sm:px-5">
+        <p className="mb-2 text-xs font-medium text-fg-tertiary">Assegnazione</p>
         <div className="flex flex-wrap items-center gap-2">
           <SegmentedControl
             ariaLabel="Filtro assegnazione rapido"
@@ -110,7 +110,7 @@ export function RequestsToolbar({
         </div>
       </div>
 
-      <div className="border-t border-border-subtle">
+      <div className="border-t border-line-default">
         <button
           type="button"
           id="req-filters-toggle"
@@ -121,7 +121,7 @@ export function RequestsToolbar({
             uiTransition,
             uiFocusRingInset,
             "flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5",
-            "text-sm font-medium text-primary hover:bg-panel-hover",
+            "text-sm font-medium text-fg-primary hover:bg-elevated",
           )}
         >
           <span>Filtri e ordinamento</span>
@@ -133,7 +133,7 @@ export function RequestsToolbar({
             ) : null}
             <svg
               className={cn(
-                "h-5 w-5 shrink-0 text-muted transition-transform",
+                "h-5 w-5 shrink-0 text-fg-tertiary transition-transform",
                 filtersOpen && "rotate-180",
               )}
               fill="none"
@@ -156,7 +156,7 @@ export function RequestsToolbar({
             id={filtersPanelId}
             role="region"
             aria-labelledby="req-filters-toggle"
-            className="border-t border-border-subtle bg-inset px-4 pb-5 pt-4 sm:px-5"
+            className="border-t border-line-default bg-canvas px-4 pb-5 pt-4 sm:px-5"
           >
             <RequestsFilters
               filters={toolbar}

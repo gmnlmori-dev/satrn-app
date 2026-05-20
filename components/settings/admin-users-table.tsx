@@ -67,21 +67,21 @@ export function AdminUsersTable({
           <table className="w-full min-w-[720px] table-fixed border-collapse text-left text-sm">
             <thead>
               <tr className={dataTableHeadRowClass}>
-                <th scope="col" className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted md:px-5">
+                <th scope="col" className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
                   Nome
                 </th>
-                <th scope="col" className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted md:px-5">
+                <th scope="col" className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
                   Email
                 </th>
-                <th scope="col" className="w-[13rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted md:px-5">
+                <th scope="col" className="w-[13rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
                   Ruolo
                 </th>
-                <th scope="col" className="w-[10rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted md:px-5">
+                <th scope="col" className="w-[10rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5">
                   Attivo
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-subtle">
+            <tbody className="divide-y divide-line-default">
               {profiles.map((u) => {
                 const busy = pendingId === u.userId;
                 return (
@@ -89,7 +89,7 @@ export function AdminUsersTable({
                     <td className={cn(dataTableTdClass, "font-medium")}>
                       {u.fullName?.trim() || "—"}
                     </td>
-                    <td className={cn(dataTableTdClass, "break-all text-secondary")}>
+                    <td className={cn(dataTableTdClass, "break-all text-fg-secondary")}>
                       {u.email || "—"}
                     </td>
                     <td className={dataTableTdClass}>
@@ -113,10 +113,10 @@ export function AdminUsersTable({
                       </select>
                     </td>
                     <td className={dataTableTdClass}>
-                      <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-primary">
+                      <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-fg-primary">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 rounded border-border-default accent-accent"
+                          className="h-4 w-4 rounded border-line-default accent-accent"
                           checked={u.isActive}
                           disabled={busy}
                           onChange={(e) =>

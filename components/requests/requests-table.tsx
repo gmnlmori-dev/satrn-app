@@ -19,9 +19,9 @@ import { uiTransition } from "@/lib/ui-classes";
 const clampTwoLines =
   "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
 const priorityBarClass: Record<RequestPriority, string> = {
-  high: "bg-rose-300/75 dark:bg-rose-500/45",
-  medium: "bg-amber-300/75 dark:bg-amber-500/45",
-  low: "bg-muted/50",
+  high: "bg-danger",
+  medium: "bg-warning",
+  low: "bg-fg-tertiary",
 };
 
 function Row({
@@ -55,7 +55,7 @@ function Row({
       className={cn(
         dataTableRowClass,
         "group min-h-[4.5rem] cursor-pointer",
-        isOdd && "bg-inset/50",
+        isOdd && "bg-canvas/50",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus",
       )}
     >
@@ -69,20 +69,20 @@ function Row({
         />
         <span
           className={cn(
-            "block pl-2 text-sm font-medium leading-snug text-primary underline-offset-2 group-hover:underline",
+            "block pl-2 text-sm font-medium leading-snug text-fg-primary underline-offset-2 group-hover:underline",
             clampTwoLines
           )}
           title={r.title}
         >
           {r.title}
         </span>
-        <p className="mt-1 truncate text-xs text-muted sm:hidden">
+        <p className="mt-1 truncate text-xs text-fg-tertiary sm:hidden">
           {r.companyName}
         </p>
       </td>
       <td
         className={cn(
-          "hidden overflow-hidden px-4 py-3 align-middle text-[15px] leading-snug text-secondary sm:table-cell sm:px-5",
+          "hidden overflow-hidden px-4 py-3 align-middle text-[15px] leading-snug text-fg-secondary sm:table-cell sm:px-5",
           dataTableColSepClass
         )}
       >
@@ -97,7 +97,7 @@ function Row({
         )}
       >
         <div
-          className="truncate whitespace-nowrap text-[15px] font-medium leading-snug text-primary"
+          className="truncate whitespace-nowrap text-[15px] font-medium leading-snug text-fg-primary"
           title={r.contactName}
         >
           {r.contactName}
@@ -114,7 +114,7 @@ function Row({
       >
         <span
           className={cn(
-            "block text-sm leading-snug text-secondary",
+            "block text-sm leading-snug text-fg-secondary",
             clampTwoLines,
           )}
           title={r.assignedToLabel ?? "Non assegnata"}
@@ -130,7 +130,7 @@ function Row({
       >
         <span
           className={cn(
-            "block text-sm leading-relaxed text-secondary",
+            "block text-sm leading-relaxed text-fg-secondary",
             clampTwoLines
           )}
           title={r.nextAction}
@@ -145,7 +145,7 @@ function Row({
         )}
       >
         <time
-          className="block text-sm font-medium tabular-nums leading-snug text-primary"
+          className="block text-sm font-medium tabular-nums leading-snug text-fg-primary"
           dateTime={r.updatedAt}
           title={formatDateTime(r.updatedAt)}
         >

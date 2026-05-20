@@ -3,10 +3,10 @@ import { inboxStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 
 const styles: Record<InboxItemStatus, string> = {
-  new: "border-sky-500/30 bg-sky-500/10 text-sky-300",
-  reviewed: "border-violet-500/30 bg-violet-500/10 text-violet-300",
-  converted: "border-success/30 bg-success-muted text-success",
-  archived: "border-border-default bg-inset text-muted",
+  new: "border-accent/50 bg-accent-subtle text-accent",
+  reviewed: "border-line-strong bg-elevated text-fg-primary",
+  converted: "border-success/40 bg-success-muted text-success",
+  archived: "border-line-default bg-field text-fg-tertiary",
 };
 
 export function InboxStatusBadge({
@@ -19,7 +19,7 @@ export function InboxStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold leading-tight",
+        "inline-flex shrink-0 items-center rounded-[6px] border px-2 py-0.5 text-[11px] font-medium",
         styles[status],
         className,
       )}

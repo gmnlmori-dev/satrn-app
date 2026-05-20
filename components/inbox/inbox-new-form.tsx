@@ -6,15 +6,10 @@ import { createInboxItem } from "@/lib/actions/create-inbox-item";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { Panel } from "@/components/ui/panel";
 import { cn } from "@/lib/cn";
-import { uiBtnPrimary, uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
+import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 
-const inputClass = cn(
-  uiTransition,
-  "w-full rounded-lg border border-slate-200/90 bg-white px-3 py-2.5 text-[15px] leading-snug text-slate-900",
-  "placeholder:text-slate-500 focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/[0.06]",
-  "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-600 dark:focus:ring-slate-100/10",
-);
+const inputClass = cn(uiControl, "py-2.5 text-[15px]");
 
 function FormSection({
   title,
@@ -90,7 +85,7 @@ export function InboxNewForm({
   const formInner = (
     <form
       onSubmit={handleSubmit}
-      className="divide-y divide-slate-200/90 dark:divide-slate-800"
+      className="divide-y divide-line-default"
     >
       <FormSection title="Provenienza e oggetto">
         <div className="space-y-3">
@@ -110,7 +105,7 @@ export function InboxNewForm({
           </div>
           <div>
             <label htmlFor={p("subject")} className={uiFormLabel}>
-              Oggetto / titolo <span className="text-rose-600 dark:text-rose-400">*</span>
+              Oggetto / titolo <span className="text-danger">*</span>
             </label>
             <input
               id={p("subject")}
@@ -161,7 +156,7 @@ export function InboxNewForm({
       <FormSection title="Contenuto grezzo">
         <div>
           <label htmlFor={p("rawContent")} className={uiFormLabel}>
-            Testo <span className="text-rose-600 dark:text-rose-400">*</span>
+            Testo <span className="text-danger">*</span>
           </label>
           <textarea
             id={p("rawContent")}
@@ -183,7 +178,7 @@ export function InboxNewForm({
         {error ? (
           <p
             role="alert"
-            className="mr-auto text-sm leading-relaxed text-rose-700 dark:text-rose-300"
+            className="mr-auto text-sm leading-relaxed text-danger"
           >
             {error}
           </p>

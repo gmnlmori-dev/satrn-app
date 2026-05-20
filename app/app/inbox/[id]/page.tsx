@@ -48,31 +48,31 @@ export default async function InboxDetailPage({
           <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <p className={uiFormLabel}>Fonte</p>
-              <p className="text-slate-900 dark:text-slate-100">
+              <p className="text-fg-primary">
                 {item.source || "—"}
               </p>
             </div>
             <div>
               <p className={uiFormLabel}>Mittente</p>
-              <p className="text-slate-900 dark:text-slate-100">
+              <p className="text-fg-primary">
                 {item.senderName || "—"}
               </p>
             </div>
             <div>
               <p className={uiFormLabel}>Email mittente</p>
-              <p className="break-all text-slate-900 dark:text-slate-100">
+              <p className="break-all text-fg-primary">
                 {item.senderEmail || "—"}
               </p>
             </div>
             <div>
               <p className={uiFormLabel}>Ricevuto</p>
-              <p className="tabular-nums text-slate-900 dark:text-slate-100">
+              <p className="tabular-nums text-fg-primary">
                 {formatDateTime(item.createdAt)}
               </p>
             </div>
             <div>
               <p className={uiFormLabel}>Aggiornato</p>
-              <p className="tabular-nums text-slate-900 dark:text-slate-100">
+              <p className="tabular-nums text-fg-primary">
                 {formatDateTime(item.updatedAt)}
               </p>
             </div>
@@ -84,13 +84,13 @@ export default async function InboxDetailPage({
         </div>
 
         {item.linkedRequestId ? (
-          <div className="mt-5 border-t border-slate-200/80 pt-5 dark:border-slate-800">
+          <div className="mt-5 border-t border-line-default pt-5">
             <Link
               href={`/app/requests/${item.linkedRequestId}`}
               className={cn(
                 uiTransition,
                 uiFocusRingOffset,
-                "inline-flex font-semibold text-slate-900 underline-offset-2 hover:underline dark:text-slate-100",
+                "inline-flex font-semibold text-accent underline-offset-2 hover:underline",
               )}
             >
               Apri richiesta collegata
@@ -100,14 +100,13 @@ export default async function InboxDetailPage({
       </Panel>
 
       <Panel className={cn(!item.linkedRequestId && "pb-5")}>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.05em] text-slate-500 dark:text-slate-400">
+        <h2 className="text-[15px] font-semibold text-fg-primary">
           Contenuto grezzo
         </h2>
         {item.rawContent?.trim() ? (
           <pre
             className={cn(
-              "mt-3 max-h-[min(28rem,55vh)] overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200/80 bg-slate-50/90 p-4 text-[13px] leading-relaxed text-slate-900",
-              "dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-100",
+              "mt-3 max-h-[min(28rem,55vh)] overflow-auto whitespace-pre-wrap rounded-[10px] border border-line-default bg-field p-4 text-[13px] leading-relaxed text-fg-primary",
             )}
           >
             {item.rawContent}

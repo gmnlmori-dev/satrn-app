@@ -8,7 +8,7 @@ import type { InboxItem, InboxItemStatus } from "@/types/inbox";
 import { InboxStatusBadge } from "@/components/inbox/inbox-status-badge";
 import { inboxStatusLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
-import { uiBtnSecondary, uiTransition } from "@/lib/ui-classes";
+import { uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 
 const MANUAL: InboxItemStatus[] = ["new", "reviewed", "archived"];
 
@@ -64,11 +64,7 @@ export function InboxStatusControls({ item }: { item: InboxItem }) {
           value={value}
           disabled={pending}
           onChange={(e) => setValue(e.target.value as InboxItemStatus)}
-          className={cn(
-            uiTransition,
-            "min-w-[10rem] rounded-lg border border-slate-200/90 bg-white px-3 py-2 text-sm text-slate-900",
-            "dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100",
-          )}
+          className={cn(uiControl, "min-w-[10rem] w-auto py-2")}
         >
           {MANUAL.map((s) => (
             <option key={s} value={s}>
@@ -86,7 +82,7 @@ export function InboxStatusControls({ item }: { item: InboxItem }) {
         </button>
       </div>
       {error ? (
-        <p className="text-sm text-rose-700 dark:text-rose-300" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       ) : null}

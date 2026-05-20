@@ -40,15 +40,15 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
       className={cn(
         dataTableRowClass,
         "group min-h-[4.5rem] cursor-pointer",
-        isOdd && "bg-inset/50",
+        isOdd && "bg-canvas/50",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus",
       )}
     >
       <td className={dataTableTdClass}>
-        <span className="block text-sm font-medium leading-snug text-primary underline-offset-2 group-hover:underline">
+        <span className="block text-sm font-medium leading-snug text-fg-primary underline-offset-2 group-hover:underline">
           {r.subject || "(Senza oggetto)"}
         </span>
-        <p className="mt-0.5 truncate text-xs text-muted">
+        <p className="mt-0.5 truncate text-xs text-fg-tertiary">
           {[r.source, r.senderName, r.senderEmail].filter(Boolean).join(" · ") ||
             "—"}
         </p>
@@ -59,7 +59,7 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
       <td
         className={cn(
           dataTableTdClass,
-          "hidden text-muted md:table-cell",
+          "hidden text-fg-tertiary md:table-cell",
           dataTableColSepClass,
         )}
       >
@@ -104,7 +104,7 @@ export function InboxListTable({ items }: { items: InboxItem[] }) {
         </tbody>
       </table>
       </div>
-      <div className="border-t border-border-subtle px-4 py-2.5 text-right text-xs text-muted sm:hidden">
+      <div className="border-t border-line-default px-4 py-2.5 text-right text-xs text-fg-tertiary sm:hidden">
         Tocca una riga per aprire il dettaglio.
       </div>
     </div>

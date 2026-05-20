@@ -18,11 +18,6 @@ const variantClass: Record<Variant, string> = {
   icon: uiBtnIcon,
 };
 
-const sizeClass: Record<Size, string> = {
-  sm: "px-2.5 py-1.5 text-xs",
-  md: "",
-};
-
 export function Button({
   variant = "secondary",
   size = "md",
@@ -33,14 +28,14 @@ export function Button({
   variant?: Variant;
   size?: Size;
 }) {
-  const base = variantClass[variant];
-  const sz = variant === "icon" ? "h-9 w-9 p-0" : sizeClass[size];
+  const sz =
+    variant === "icon"
+      ? ""
+      : size === "sm"
+        ? "px-2.5 py-1.5 text-xs"
+        : "";
   return (
-    <button
-      type="button"
-      className={cn(base, sz, className)}
-      {...props}
-    >
+    <button type="button" className={cn(variantClass[variant], sz, className)} {...props}>
       {children}
     </button>
   );

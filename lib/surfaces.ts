@@ -1,17 +1,16 @@
 import { cn } from "@/lib/cn";
 
-export const uiPanel = cn(
-  "rounded-lg border border-border-subtle bg-panel",
+export const uiCard = cn(
+  "rounded-[12px] border border-line-default bg-surface",
 );
 
-export const uiPanelElevated = cn(
-  "rounded-lg border border-border-default bg-panel shadow-sm",
+export const uiCardElevated = cn(
+  "rounded-[12px] border border-line-strong bg-surface shadow-[var(--shadow-surface)]",
 );
 
-export const uiInset = cn(
-  "rounded-lg border border-border-subtle bg-inset",
+export const uiMetricRow = cn(
+  "overflow-hidden rounded-[12px] border border-line-default bg-surface",
 );
 
-export const uiStatGrid = cn(
-  "overflow-hidden rounded-lg border border-border-subtle bg-panel",
-);
+/** Card/toolbar shell (alias of uiCard). */
+export const uiPanel = uiCard;
