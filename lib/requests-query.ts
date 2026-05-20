@@ -136,12 +136,13 @@ export function sortRequests(
 }
 
 export function filtersActive(f: ToolbarFilters): boolean {
-  return (
-    f.search.trim().length > 0 ||
-    f.status !== "all" ||
-    f.priority !== "all" ||
-    f.source !== "all" ||
-    f.assignScope !== "all" ||
-    (f.assignScope === "user" && f.assignUserId.trim().length > 0)
-  );
+  if (f.search.trim().length > 0) return true;
+  if (f.status !== "all") return true;
+  if (f.priority !== "all") return true;
+  if (f.source !== "all") return true;
+  if (f.assignScope === "all") return false;
+  if (f.assignScope === "user") {
+    return f.assignUserId.trim().length > 0;
+  }
+  return true;
 }
