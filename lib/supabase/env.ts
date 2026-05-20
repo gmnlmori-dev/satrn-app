@@ -13,10 +13,12 @@ export function getSupabasePublicEnv(): { url: string; key: string } {
 /** Service role — solo server (Server Actions admin). Mai esporre al client. */
 export function getSupabaseServiceRoleEnv(): { url: string; serviceRoleKey: string } {
   const { url } = getSupabasePublicEnv();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SECRET_KEY;
   if (!serviceRoleKey) {
     throw new Error(
-      "Manca SUPABASE_SERVICE_ROLE_KEY (Supabase → Project Settings → API → service_role).",
+      "Manca SUPABASE_SERVICE_ROLE_KEY (Supabase → Settings → API → Secret key).",
     );
   }
   return { url, serviceRoleKey };

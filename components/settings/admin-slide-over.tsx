@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { uiBtnIcon } from "@/lib/ui-classes";
 
 const BELOW_TOP_BAR = "top-12";
 const SLIDE_EASE = "duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]";
+/** Sopra sidebar/top bar (z-50) — il pannello è portato su document.body. */
+const OVERLAY_Z = "z-[60]";
+const PANEL_Z = "z-[70]";
 
 export function AdminSlideOver({
   open,
@@ -23,6 +27,11 @@ export function AdminSlideOver({
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const [entered, setEntered] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -63,15 +72,16 @@ export function AdminSlideOver({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  const ui = (
     <>
       <button
         type="button"
         aria-label="Chiudi pannello"
         className={cn(
-          "fixed bottom-0 right-0 z-40",
+          "fixed bottom-0 right-0",
+          OVERLAY_Z,
           BELOW_TOP_BAR,
           "left-0 md:left-52",
           "bg-canvas/70 transition-opacity",
@@ -88,12 +98,15 @@ export function AdminSlideOver({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "fixed bottom-0 left-0 z-[55] flex max-w-xl flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)] md:z-[45] md:w-[min(32rem,100vw)] md:max-w-none",
+          "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)]",
+          PANEL_Z,
           BELOW_TOP_BAR,
-          "w-full transition-transform",
+          "w-full max-w-xl md:w-[min(32rem,calc(100vw-13rem))] md:max-w-none",
+          "transition-transform",
           SLIDE_EASE,
           "motion-reduce:translate-x-0 motion-reduce:transition-none",
           entered ? "translate-x-0" : "translate-x-full md:-translate-x-full",
+          "left-0 md:left-52",
         )}
       >
         <div className="flex min-h-0 flex-1 flex-col pl-5 pr-4 sm:pr-5 md:pl-[calc(14rem+1.25rem)]">
@@ -140,4 +153,6 @@ export function AdminSlideOver({
       </div>
     </>
   );
+
+  return createPortal(ui, document.body);
 }
