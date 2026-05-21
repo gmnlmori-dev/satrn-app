@@ -3,8 +3,12 @@
 import type { AssigneeOption } from "@/types/profile";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 import { priorityLabel, statusLabel } from "@/lib/labels";
-import type { SortOption, ToolbarFilters } from "@/lib/requests-query";
-import { filtersActive } from "@/lib/requests-query";
+import {
+  defaultToolbarFilters,
+  filtersActive,
+  type SortOption,
+  type ToolbarFilters,
+} from "@/lib/requests-query";
 import { cn } from "@/lib/cn";
 import { uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 
