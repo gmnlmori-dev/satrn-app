@@ -9,11 +9,13 @@ import {
   buildMonthGrid,
   buildWeekGrid,
   groupRequestsByDay,
+  startOfMonth,
   startOfWeek,
   WEEKDAY_LABELS,
   type CalendarCell,
 } from "@/lib/calendar-grid";
 import {
+  formatCalendarWeekRange,
   formatMonthYear,
   formatWeekdayShort,
   monthParamFromDate,
@@ -62,6 +64,9 @@ function ChevronIcon({ dir }: { dir: "left" | "right" }) {
   );
 }
 
+/** Altezza minima cella mese: header + 3 eventi compatti + gap. */
+const MONTH_CELL_MIN_H = "min-h-[11rem]";
+
 function MonthCell({
   cell,
   events,
@@ -77,7 +82,8 @@ function MonthCell({
   return (
     <div
       className={cn(
-        "flex min-h-[7.5rem] min-w-0 flex-col border-b border-r border-line-default p-1",
+        "flex min-w-0 flex-col border-b border-r border-line-default p-1",
+        MONTH_CELL_MIN_H,
         !cell.isCurrentMonth && "bg-canvas/60",
         cell.isToday && "bg-accent-muted/30 ring-1 ring-inset ring-accent/40",
       )}
@@ -176,8 +182,27 @@ export function RequestsCalendar({
 
   useEffect(() => {
     const parsed = parseMonthParam(monthParam);
-    if (parsed) setAnchor(parsed);
-  }, [monthParam]);
+    if (!parsed || layout !== "month") return;
+    setAnchor(parsed);
+  }, [monthParam, layout]);
+
+  const handleLayoutChange = useCallback(
+    (next: CalendarLayout) => {
+      setLayout(next);
+      if (next === "week") {
+        const d = new Date();
+        setAnchor(d);
+        onMonthParamChange(monthParamFromDate(d));
+        return;
+      }
+      setAnchor((prev) => {
+        const monthStart = startOfMonth(prev);
+        onMonthParamChange(monthParamFromDate(monthStart));
+        return monthStart;
+      });
+    },
+    [onMonthParamChange],
+  );
 
   const byDay = useMemo(() => groupRequestsByDay(requests), [requests]);
 
@@ -193,7 +218,7 @@ export function RequestsCalendar({
     if (layout === "week") {
       const start = startOfWeek(anchor);
       const end = addDays(start, 6);
-      return `${formatMonthYear(start)} – ${end.getDate()} ${formatMonthYear(end).split(" ").slice(1).join(" ")}`;
+      return formatCalendarWeekRange(start, end);
     }
     return formatMonthYear(anchor);
   }, [layout, anchor]);
@@ -223,9 +248,9 @@ export function RequestsCalendar({
 
   const goToday = useCallback(() => {
     const d = new Date();
-    setAnchor(d);
+    setAnchor(layout === "month" ? startOfMonth(d) : d);
     onMonthParamChange(monthParamFromDate(d));
-  }, [onMonthParamChange]);
+  }, [layout, onMonthParamChange]);
 
   if (requests.length === 0 && filteredCount > 0) {
     return (
@@ -244,7 +269,7 @@ export function RequestsCalendar({
         <CalendarToolbar
           title={title}
           layout={layout}
-          onLayoutChange={setLayout}
+          onLayoutChange={handleLayoutChange}
           onPrev={() => navigate(-1)}
           onNext={() => navigate(1)}
           onToday={goToday}
@@ -281,7 +306,7 @@ export function RequestsCalendar({
       <CalendarToolbar
         title={title}
         layout={layout}
-        onLayoutChange={setLayout}
+        onLayoutChange={handleLayoutChange}
         onPrev={() => navigate(-1)}
         onNext={() => navigate(1)}
         onToday={goToday}

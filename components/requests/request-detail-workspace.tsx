@@ -15,10 +15,14 @@ import type { Request, RequestNote, RequestPriority, RequestStatus } from "@/typ
 import { activityTypeLabel, priorityLabel, statusLabel } from "@/lib/labels";
 import {
   formatDateTime,
-  fromDatetimeLocalValue,
+  fromDateAndTimeInputs,
   nowIso,
-  toDatetimeLocalValue,
 } from "@/lib/date";
+import {
+  NextActionDeadlineFields,
+  nextActionDeadlineDraftEquals,
+  nextActionDeadlineDraftFromIso,
+} from "@/components/requests/next-action-deadline-fields";
 import { cn } from "@/lib/cn";
 import {
   uiBtnGhost,
@@ -109,9 +113,11 @@ export function RequestDetailWorkspace({
   );
 
   const [nextDraft, setNextDraft] = useState(initialRequest.nextAction);
-  const [nextAtDraft, setNextAtDraft] = useState(
-    toDatetimeLocalValue(initialRequest.nextActionAt)
+  const initialDeadline = nextActionDeadlineDraftFromIso(
+    initialRequest.nextActionAt,
   );
+  const [nextAtDateDraft, setNextAtDateDraft] = useState(initialDeadline.date);
+  const [nextAtTimeDraft, setNextAtTimeDraft] = useState(initialDeadline.time);
 
   useEffect(() => {
     // Allinea allo stato server dopo refresh o navigazione (stesso id, props aggiornate).
@@ -154,8 +160,18 @@ export function RequestDetailWorkspace({
   const nextDirty = useMemo(
     () =>
       nextDraft !== request.nextAction ||
-      toDatetimeLocalValue(request.nextActionAt) !== nextAtDraft,
-    [nextDraft, request.nextAction, request.nextActionAt, nextAtDraft]
+      !nextActionDeadlineDraftEquals(
+        request.nextActionAt,
+        nextAtDateDraft,
+        nextAtTimeDraft,
+      ),
+    [
+      nextDraft,
+      request.nextAction,
+      request.nextActionAt,
+      nextAtDateDraft,
+      nextAtTimeDraft,
+    ],
   );
 
   const onStatus = useCallback(
@@ -244,7 +260,7 @@ export function RequestDetailWorkspace({
     if (!nextDirty || nextSaveUi === "saving") return;
     setOperationalError(null);
     setNextSaveUi("saving");
-    const nextAt = fromDatetimeLocalValue(nextAtDraft);
+    const nextAt = fromDateAndTimeInputs(nextAtDateDraft, nextAtTimeDraft);
     const res = await updateRequestOperational(request.id, {
       next_action: nextDraft,
       next_action_at: nextAt,
@@ -261,7 +277,9 @@ export function RequestDetailWorkspace({
       updatedAt: res.updatedAt,
       lastInteractionAt: res.lastInteractionAt,
     });
-    setNextAtDraft(toDatetimeLocalValue(nextAt));
+    const saved = nextActionDeadlineDraftFromIso(nextAt);
+    setNextAtDateDraft(saved.date);
+    setNextAtTimeDraft(saved.time);
     setNextSaveUi("saved");
     showFeedback();
     if (nextSaveResetRef.current) clearTimeout(nextSaveResetRef.current);
@@ -271,7 +289,8 @@ export function RequestDetailWorkspace({
     }, 2000);
     router.refresh();
   }, [
-    nextAtDraft,
+    nextAtDateDraft,
+    nextAtTimeDraft,
     nextDraft,
     nextDirty,
     nextSaveUi,
@@ -514,22 +533,30 @@ export function RequestDetailWorkspace({
           </div>
 
           <div>
-            <label htmlFor="detail-next-at" className={uiFilterLabel}>
+            <label htmlFor="detail-next-at-date" className={uiFilterLabel}>
               Scadenza (opzionale)
             </label>
             <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
-              <input
-                id="detail-next-at"
-                type="datetime-local"
-                value={nextAtDraft}
-                onChange={(e) => setNextAtDraft(e.target.value)}
-                disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
-                className={cn(inputClass, "min-w-0 flex-1 sm:max-w-[20rem]")}
-              />
-              {nextAtDraft !== "" || request.nextActionAt !== null ? (
+              <div className="min-w-0 flex-1">
+                <NextActionDeadlineFields
+                  idPrefix="detail-next-at"
+                  hideHeading
+                  hideHint
+                  disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
+                  inputClass={inputClass}
+                  date={nextAtDateDraft}
+                  time={nextAtTimeDraft}
+                  onDateChange={setNextAtDateDraft}
+                  onTimeChange={setNextAtTimeDraft}
+                />
+              </div>
+              {nextAtDateDraft !== "" || request.nextActionAt !== null ? (
                 <button
                   type="button"
-                  onClick={() => setNextAtDraft("")}
+                  onClick={() => {
+                    setNextAtDateDraft("");
+                    setNextAtTimeDraft("");
+                  }}
                   disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
                   className={cn(uiBtnSecondary, "shrink-0")}
                 >
@@ -565,7 +592,9 @@ export function RequestDetailWorkspace({
               type="button"
               onClick={() => {
                 setNextDraft(request.nextAction);
-                setNextAtDraft(toDatetimeLocalValue(request.nextActionAt));
+                const reset = nextActionDeadlineDraftFromIso(request.nextActionAt);
+                setNextAtDateDraft(reset.date);
+                setNextAtTimeDraft(reset.time);
               }}
               className={uiBtnGhost}
             >

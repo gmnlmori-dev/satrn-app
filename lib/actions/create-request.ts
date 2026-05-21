@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { fromDatetimeLocalValue } from "@/lib/date";
+import { nextActionAtFromFormData } from "@/lib/date";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
 const STATUSES: RequestStatus[] = [
@@ -44,7 +44,6 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
   const source = String(fd.get("source") ?? "").trim();
   const description = String(fd.get("description") ?? "").trim();
   const next_action = String(fd.get("nextAction") ?? "").trim();
-  const nextActionAtRaw = String(fd.get("nextActionAt") ?? "").trim();
 
   const status = parseStatus(String(fd.get("status") ?? ""));
   const priority = parsePriority(String(fd.get("priority") ?? ""));
@@ -56,7 +55,7 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     return { ok: false, message: "Stato o priorità non validi." };
   }
 
-  const next_action_at = fromDatetimeLocalValue(nextActionAtRaw);
+  const next_action_at = nextActionAtFromFormData(fd);
 
   const supabase = await createSupabaseServerClient();
   const last_interaction_at = new Date().toISOString();

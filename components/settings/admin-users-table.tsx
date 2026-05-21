@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AdminUserCreateSheet } from "@/components/settings/admin-user-create-sheet";
 import { AdminUserEditSheet } from "@/components/settings/admin-user-edit-sheet";
+import {
+  useAppSlideCoordinator,
+  useExclusiveAppSlide,
+  useRegisterAppSlideClose,
+} from "@/components/app/app-slide-coordinator";
 import { appRoleLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary } from "@/lib/ui-classes";
@@ -19,8 +24,19 @@ export function AdminUsersTable({
 }: {
   profiles: ProfileSummary[];
 }) {
-  const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<ProfileSummary | null>(null);
+  const { openExclusive } = useAppSlideCoordinator();
+  const createSlide = useExclusiveAppSlide("admin-user-create");
+
+  const closeEdit = useCallback(() => setEditUser(null), []);
+  useRegisterAppSlideClose("admin-user-edit", closeEdit);
+
+  const openEdit = useCallback(
+    (user: ProfileSummary) => {
+      openExclusive("admin-user-edit", () => setEditUser(user));
+    },
+    [openExclusive],
+  );
 
   return (
     <div className="space-y-6">
@@ -35,7 +51,7 @@ export function AdminUsersTable({
         <button
           type="button"
           className={cn(uiBtnPrimary, "shrink-0 self-start")}
-          onClick={() => setCreateOpen(true)}
+          onClick={createSlide.openSlide}
         >
           Nuovo utente
         </button>
@@ -121,7 +137,7 @@ export function AdminUsersTable({
                       <button
                         type="button"
                         className={cn(uiBtnSecondary, "px-2.5 py-1 text-xs")}
-                        onClick={() => setEditUser(u)}
+                        onClick={() => openEdit(u)}
                       >
                         Modifica
                       </button>
@@ -135,8 +151,8 @@ export function AdminUsersTable({
       </div>
 
       <AdminUserCreateSheet
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        open={createSlide.open}
+        onClose={createSlide.closeSlide}
       />
       <AdminUserEditSheet
         open={editUser !== null}

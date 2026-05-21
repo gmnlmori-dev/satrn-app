@@ -10,6 +10,7 @@ export type ProfileRow = {
   full_name: string;
   role: AppRole;
   is_active: boolean;
+  preferences?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };

@@ -8,7 +8,7 @@ import {
   getUpcomingRequests,
 } from "@/lib/supabase/follow-up-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
-import { defaultFollowUpAssigneeScope } from "@/lib/request-assignee";
+import { resolveDefaultAssignScope } from "@/lib/user-preferences";
 import { cn } from "@/lib/cn";
 import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 
@@ -26,7 +26,7 @@ export default async function FollowUpPage() {
   ]);
 
   const defaultScope = profile
-    ? defaultFollowUpAssigneeScope(profile.role)
+    ? resolveDefaultAssignScope(profile.preferences, profile.role)
     : "all";
 
   const totalQueue = overdue.length + today.length + upcoming.length;

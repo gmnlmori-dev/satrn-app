@@ -30,6 +30,7 @@ import {
   sortRequests,
   type SortOption,
   type ToolbarFilters,
+  type AssignScopeFilter,
 } from "@/lib/requests-query";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
@@ -135,10 +136,12 @@ export function RequestsWorkspace({
   requests,
   currentUserId,
   assigneeOptions,
+  defaultAssignScope = "all",
 }: {
   requests: Request[];
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
+  defaultAssignScope?: AssignScopeFilter;
 }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -147,7 +150,12 @@ export function RequestsWorkspace({
   const urlView = searchParams.get("view");
   const urlMonth = searchParams.get("month");
 
-  const [toolbar, setToolbar] = useState<ToolbarFilters>(defaultToolbarFilters());
+  const toolbarBaseline = useMemo(
+    () => defaultToolbarFilters(defaultAssignScope),
+    [defaultAssignScope],
+  );
+
+  const [toolbar, setToolbar] = useState<ToolbarFilters>(toolbarBaseline);
   const [sort, setSort] = useState<SortOption>("updated_desc");
   const [viewMode, setViewMode] = useState<RequestsViewMode>(() =>
     viewFromSearchParam(urlView),
@@ -225,9 +233,9 @@ export function RequestsWorkspace({
   );
 
   const resetAll = useCallback(() => {
-    setToolbar(defaultToolbarFilters());
+    setToolbar(toolbarBaseline);
     setSort("updated_desc");
-  }, []);
+  }, [toolbarBaseline]);
 
   const total = requests.length;
   const aperte = countOpenRequests(requests);
@@ -296,6 +304,7 @@ export function RequestsWorkspace({
         assigneeOptions={assigneeOptions}
         myAssignedCount={myAssignedCount}
         viewMode={viewMode}
+        filterBaseline={toolbarBaseline}
       />
 
       {filtered.length === 0 ? (

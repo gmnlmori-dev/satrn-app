@@ -14,6 +14,12 @@ export const uiControl = cn(
   "placeholder:text-fg-tertiary focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/40",
 );
 
+/** Input date/time — icona calendario invertita in tema scuro via globals.css */
+export const uiDateControl = cn(
+  uiControl,
+  "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80",
+);
+
 export const uiBtnPrimary = cn(
   uiTransition,
   uiFocusRingOffset,

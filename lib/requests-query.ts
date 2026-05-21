@@ -15,12 +15,14 @@ export type ToolbarFilters = {
   assignUserId: string;
 };
 
-export const defaultToolbarFilters = (): ToolbarFilters => ({
+export const defaultToolbarFilters = (
+  assignScope: AssignScopeFilter = "all",
+): ToolbarFilters => ({
   search: "",
   status: "all",
   priority: "all",
   source: "all",
-  assignScope: "all",
+  assignScope,
   assignUserId: "",
 });
 
@@ -135,14 +137,18 @@ export function sortRequests(
   return out;
 }
 
-export function filtersActive(f: ToolbarFilters): boolean {
-  if (f.search.trim().length > 0) return true;
-  if (f.status !== "all") return true;
-  if (f.priority !== "all") return true;
-  if (f.source !== "all") return true;
-  if (f.assignScope === "all") return false;
+export function filtersActive(
+  f: ToolbarFilters,
+  baseline?: ToolbarFilters,
+): boolean {
+  const base = baseline ?? defaultToolbarFilters();
+  if (f.search.trim() !== base.search) return true;
+  if (f.status !== base.status) return true;
+  if (f.priority !== base.priority) return true;
+  if (f.source !== base.source) return true;
+  if (f.assignScope !== base.assignScope) return true;
   if (f.assignScope === "user") {
     return f.assignUserId.trim().length > 0;
   }
-  return true;
+  return false;
 }

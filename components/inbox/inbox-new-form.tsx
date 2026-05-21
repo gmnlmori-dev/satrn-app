@@ -87,22 +87,8 @@ export function InboxNewForm({
       onSubmit={handleSubmit}
       className="divide-y divide-line-default"
     >
-      <FormSection title="Provenienza e oggetto">
+      <FormSection title="Oggetto e provenienza">
         <div className="space-y-3">
-          <div>
-            <label htmlFor={p("source")} className={uiFormLabel}>
-              Canale / fonte
-            </label>
-            <input
-              id={p("source")}
-              name="source"
-              maxLength={500}
-              disabled={pending}
-              autoComplete="off"
-              className={inputClass}
-              placeholder="Es. email, WhatsApp, voce, note…"
-            />
-          </div>
           <div>
             <label htmlFor={p("subject")} className={uiFormLabel}>
               Oggetto / titolo <span className="text-danger">*</span>
@@ -116,6 +102,20 @@ export function InboxNewForm({
               autoComplete="off"
               className={inputClass}
               aria-invalid={error ? true : undefined}
+            />
+          </div>
+          <div>
+            <label htmlFor={p("source")} className={uiFormLabel}>
+              Canale / fonte
+            </label>
+            <input
+              id={p("source")}
+              name="source"
+              maxLength={500}
+              disabled={pending}
+              autoComplete="off"
+              className={inputClass}
+              placeholder="Es. email, WhatsApp, voce, note…"
             />
           </div>
         </div>

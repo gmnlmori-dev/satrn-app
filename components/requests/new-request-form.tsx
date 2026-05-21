@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { createRequest } from "@/lib/actions/create-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
+import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
@@ -218,19 +219,11 @@ export function NewRequestForm({
                   placeholder="Cosa fare dopo"
                 />
               </div>
-              <div>
-                <label htmlFor={p("nextActionAt")} className={uiFormLabel}>
-                  Scadenza prossima azione{" "}
-                  <span className="font-normal text-fg-tertiary">(opzionale)</span>
-                </label>
-                <input
-                  id={p("nextActionAt")}
-                  name="nextActionAt"
-                  type="datetime-local"
-                  disabled={pending}
-                  className={inputClass}
-                />
-              </div>
+              <NextActionDeadlineFields
+                idPrefix={p("nextActionAt")}
+                disabled={pending}
+                inputClass={inputClass}
+              />
             </div>
           </FormSection>
         </div>

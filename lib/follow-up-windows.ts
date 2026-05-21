@@ -38,6 +38,20 @@ export function daysFromTodayAtNineDatetimeLocal(daysFromToday: number): string 
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T09:00`;
 }
 
+/** Coppia data/ora per input separati: tra N giorni alle 9:00 (locale). */
+export function daysFromTodayAtNineInputs(daysFromToday: number): {
+  date: string;
+  time: string;
+} {
+  const raw = daysFromTodayAtNineDatetimeLocal(daysFromToday);
+  const [date, timePart] = raw.split("T");
+  return { date: date ?? "", time: timePart?.slice(0, 5) ?? "09:00" };
+}
+
+export function tomorrowAtNineInputs(): { date: string; time: string } {
+  return daysFromTodayAtNineInputs(1);
+}
+
 export function tomorrowAtNineLocalIso(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);

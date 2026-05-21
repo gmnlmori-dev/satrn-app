@@ -20,10 +20,14 @@ import { StatusBadge } from "@/components/requests/status-badge";
 import { updateInboxItemStatus } from "@/lib/actions/update-inbox-status";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
 import {
-  daysFromTodayAtNineDatetimeLocal,
-  tomorrowAtNineDatetimeLocal,
+  daysFromTodayAtNineInputs,
+  tomorrowAtNineInputs,
 } from "@/lib/follow-up-windows";
-import { formatDateTime, fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/date";
+import { formatDateTime, fromDateAndTimeInputs, todayDateInputValue } from "@/lib/date";
+import {
+  NextActionDeadlineFields,
+  nextActionDeadlineDraftFromIso,
+} from "@/components/requests/next-action-deadline-fields";
 import { inboxStatusLabel, statusLabel } from "@/lib/labels";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
@@ -51,6 +55,13 @@ const QUICK_STATUSES: RequestStatus[] = [
 ];
 
 const datetimeInputClass = uiControl;
+
+function initialPostponeDraft(request: Request): { date: string; time: string } {
+  if (request.nextActionAt) {
+    return nextActionDeadlineDraftFromIso(request.nextActionAt);
+  }
+  return tomorrowAtNineInputs();
+}
 
 const tableHeadCell = dataTableThClass;
 
@@ -197,11 +208,13 @@ function PostponeScadenzaPopover({
   onApplied: () => void;
 }) {
   const titleId = useId();
-  const inputId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const isClient = useIsClient();
-  const [draft, setDraft] = useState(
-    () => toDatetimeLocalValue(request.nextActionAt) || tomorrowAtNineDatetimeLocal(),
+  const [dateDraft, setDateDraft] = useState(() =>
+    initialPostponeDraft(request).date,
+  );
+  const [timeDraft, setTimeDraft] = useState(() =>
+    initialPostponeDraft(request).time,
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -261,9 +274,9 @@ function PostponeScadenzaPopover({
 
   async function apply() {
     if (saving) return;
-    const iso = fromDatetimeLocalValue(draft);
+    const iso = fromDateAndTimeInputs(dateDraft, timeDraft);
     if (!iso) {
-      setError("Imposta una data e un orario validi.");
+      setError("Imposta una data valida.");
       return;
     }
     setError(null);
@@ -319,7 +332,24 @@ function PostponeScadenzaPopover({
                 type="button"
                 disabled={saving}
                 className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
-                onClick={() => setDraft(tomorrowAtNineDatetimeLocal())}
+                onClick={() => {
+                  setDateDraft(todayDateInputValue());
+                  setTimeDraft("");
+                  setError(null);
+                }}
+              >
+                Oggi
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
+                onClick={() => {
+                  const next = tomorrowAtNineInputs();
+                  setDateDraft(next.date);
+                  setTimeDraft(next.time);
+                  setError(null);
+                }}
               >
                 Domani 9:00
               </button>
@@ -327,7 +357,12 @@ function PostponeScadenzaPopover({
                 type="button"
                 disabled={saving}
                 className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
-                onClick={() => setDraft(daysFromTodayAtNineDatetimeLocal(3))}
+                onClick={() => {
+                  const next = daysFromTodayAtNineInputs(3);
+                  setDateDraft(next.date);
+                  setTimeDraft(next.time);
+                  setError(null);
+                }}
               >
                 Tra 3 giorni 9:00
               </button>
@@ -335,34 +370,41 @@ function PostponeScadenzaPopover({
                 type="button"
                 disabled={saving}
                 className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
-                onClick={() => setDraft(daysFromTodayAtNineDatetimeLocal(7))}
+                onClick={() => {
+                  const next = daysFromTodayAtNineInputs(7);
+                  setDateDraft(next.date);
+                  setTimeDraft(next.time);
+                  setError(null);
+                }}
               >
                 Tra 7 giorni 9:00
               </button>
             </div>
           </div>
 
-          <div>
-            <label htmlFor={inputId} className={uiFormLabel}>
-              Data e ora
-            </label>
-            <input
-              id={inputId}
-              type="datetime-local"
-              value={draft}
-              disabled={saving}
-              onChange={(e) => {
-                setDraft(e.target.value);
-                setError(null);
-              }}
-              className={cn(datetimeInputClass, "mt-1.5")}
-            />
-            {error ? (
-              <p className="mt-2 text-sm text-danger" role="alert">
-                {error}
-              </p>
-            ) : null}
-          </div>
+          <NextActionDeadlineFields
+            idPrefix={`postpone-${request.id}`}
+            hideHeading
+            hideHint
+            showToday={false}
+            disabled={saving}
+            inputClass={datetimeInputClass}
+            date={dateDraft}
+            time={timeDraft}
+            onDateChange={(value) => {
+              setDateDraft(value);
+              setError(null);
+            }}
+            onTimeChange={(value) => {
+              setTimeDraft(value);
+              setError(null);
+            }}
+          />
+          {error ? (
+            <p className="text-sm text-danger" role="alert">
+              {error}
+            </p>
+          ) : null}
 
           <div className="flex flex-wrap justify-end gap-2 border-t border-line-default pt-4">
             <button

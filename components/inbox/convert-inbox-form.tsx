@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { convertInboxToRequest } from "@/lib/actions/convert-inbox-to-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
+import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
 import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
 import { cn } from "@/lib/cn";
@@ -36,7 +37,6 @@ function defaultsFromInbox(item: InboxItem) {
     source: item.source.trim() || "Inbox",
     description: item.rawContent.trim(),
     nextAction: "",
-    nextActionAt: "",
     status: "new" as const,
     priority: "medium" as const,
   };
@@ -229,20 +229,11 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
                 defaultValue={d.nextAction}
               />
             </div>
-            <div>
-              <label htmlFor={p("nextActionAt")} className={uiFormLabel}>
-                Scadenza prossima azione{" "}
-                <span className="font-normal text-fg-tertiary">(opzionale)</span>
-              </label>
-              <input
-                id={p("nextActionAt")}
-                name="nextActionAt"
-                type="datetime-local"
-                disabled={pending}
-                className={inputClass}
-                defaultValue={d.nextActionAt}
-              />
-            </div>
+            <NextActionDeadlineFields
+              idPrefix={p("nextActionAt")}
+              disabled={pending}
+              inputClass={inputClass}
+            />
           </div>
         </FormSection>
 

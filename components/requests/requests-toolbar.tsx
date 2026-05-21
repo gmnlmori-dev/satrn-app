@@ -24,6 +24,7 @@ type Props = {
   assigneeOptions: AssigneeOption[];
   myAssignedCount: number;
   viewMode: RequestsViewMode;
+  filterBaseline: ToolbarFilters;
 };
 
 const assignSegments: { value: AssignScopeFilter; label: string }[] = [
@@ -43,11 +44,12 @@ export function RequestsToolbar({
   assigneeOptions,
   myAssignedCount,
   viewMode,
+  filterBaseline,
 }: Props) {
   const filtersPanelId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const showResetHint =
-    filtersActive(toolbar) ||
+    filtersActive(toolbar, filterBaseline) ||
     (viewMode === "list" && sort !== "updated_desc");
 
   const assignValue =
@@ -174,6 +176,7 @@ export function RequestsToolbar({
               onReset={onReset}
               assigneeOptions={assigneeOptions}
               hideSort={viewMode === "calendar"}
+              filterBaseline={filterBaseline}
             />
           </div>
         ) : null}

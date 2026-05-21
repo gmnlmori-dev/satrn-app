@@ -51,6 +51,61 @@ export function fromDatetimeLocalValue(value: string): string | null {
   return new Date(t).toISOString();
 }
 
+/** Valore per input `type="date"` da ISO. */
+export function toDateInputValue(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return toDateKey(d);
+}
+
+/** Valore per input `type="time"` da ISO (HH:mm). */
+export function toTimeInputValue(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export function todayDateInputValue(ref: Date = new Date()): string {
+  return toDateKey(ref);
+}
+
+/**
+ * Combina data e ora opzionale (locale). Solo data → fine giornata (23:59:59).
+ */
+export function fromDateAndTimeInputs(
+  date: string,
+  time: string,
+): string | null {
+  const d = date.trim();
+  if (!d) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+
+  const t = time.trim();
+  if (t) {
+    if (!/^\d{2}:\d{2}$/.test(t)) return null;
+    const local = new Date(`${d}T${t}`);
+    if (Number.isNaN(local.getTime())) return null;
+    return local.toISOString();
+  }
+
+  const [y, m, day] = d.split("-").map(Number);
+  const end = new Date(y, m - 1, day, 23, 59, 59, 999);
+  return end.toISOString();
+}
+
+/** Legge scadenza da FormData (date+time o legacy datetime-local). */
+export function nextActionAtFromFormData(fd: FormData): string | null {
+  const date = String(fd.get("nextActionAtDate") ?? "").trim();
+  const time = String(fd.get("nextActionAtTime") ?? "").trim();
+  if (date) {
+    return fromDateAndTimeInputs(date, time);
+  }
+  return fromDatetimeLocalValue(String(fd.get("nextActionAt") ?? ""));
+}
+
 export function nowIso(): string {
   return new Date().toISOString();
 }
@@ -70,6 +125,26 @@ const itTime = new Intl.DateTimeFormat("it-IT", {
 export function formatMonthYear(date: Date): string {
   const s = itMonthYear.format(date);
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Intervallo settimana calendario, es. «5–11 Maggio 2026» o «28 Aprile – 4 Maggio 2026». */
+export function formatCalendarWeekRange(start: Date, end: Date): string {
+  const sy = start.getFullYear();
+  const ey = end.getFullYear();
+  const sm = start.getMonth();
+  const em = end.getMonth();
+
+  if (sy === ey && sm === em) {
+    return `${start.getDate()}–${end.getDate()} ${formatMonthYear(start)}`;
+  }
+
+  if (sy === ey) {
+    const startMonth = formatMonthYear(start).split(" ")[0] ?? "";
+    const endMonth = formatMonthYear(end).split(" ")[0] ?? "";
+    return `${start.getDate()} ${startMonth} – ${end.getDate()} ${endMonth} ${sy}`;
+  }
+
+  return `${start.getDate()} ${formatMonthYear(start)} – ${end.getDate()} ${formatMonthYear(end)}`;
 }
 
 export function formatWeekdayShort(date: Date): string {

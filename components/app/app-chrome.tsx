@@ -20,6 +20,10 @@ import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb
 import { canManageUsers } from "@/lib/permissions";
 import { CreateRequestProvider } from "@/components/app/create-request-context";
 import {
+  AppSlideCoordinatorProvider,
+  useExclusiveAppSlide,
+} from "@/components/app/app-slide-coordinator";
+import {
   DetailSaveFeedbackProvider,
   useDetailSaveFeedback,
 } from "@/components/app/detail-save-feedback-context";
@@ -336,21 +340,23 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
 }
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
+  return (
+    <AppSlideCoordinatorProvider>
+      <AppChromeInner>{children}</AppChromeInner>
+    </AppSlideCoordinatorProvider>
+  );
+}
+
+function AppChromeInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const me = useOptionalCurrentProfile();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [newRequestOpen, setNewRequestOpen] = useState(false);
-  const [newInboxOpen, setNewInboxOpen] = useState(false);
+  const newRequestSlide = useExclusiveAppSlide("new-request");
+  const newInboxSlide = useExclusiveAppSlide("new-inbox");
   const [createOpen, setCreateOpen] = useState(false);
-  const openNewRequest = useCallback(() => {
-    setNewInboxOpen(false);
-    setNewRequestOpen(true);
-  }, []);
-  const openNewInbox = useCallback(() => {
-    setNewRequestOpen(false);
-    setNewInboxOpen(true);
-  }, []);
+  const openNewRequest = newRequestSlide.openSlide;
+  const openNewInbox = newInboxSlide.openSlide;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -373,12 +379,12 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         </Suspense>
 
         <NewRequestSlideOver
-          open={newRequestOpen}
-          onClose={() => setNewRequestOpen(false)}
+          open={newRequestSlide.open}
+          onClose={newRequestSlide.closeSlide}
         />
         <InboxNewSlideOver
-          open={newInboxOpen}
-          onClose={() => setNewInboxOpen(false)}
+          open={newInboxSlide.open}
+          onClose={newInboxSlide.closeSlide}
         />
 
         {menuOpen ? (

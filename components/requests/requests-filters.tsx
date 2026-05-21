@@ -41,6 +41,7 @@ type Props = {
   onReset: () => void;
   assigneeOptions: AssigneeOption[];
   hideSort?: boolean;
+  filterBaseline?: ToolbarFilters;
 };
 
 export function RequestsFilters({
@@ -52,9 +53,11 @@ export function RequestsFilters({
   onReset,
   assigneeOptions,
   hideSort = false,
+  filterBaseline,
 }: Props) {
+  const baseline = filterBaseline ?? defaultToolbarFilters();
   const resetDisabled =
-    !filtersActive(filters) && (hideSort || sort === "updated_desc");
+    !filtersActive(filters, baseline) && (hideSort || sort === "updated_desc");
 
   return (
     <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">

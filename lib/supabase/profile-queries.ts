@@ -1,3 +1,4 @@
+import { parseUserPreferences } from "@/lib/user-preferences";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ProfileRow } from "@/types/database";
 import type { AssigneeOption, ProfileSummary } from "@/types/profile";
@@ -13,6 +14,7 @@ function profileRowToSummary(row: ProfileRow): ProfileSummary {
     fullName: row.full_name ?? "",
     role: row.role,
     isActive: row.is_active,
+    preferences: parseUserPreferences(row.preferences ?? {}),
   };
 }
 
