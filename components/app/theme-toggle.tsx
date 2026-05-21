@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
-import { uiBtnGhost } from "@/lib/ui-classes";
+import { uiBtnGhost, uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
 import {
   applyTheme,
   getStoredTheme,
