@@ -6,6 +6,7 @@ import { useOptionalCurrentProfile } from "@/components/app/current-user-context
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { createRequest } from "@/lib/actions/create-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
+import { NextActionField } from "@/components/requests/next-action-field";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
@@ -53,6 +54,7 @@ export function NewRequestForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createTeamId, setCreateTeamId] = useState(me?.teamId ?? "");
+  const [nextAction, setNextAction] = useState("");
   const { pulseTopBar } = useDetailSaveFeedback();
 
   useEffect(() => {
@@ -77,6 +79,7 @@ export function NewRequestForm({
       }
       pulseTopBar();
       form.reset();
+      setNextAction("");
       onSuccess(result.id);
     } finally {
       setPending(false);
@@ -233,15 +236,15 @@ export function NewRequestForm({
           <FormSection title="Prossimo passo">
             <div className="space-y-3">
               <div>
-                <label htmlFor={p("nextAction")} className={uiFormLabel}>
-                  Prossima azione
-                </label>
-                <input
-                  id={p("nextAction")}
+                <p className={uiFormLabel}>Prossima azione</p>
+                <NextActionField
+                  idPrefix={p("nextAction")}
                   name="nextAction"
+                  value={nextAction}
+                  onChange={setNextAction}
                   disabled={pending}
-                  className={inputClass}
-                  placeholder="Cosa fare dopo"
+                  textRows={3}
+                  className="mt-1.5"
                 />
               </div>
               <NextActionDeadlineFields

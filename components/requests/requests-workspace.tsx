@@ -238,7 +238,8 @@ export function RequestsWorkspace({
             params.set("month", monthParamFromDate(new Date()));
           }
         } else {
-          params.delete("view");
+          params.set("view", "list");
+          params.delete("month");
         }
       });
     },

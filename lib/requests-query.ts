@@ -3,6 +3,7 @@ import type {
   RequestPriority,
   RequestStatus,
 } from "@/types/request";
+import { nextActionSearchText } from "@/lib/next-action-tasks";
 
 export type AssignScopeFilter = "all" | "mine" | "unassigned" | "user";
 
@@ -70,7 +71,7 @@ export function filterByToolbar(
       r.companyName,
       r.contactName,
       r.contactEmail,
-      r.nextAction,
+      nextActionSearchText(r.nextAction),
       r.source,
       r.id,
       r.assignedToLabel ?? "",

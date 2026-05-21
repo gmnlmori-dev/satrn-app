@@ -86,45 +86,40 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
   const supabase = await createSupabaseServerClient();
   const last_interaction_at = new Date().toISOString();
 
-  let assigned_user_id: string | null = null;
-  let assigned_at: string | null = null;
-  let assigneeProfile:
-    | { full_name: string | null; email: string | null }
-    | null = null;
-
+  let assigneeUserId = me.userId;
   if (canAssignRequests(me.role)) {
     const rawAssignee = String(fd.get("assignedUserId") ?? "").trim();
-    const normAssignee = rawAssignee === "" ? null : rawAssignee;
-    if (normAssignee) {
-      const { data: tgt, error: tgtErr } = await supabase
-        .from("profiles")
-        .select("full_name, email, is_active, team_id")
-        .eq("user_id", normAssignee)
-        .maybeSingle();
-
-      if (tgtErr || !tgt) {
-        return {
-          ok: false,
-          message: "Destinatario assegnazione non trovato.",
-        };
-      }
-      if (!(tgt as { is_active: boolean }).is_active) {
-        return { ok: false, message: "L’utente selezionato non è attivo." };
-      }
-      if ((tgt as { team_id: string }).team_id !== team_id) {
-        return {
-          ok: false,
-          message: "L’utente selezionato non appartiene al team della richiesta.",
-        };
-      }
-      assigneeProfile = {
-        full_name: (tgt as { full_name: string }).full_name ?? null,
-        email: (tgt as { email: string }).email ?? null,
-      };
-      assigned_user_id = normAssignee;
-      assigned_at = last_interaction_at;
-    }
+    if (rawAssignee) assigneeUserId = rawAssignee;
   }
+
+  const { data: assigneeProfileRow, error: assigneeErr } = await supabase
+    .from("profiles")
+    .select("full_name, email, is_active, team_id")
+    .eq("user_id", assigneeUserId)
+    .maybeSingle();
+
+  if (assigneeErr || !assigneeProfileRow) {
+    return {
+      ok: false,
+      message: "Destinatario assegnazione non trovato.",
+    };
+  }
+  if (!(assigneeProfileRow as { is_active: boolean }).is_active) {
+    return { ok: false, message: "L’utente selezionato non è attivo." };
+  }
+  if ((assigneeProfileRow as { team_id: string }).team_id !== team_id) {
+    return {
+      ok: false,
+      message: "L’utente selezionato non appartiene al team della richiesta.",
+    };
+  }
+
+  const assigneeProfile = {
+    full_name: (assigneeProfileRow as { full_name: string | null }).full_name ?? null,
+    email: (assigneeProfileRow as { email: string | null }).email ?? null,
+  };
+  const assigned_user_id = assigneeUserId;
+  const assigned_at = last_interaction_at;
 
   const { data, error } = await supabase
     .from("requests")
@@ -161,18 +156,16 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     body: `Richiesta creata: ${title}`,
   });
 
-  if (assigned_user_id) {
-    await insertRequestActivity(supabase, {
-      requestId: id,
-      type: "assigned_user_changed",
-      body: `Assegnazione: Nessuno → ${assigneeCaption(assigneeProfile)}`,
-      meta: {
-        from_assigned_user_id: null,
-        to_assigned_user_id: assigned_user_id,
-        changed_by_user_id: me.userId,
-      },
-    });
-  }
+  await insertRequestActivity(supabase, {
+    requestId: id,
+    type: "assigned_user_changed",
+    body: `Assegnazione: Nessuno → ${assigneeCaption(assigneeProfile)}`,
+    meta: {
+      from_assigned_user_id: null,
+      to_assigned_user_id: assigned_user_id,
+      changed_by_user_id: me.userId,
+    },
+  });
 
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");

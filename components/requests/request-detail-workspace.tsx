@@ -23,6 +23,7 @@ import {
   nextActionDeadlineDraftEquals,
   nextActionDeadlineDraftFromIso,
 } from "@/components/requests/next-action-deadline-fields";
+import { NextActionField } from "@/components/requests/next-action-field";
 import { cn } from "@/lib/cn";
 import {
   uiBtnGhost,
@@ -518,17 +519,13 @@ export function RequestDetailWorkspace({
 
         <div className="mt-6 space-y-6">
           <div>
-            <label htmlFor="detail-next-action" className={uiFilterLabel}>
-              Cosa fare
-            </label>
-            <textarea
-              id="detail-next-action"
-              rows={4}
+            <label className={uiFilterLabel}>Cosa fare</label>
+            <NextActionField
+              idPrefix="detail-next-action"
               value={nextDraft}
-              onChange={(e) => setNextDraft(e.target.value)}
+              onChange={setNextDraft}
               disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
-              className={cn(inputClass, "mt-1.5 min-h-[6rem] resize-y")}
-              placeholder="Prossimo passo operativo…"
+              className="mt-1.5"
             />
           </div>
 

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatDateTime } from "@/lib/date";
+import { formatNextActionPreview } from "@/lib/next-action-tasks";
 import { priorityLabel, statusLabel } from "@/lib/labels";
 import type { RequestActivityType } from "@/types/activity";
 import type { RequestPriority, RequestStatus } from "@/types/request";
@@ -94,9 +95,10 @@ export async function logOperationalChanges(
 
   const parts: string[] = [];
   if (textChanged) {
+    const preview = formatNextActionPreview(newText ?? "");
     parts.push(
-      (newText ?? "").trim()
-        ? `Testo: ${(newText ?? "").trim().slice(0, 160)}${(newText ?? "").trim().length > 160 ? "…" : ""}`
+      preview
+        ? `Testo: ${preview.slice(0, 160)}${preview.length > 160 ? "…" : ""}`
         : "Testo svuotato",
     );
   }

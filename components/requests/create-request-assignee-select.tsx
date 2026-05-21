@@ -8,6 +8,16 @@ import { cn } from "@/lib/cn";
 import { uiFormLabel } from "@/lib/typography";
 import type { AssigneeOption } from "@/types/profile";
 
+function defaultAssigneeId(
+  options: AssigneeOption[],
+  currentUserId: string | undefined,
+): string {
+  if (currentUserId && options.some((o) => o.userId === currentUserId)) {
+    return currentUserId;
+  }
+  return options[0]?.userId ?? "";
+}
+
 export function CreateRequestAssigneeSelect({
   teamId,
   idPrefix,
@@ -23,14 +33,16 @@ export function CreateRequestAssigneeSelect({
   const [options, setOptions] = useState<AssigneeOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [assignedUserId, setAssignedUserId] = useState("");
+  const [assignedUserId, setAssignedUserId] = useState(() =>
+    me?.userId ?? "",
+  );
 
   const canAssign = me ? canAssignRequests(me.role) : false;
 
   useEffect(() => {
     if (!canAssign || !teamId) {
       setOptions([]);
-      setAssignedUserId("");
+      setAssignedUserId(me?.userId ?? "");
       return;
     }
 
@@ -42,7 +54,7 @@ export function CreateRequestAssigneeSelect({
       if (cancelled) return;
       if (!result.ok) {
         setOptions([]);
-        setAssignedUserId("");
+        setAssignedUserId(me?.userId ?? "");
         setLoadError(result.message);
         return;
       }
@@ -50,7 +62,7 @@ export function CreateRequestAssigneeSelect({
       setAssignedUserId((current) =>
         current && result.options.some((o) => o.userId === current)
           ? current
-          : "",
+          : defaultAssigneeId(result.options, me?.userId),
       );
     }).finally(() => {
       if (!cancelled) setLoading(false);
@@ -59,7 +71,7 @@ export function CreateRequestAssigneeSelect({
     return () => {
       cancelled = true;
     };
-  }, [canAssign, teamId]);
+  }, [canAssign, teamId, me?.userId]);
 
   if (!canAssign) return null;
 
@@ -76,7 +88,6 @@ export function CreateRequestAssigneeSelect({
         onChange={(e) => setAssignedUserId(e.target.value)}
         className={cn(inputClass, loading && "opacity-70")}
       >
-        <option value="">Non assegnata</option>
         {options.map((o) => (
           <option key={o.userId} value={o.userId}>
             {o.label}

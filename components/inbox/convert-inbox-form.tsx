@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { convertInboxToRequest } from "@/lib/actions/convert-inbox-to-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
+import { NextActionField } from "@/components/requests/next-action-field";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
 import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
@@ -47,10 +48,11 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
   const uid = useId();
   const p = (name: string) => `${uid}-${name}`;
   const router = useRouter();
+  const d = defaultsFromInbox(item);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextAction, setNextAction] = useState(d.nextAction);
   const { pulseTopBar } = useDetailSaveFeedback();
-  const d = defaultsFromInbox(item);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -225,15 +227,15 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
         <FormSection title="Prossimo passo">
           <div className="space-y-3">
             <div>
-              <label htmlFor={p("nextAction")} className={uiFormLabel}>
-                Prossima azione
-              </label>
-              <input
-                id={p("nextAction")}
+              <p className={uiFormLabel}>Prossima azione</p>
+              <NextActionField
+                idPrefix={p("nextAction")}
                 name="nextAction"
+                value={nextAction}
+                onChange={setNextAction}
                 disabled={pending}
-                className={inputClass}
-                defaultValue={d.nextAction}
+                textRows={3}
+                className="mt-1.5"
               />
             </div>
             <NextActionDeadlineFields

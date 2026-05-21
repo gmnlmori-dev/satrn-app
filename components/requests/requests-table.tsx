@@ -5,6 +5,7 @@ import type { Request } from "@/types/request";
 import type { RequestPriority } from "@/types/request";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { formatDate, formatDateTime } from "@/lib/date";
+import { formatNextActionPreview } from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
 import {
   dataTableColSepClass,
@@ -157,9 +158,9 @@ function Row({
             "block text-sm leading-relaxed text-fg-secondary",
             clampTwoLines
           )}
-          title={r.nextAction}
+          title={formatNextActionPreview(r.nextAction) || r.nextAction}
         >
-          {r.nextAction}
+          {formatNextActionPreview(r.nextAction) || "—"}
         </span>
       </td>
       <td
