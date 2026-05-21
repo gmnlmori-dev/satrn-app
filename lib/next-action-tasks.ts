@@ -1,16 +1,33 @@
+import type { Request, RequestPriority } from "@/types/request";
+
 export type NextActionTask = {
   id: string;
   text: string;
   done: boolean;
+  dueAt: string | null;
 };
 
-export type NextActionContent =
-  | { mode: "text"; text: string; tasks: NextActionTask[] }
-  | { mode: "tasks"; text: string; tasks: NextActionTask[] };
+export type NextActionContent = {
+  text: string;
+  tasks: NextActionTask[];
+};
 
-type StoredTasksPayload = {
+export type CalendarTaskEntry = {
+  requestId: string;
+  requestTitle: string;
+  requestPriority: RequestPriority;
+  task: NextActionTask;
+};
+
+type StoredTasksPayloadV1 = {
   v: 1;
   mode: "tasks";
+  tasks: NextActionTask[];
+};
+
+type StoredPayloadV2 = {
+  v: 2;
+  text: string;
   tasks: NextActionTask[];
 };
 
@@ -21,13 +38,19 @@ function newTaskId(): string {
   return `task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function normalizeDueAt(raw: unknown): string | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const t = new Date(raw).getTime();
+  return Number.isNaN(t) ? null : raw;
+}
+
 export function createNextActionTask(text = ""): NextActionTask {
-  return { id: newTaskId(), text, done: false };
+  return { id: newTaskId(), text, done: false, dueAt: null };
 }
 
 function normalizeTasks(raw: unknown): NextActionTask[] {
-  if (!Array.isArray(raw)) return [createNextActionTask()];
-  const tasks = raw
+  if (!Array.isArray(raw)) return [];
+  return raw
     .map((item) => {
       if (!item || typeof item !== "object") return null;
       const o = item as Record<string, unknown>;
@@ -36,24 +59,29 @@ function normalizeTasks(raw: unknown): NextActionTask[] {
         id: typeof o.id === "string" && o.id ? o.id : newTaskId(),
         text,
         done: Boolean(o.done),
+        dueAt: normalizeDueAt(o.dueAt),
       } satisfies NextActionTask;
     })
     .filter((t): t is NextActionTask => t !== null);
-  return tasks.length > 0 ? tasks : [createNextActionTask()];
 }
 
 export function parseNextAction(raw: string): NextActionContent {
   const trimmed = (raw ?? "").trim();
   if (!trimmed) {
-    return { mode: "text", text: "", tasks: [createNextActionTask()] };
+    return { text: "", tasks: [] };
   }
 
   if (trimmed.startsWith("{")) {
     try {
-      const parsed = JSON.parse(trimmed) as StoredTasksPayload;
+      const parsed = JSON.parse(trimmed) as StoredPayloadV2 | StoredTasksPayloadV1;
+      if (parsed.v === 2) {
+        return {
+          text: typeof parsed.text === "string" ? parsed.text : "",
+          tasks: normalizeTasks(parsed.tasks),
+        };
+      }
       if (parsed.v === 1 && parsed.mode === "tasks") {
         return {
-          mode: "tasks",
           text: "",
           tasks: normalizeTasks(parsed.tasks),
         };
@@ -63,85 +91,88 @@ export function parseNextAction(raw: string): NextActionContent {
     }
   }
 
-  return {
-    mode: "text",
-    text: raw,
-    tasks: linesToTasks(raw),
-  };
-}
-
-function linesToTasks(text: string): NextActionTask[] {
-  const lines = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines.length === 0) return [createNextActionTask()];
-  return lines.map((line) => createNextActionTask(line));
+  return { text: raw, tasks: [] };
 }
 
 export function serializeNextAction(content: NextActionContent): string {
-  if (content.mode === "text") {
-    return content.text.trim();
-  }
-
+  const text = content.text.trim();
   const tasks = content.tasks
     .map((task) => ({ ...task, text: task.text.trim() }))
     .filter((task) => task.text.length > 0);
 
-  if (tasks.length === 0) return "";
+  if (!text && tasks.length === 0) return "";
 
-  const payload: StoredTasksPayload = {
-    v: 1,
-    mode: "tasks",
+  if (tasks.length === 0) return text;
+
+  const payload: StoredPayloadV2 = {
+    v: 2,
+    text: content.text,
     tasks,
   };
   return JSON.stringify(payload);
 }
 
-export function switchNextActionMode(
-  content: NextActionContent,
-  mode: NextActionContent["mode"],
-): NextActionContent {
-  if (content.mode === mode) return content;
-
-  if (mode === "tasks") {
-    const fromText = content.mode === "text" ? content.text : "";
-    return {
-      mode: "tasks",
-      text: "",
-      tasks: linesToTasks(fromText),
-    };
-  }
-
-  const joined = content.tasks
-    .map((task) => task.text.trim())
-    .filter(Boolean)
-    .join("\n");
-  return {
-    mode: "text",
-    text: joined,
-    tasks: linesToTasks(joined),
-  };
+export function patchNextActionTask(
+  raw: string,
+  taskId: string,
+  patch: Partial<Pick<NextActionTask, "text" | "done" | "dueAt">>,
+): string | null {
+  const content = parseNextAction(raw);
+  const index = content.tasks.findIndex((task) => task.id === taskId);
+  if (index === -1) return null;
+  content.tasks[index] = { ...content.tasks[index], ...patch };
+  return serializeNextAction(content);
 }
 
-export function formatNextActionPreview(raw: string): string {
-  const content = parseNextAction(raw);
-  if (content.mode === "text") {
-    return content.text.trim();
+export function extractCalendarTasks(requests: Request[]): CalendarTaskEntry[] {
+  const entries: CalendarTaskEntry[] = [];
+  for (const request of requests) {
+    if (request.status === "closed") continue;
+    const content = parseNextAction(request.nextAction);
+    for (const task of content.tasks) {
+      if (task.done || !task.dueAt) continue;
+      entries.push({
+        requestId: request.id,
+        requestTitle: request.title,
+        requestPriority: request.priority,
+        task,
+      });
+    }
   }
+  return entries;
+}
 
-  const tasks = content.tasks.filter((task) => task.text.trim());
-  if (tasks.length === 0) return "";
+export function isCalendarTaskOverdue(
+  task: NextActionTask,
+  now: Date = new Date(),
+): boolean {
+  if (task.done || !task.dueAt) return false;
+  return new Date(task.dueAt).getTime() < now.getTime();
+}
 
-  const open = tasks.filter((task) => !task.done);
-  const first = (open[0] ?? tasks[0]).text.trim();
-  const remaining = tasks.length - 1;
+function formatTasksPreview(tasks: NextActionTask[]): string {
+  const withText = tasks.filter((task) => task.text.trim());
+  if (withText.length === 0) return "";
+
+  const open = withText.filter((task) => !task.done);
+  const first = (open[0] ?? withText[0]).text.trim();
+  const remaining = withText.length - 1;
   if (remaining <= 0) return first;
   return `${first} (+${remaining})`;
 }
 
+export function formatNextActionPreview(raw: string): string {
+  const content = parseNextAction(raw);
+  const textPart = content.text.trim();
+  const tasksPart = formatTasksPreview(content.tasks);
+
+  if (textPart && tasksPart) return `${textPart} · ${tasksPart}`;
+  return textPart || tasksPart;
+}
+
 export function nextActionSearchText(raw: string): string {
   const content = parseNextAction(raw);
-  if (content.mode === "text") return content.text;
-  return content.tasks.map((task) => task.text).join(" ");
+  return [content.text, ...content.tasks.map((task) => task.text)]
+    .join(" ")
+    .trim();
 }

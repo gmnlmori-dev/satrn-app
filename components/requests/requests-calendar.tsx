@@ -2,12 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Request } from "@/types/request";
+import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
+import {
+  extractCalendarTasks,
+  isCalendarTaskOverdue,
+} from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
 import {
   addDays,
   addMonths,
   buildMonthGrid,
   buildWeekGrid,
+  groupCalendarTasksByDay,
   groupRequestsByDay,
   startOfMonth,
   startOfWeek,
@@ -27,6 +33,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { RequestsCalendarEvent } from "@/components/requests/requests-calendar-event";
 import { RequestsCalendarDayPanel } from "@/components/requests/requests-calendar-day-panel";
+import { RequestsCalendarTasksPanel } from "@/components/requests/requests-calendar-tasks-panel";
 import type { DefaultRequestsCalendarLayoutPreference } from "@/lib/user-preferences";
 
 const MAX_EVENTS_PER_CELL = 3;
@@ -36,6 +43,11 @@ type CalendarLayout = DefaultRequestsCalendarLayoutPreference;
 type DayOverflow = {
   date: Date;
   requests: Request[];
+};
+
+type DayTasksOverflow = {
+  date: Date;
+  entries: CalendarTaskEntry[];
 };
 
 type Props = {
@@ -66,20 +78,77 @@ function ChevronIcon({ dir }: { dir: "left" | "right" }) {
   );
 }
 
+function ChecklistIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={cn("h-3 w-3 shrink-0", className)}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.75}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+      />
+    </svg>
+  );
+}
+
+function CalendarTasksBadge({
+  count,
+  overdue,
+  onClick,
+}: {
+  count: number;
+  overdue: boolean;
+  onClick: () => void;
+}) {
+  if (count <= 0) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={cn(
+        uiTransition,
+        "inline-flex h-5 min-w-[1.25rem] items-center gap-0.5 rounded-[4px] border px-1 text-[10px] font-medium tabular-nums",
+        overdue
+          ? "border-danger/50 bg-danger-muted/40 text-danger hover:bg-danger-muted/60"
+          : "border-line-default bg-surface text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+      )}
+      aria-label={`${count} task in scadenza`}
+    >
+      <ChecklistIcon />
+      {count}
+    </button>
+  );
+}
+
 /** Altezza minima cella mese: header + 3 eventi compatti + gap. */
 const MONTH_CELL_MIN_H = "min-h-[11rem]";
 
 function MonthCell({
   cell,
   events,
+  tasks,
   onMore,
+  onTasks,
 }: {
   cell: CalendarCell;
   events: Request[];
+  tasks: CalendarTaskEntry[];
   onMore: (payload: DayOverflow) => void;
+  onTasks: (payload: DayTasksOverflow) => void;
 }) {
   const visible = events.slice(0, MAX_EVENTS_PER_CELL);
   const hidden = events.length - visible.length;
+  const taskOverdue = tasks.some((entry) => isCalendarTaskOverdue(entry.task));
 
   return (
     <div
@@ -101,9 +170,16 @@ function MonthCell({
         )}
       >
         <span>{cell.date.getDate()}</span>
-        {events.length > 0 ? (
-          <span className="text-[10px] text-fg-tertiary">{events.length}</span>
-        ) : null}
+        <div className="flex items-center gap-1">
+          <CalendarTasksBadge
+            count={tasks.length}
+            overdue={taskOverdue}
+            onClick={() => onTasks({ date: cell.date, entries: tasks })}
+          />
+          {events.length > 0 ? (
+            <span className="text-[10px] text-fg-tertiary">{events.length}</span>
+          ) : null}
+        </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
         {visible.map((r) => (
@@ -131,10 +207,16 @@ function MonthCell({
 function WeekColumn({
   cell,
   events,
+  tasks,
+  onTasks,
 }: {
   cell: CalendarCell;
   events: Request[];
+  tasks: CalendarTaskEntry[];
+  onTasks: (payload: DayTasksOverflow) => void;
 }) {
+  const taskOverdue = tasks.some((entry) => isCalendarTaskOverdue(entry.task));
+
   return (
     <div
       className={cn(
@@ -151,7 +233,14 @@ function WeekColumn({
         <span className="block uppercase tracking-wide">
           {formatWeekdayShort(cell.date)}
         </span>
-        <span className="tabular-nums">{cell.date.getDate()}</span>
+        <div className="mt-0.5 flex items-center justify-center gap-1.5">
+          <span className="tabular-nums">{cell.date.getDate()}</span>
+          <CalendarTasksBadge
+            count={tasks.length}
+            overdue={taskOverdue}
+            onClick={() => onTasks({ date: cell.date, entries: tasks })}
+          />
+        </div>
       </div>
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-1.5">
         {events.length === 0 ? (
@@ -182,6 +271,7 @@ export function RequestsCalendar({
     return parseMonthParam(monthParam) ?? today;
   });
   const [dayPanel, setDayPanel] = useState<DayOverflow | null>(null);
+  const [tasksPanel, setTasksPanel] = useState<DayTasksOverflow | null>(null);
 
   useEffect(() => {
     const parsed = parseMonthParam(monthParam);
@@ -207,7 +297,25 @@ export function RequestsCalendar({
     [onMonthParamChange],
   );
 
+  const calendarTasks = useMemo(
+    () => extractCalendarTasks(requests),
+    [requests],
+  );
   const byDay = useMemo(() => groupRequestsByDay(requests), [requests]);
+  const tasksByDay = useMemo(
+    () => groupCalendarTasksByDay(calendarTasks),
+    [calendarTasks],
+  );
+
+  const requestDeadlineCount = useMemo(
+    () => requests.filter((request) => request.nextActionAt != null).length,
+    [requests],
+  );
+
+  const hasAnyDeadlines = useMemo(
+    () => requestDeadlineCount > 0 || calendarTasks.length > 0,
+    [requestDeadlineCount, calendarTasks.length],
+  );
 
   const cells = useMemo(
     () =>
@@ -227,13 +335,14 @@ export function RequestsCalendar({
   }, [layout, anchor]);
 
   const eventsInView = useMemo(() => {
-    const keys = new Set(cells.map((c) => c.dateKey));
+    const keys = new Set(cells.map((cell) => cell.dateKey));
     let n = 0;
     for (const key of keys) {
       n += byDay.get(key)?.length ?? 0;
+      n += tasksByDay.get(key)?.length ?? 0;
     }
     return n;
-  }, [cells, byDay]);
+  }, [cells, byDay, tasksByDay]);
 
   const navigate = useCallback(
     (delta: number) => {
@@ -255,12 +364,12 @@ export function RequestsCalendar({
     onMonthParamChange(monthParamFromDate(d));
   }, [layout, onMonthParamChange]);
 
-  if (requests.length === 0 && filteredCount > 0) {
+  if (!hasAnyDeadlines && filteredCount > 0) {
     return (
       <div className={cn(uiCard, "p-6")}>
         <AppEmptyHint
           title="Nessuna scadenza da mostrare"
-          description="Le richieste filtrate non hanno una data di prossima azione. Imposta la scadenza nel dettaglio o passa alla vista Elenco."
+          description="Imposta la scadenza generale della prossima azione o aggiungi scadenze ai task in checklist, oppure passa alla vista Elenco."
         />
       </div>
     );
@@ -280,7 +389,7 @@ export function RequestsCalendar({
         <div className={cn(uiCard, "p-6")}>
           <AppEmptyHint
             title="Nessuna scadenza in questo periodo"
-            description="Prova un altro mese o allarga i filtri. Le richieste senza data non compaiono in calendario."
+            description="Prova un altro mese o allarga i filtri."
           />
         </div>
       </div>
@@ -291,9 +400,19 @@ export function RequestsCalendar({
     <div className="space-y-3">
       <p className="text-sm text-fg-secondary">
         <span className="tabular-nums font-semibold text-fg-primary">
-          {requests.length}
+          {requestDeadlineCount}
         </span>{" "}
-        in calendario
+        scadenze richieste
+        {calendarTasks.length > 0 ? (
+          <>
+            {" "}
+            ·{" "}
+            <span className="tabular-nums font-semibold text-fg-primary">
+              {calendarTasks.length}
+            </span>{" "}
+            task scadenti
+          </>
+        ) : null}
         {withoutDeadlineCount > 0 ? (
           <>
             {" "}
@@ -301,7 +420,7 @@ export function RequestsCalendar({
             <span className="tabular-nums font-semibold text-fg-primary">
               {withoutDeadlineCount}
             </span>{" "}
-            senza scadenza (solo in elenco)
+            senza scadenza generale
           </>
         ) : null}
       </p>
@@ -338,7 +457,9 @@ export function RequestsCalendar({
                   key={cell.dateKey}
                   cell={cell}
                   events={byDay.get(cell.dateKey) ?? []}
+                  tasks={tasksByDay.get(cell.dateKey) ?? []}
                   onMore={setDayPanel}
+                  onTasks={setTasksPanel}
                 />
               ))}
             </div>
@@ -354,6 +475,8 @@ export function RequestsCalendar({
                 key={cell.dateKey}
                 cell={cell}
                 events={byDay.get(cell.dateKey) ?? []}
+                tasks={tasksByDay.get(cell.dateKey) ?? []}
+                onTasks={setTasksPanel}
               />
             ))}
           </div>
@@ -365,6 +488,19 @@ export function RequestsCalendar({
           date={dayPanel.date}
           requests={dayPanel.requests}
           onClose={() => setDayPanel(null)}
+        />
+      ) : null}
+
+      {tasksPanel ? (
+        <RequestsCalendarTasksPanel
+          date={tasksPanel.date}
+          entries={tasksPanel.entries}
+          onClose={() => setTasksPanel(null)}
+          onEntriesChange={(entries) =>
+            setTasksPanel((prev) =>
+              prev ? { ...prev, entries } : null,
+            )
+          }
         />
       ) : null}
     </div>

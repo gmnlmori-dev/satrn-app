@@ -363,7 +363,7 @@ export function RequestsWorkspace({
             <RequestsTable requests={forList} />
           ) : (
             <RequestsCalendar
-              requests={forCalendar}
+              requests={filtered}
               filteredCount={filtered.length}
               withoutDeadlineCount={withoutDeadlineCount}
               monthParam={urlMonth}

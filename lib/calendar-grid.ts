@@ -1,3 +1,4 @@
+import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import type { Request, RequestPriority } from "@/types/request";
 import { toDateKey, toDateKeyFromIso } from "@/lib/date";
 
@@ -100,6 +101,36 @@ export function groupRequestsByDay(requests: Request[]): Map<string, Request[]> 
   }
   for (const [key, list] of map) {
     map.set(key, sortDayEvents(list));
+  }
+  return map;
+}
+
+export function sortDayTasks(entries: CalendarTaskEntry[]): CalendarTaskEntry[] {
+  return [...entries].sort((a, b) => {
+    const pa = priorityRank[a.requestPriority];
+    const pb = priorityRank[b.requestPriority];
+    if (pa !== pb) return pa - pb;
+    const ta = a.task.dueAt ? new Date(a.task.dueAt).getTime() : 0;
+    const tb = b.task.dueAt ? new Date(b.task.dueAt).getTime() : 0;
+    if (ta !== tb) return ta - tb;
+    return a.task.text.localeCompare(b.task.text, "it");
+  });
+}
+
+export function groupCalendarTasksByDay(
+  entries: CalendarTaskEntry[],
+): Map<string, CalendarTaskEntry[]> {
+  const map = new Map<string, CalendarTaskEntry[]>();
+  for (const entry of entries) {
+    if (entry.task.done || !entry.task.dueAt) continue;
+    const key = toDateKeyFromIso(entry.task.dueAt);
+    if (!key) continue;
+    const list = map.get(key) ?? [];
+    list.push(entry);
+    map.set(key, list);
+  }
+  for (const [key, list] of map) {
+    map.set(key, sortDayTasks(list));
   }
   return map;
 }
