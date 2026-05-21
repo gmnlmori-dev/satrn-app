@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { createRequest } from "@/lib/actions/create-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
@@ -152,6 +153,11 @@ export function NewRequestForm({
 
           <FormSection title="Classificazione">
             <div className="grid gap-3 sm:grid-cols-2">
+              <AdminCreateTeamSelect
+                idPrefix={p("create")}
+                disabled={pending}
+                inputClass={inputClass}
+              />
               <div>
                 <label htmlFor={p("status")} className={uiFormLabel}>
                   Stato iniziale

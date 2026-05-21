@@ -26,6 +26,12 @@ export async function createInboxItem(
     return { ok: false, message: "Sessione non valida." };
   }
 
+  let team_id = me.teamId;
+  if (me.role === "admin") {
+    const teamIdFromForm = String(fd.get("teamId") ?? "").trim();
+    if (teamIdFromForm) team_id = teamIdFromForm;
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("inbox_items")
@@ -36,7 +42,7 @@ export async function createInboxItem(
       sender_email,
       raw_content,
       status: "new",
-      team_id: me.teamId,
+      team_id,
     })
     .select("id")
     .single();

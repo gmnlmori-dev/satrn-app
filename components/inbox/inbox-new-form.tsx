@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
+import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { createInboxItem } from "@/lib/actions/create-inbox-item";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { Panel } from "@/components/ui/panel";
@@ -89,6 +90,11 @@ export function InboxNewForm({
     >
       <FormSection title="Oggetto e provenienza">
         <div className="space-y-3">
+          <AdminCreateTeamSelect
+            idPrefix={p("create")}
+            disabled={pending}
+            inputClass={inputClass}
+          />
           <div>
             <label htmlFor={p("subject")} className={uiFormLabel}>
               Oggetto / titolo <span className="text-danger">*</span>

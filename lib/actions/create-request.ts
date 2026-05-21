@@ -63,13 +63,10 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     return { ok: false, message: "Sessione non valida." };
   }
 
-  const teamIdFromForm = String(fd.get("teamId") ?? "").trim();
   let team_id = me.teamId;
-  if (teamIdFromForm) {
-    if (me.role !== "admin" && teamIdFromForm !== me.teamId) {
-      return { ok: false, message: "Team non consentito per questa operazione." };
-    }
-    team_id = teamIdFromForm;
+  if (me.role === "admin") {
+    const teamIdFromForm = String(fd.get("teamId") ?? "").trim();
+    if (teamIdFromForm) team_id = teamIdFromForm;
   }
 
   const supabase = await createSupabaseServerClient();
