@@ -4,12 +4,16 @@ import { uiSectionTitle } from "@/lib/typography";
 
 export function DashboardOperationalStrip({
   counts,
+  teamScoped = false,
 }: {
   counts: DashboardOperationalCounts;
+  teamScoped?: boolean;
 }) {
   return (
     <section className="space-y-2">
-      <h2 className={uiSectionTitle}>Tutta la coda</h2>
+      <h2 className={uiSectionTitle}>
+        {teamScoped ? "Coda del team" : "Tutta la coda"}
+      </h2>
       <MetricRow columns={4}>
         <StatTile
           label="In ritardo"

@@ -2,6 +2,11 @@ import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import { requestActivityRowToActivity, requestRowToRequest } from "@/lib/supabase/mappers";
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  applyTeamIdFilter,
+  scopesToTeam,
+  type TeamQueryScope,
+} from "@/lib/supabase/team-scope";
 import type { RequestActivityRow, RequestRowWithAssignee } from "@/types/database";
 import type { RequestActivity } from "@/types/activity";
 import type { Request } from "@/types/request";
@@ -27,13 +32,17 @@ function requestCountQuery(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   bounds: ReturnType<typeof getFollowUpWindowBounds>,
   window: "overdue" | "today" | "upcoming",
+  scope: TeamQueryScope,
   assignedUserId?: string,
 ) {
   const { startTodayIso, startTomorrowIso, endWeekIso } = bounds;
-  let q = supabase
-    .from("requests")
-    .select("*", { count: "exact", head: true })
-    .neq("status", "closed");
+  let q = applyTeamIdFilter(
+    supabase
+      .from("requests")
+      .select("*", { count: "exact", head: true })
+      .neq("status", "closed"),
+    scope,
+  );
 
   if (assignedUserId) {
     q = q.eq("assigned_user_id", assignedUserId);
@@ -55,20 +64,27 @@ function requestCountQuery(
     .lte("next_action_at", endWeekIso);
 }
 
-/** Conteggi allineati alla vista «Da seguire» (stessi filtri). */
-export async function getDashboardOperationalCounts(): Promise<DashboardOperationalCounts> {
+/** Conteggi allineati alla vista «Da seguire» (stessi filtri), scoped per team. */
+export async function getDashboardOperationalCounts(
+  scope: TeamQueryScope,
+): Promise<DashboardOperationalCounts> {
   const supabase = await createSupabaseServerClient();
   const bounds = getFollowUpWindowBounds();
 
-  const [overdue, today, upcoming, inbox] = await Promise.all([
-    requestCountQuery(supabase, bounds, "overdue"),
-    requestCountQuery(supabase, bounds, "today"),
-    requestCountQuery(supabase, bounds, "upcoming"),
+  const inboxQuery = applyTeamIdFilter(
     supabase
       .from("inbox_items")
       .select("*", { count: "exact", head: true })
       .in("status", ["new", "reviewed"])
       .is("linked_request_id", null),
+    scope,
+  );
+
+  const [overdue, today, upcoming, inbox] = await Promise.all([
+    requestCountQuery(supabase, bounds, "overdue", scope),
+    requestCountQuery(supabase, bounds, "today", scope),
+    requestCountQuery(supabase, bounds, "upcoming", scope),
+    inboxQuery,
   ]);
 
   assertNoError("dashboard overdue count", overdue.error);
@@ -84,9 +100,10 @@ export async function getDashboardOperationalCounts(): Promise<DashboardOperatio
   };
 }
 
-/** Stesse finestre temporali, solo richieste assegnate all’utente. */
+/** Stesse finestre temporali, solo richieste assegnate all’utente (nel proprio team). */
 export async function getDashboardMineCounts(
   userId: string,
+  scope: TeamQueryScope,
 ): Promise<DashboardMineCounts | null> {
   if (!userId) return null;
 
@@ -94,9 +111,9 @@ export async function getDashboardMineCounts(
   const bounds = getFollowUpWindowBounds();
 
   const [overdue, today, upcoming] = await Promise.all([
-    requestCountQuery(supabase, bounds, "overdue", userId),
-    requestCountQuery(supabase, bounds, "today", userId),
-    requestCountQuery(supabase, bounds, "upcoming", userId),
+    requestCountQuery(supabase, bounds, "overdue", scope, userId),
+    requestCountQuery(supabase, bounds, "today", scope, userId),
+    requestCountQuery(supabase, bounds, "upcoming", scope, userId),
   ]);
 
   assertNoError("dashboard mine overdue count", overdue.error);
@@ -114,21 +131,36 @@ export type DashboardActivityItem = RequestActivity & {
   requestTitle: string | null;
 };
 
-/** Ultime attività globali (timeline), con titolo richiesta se disponibile. */
+/** Ultime attività (timeline), con titolo richiesta se disponibile. */
 export async function getRecentActivitiesGlobal(
+  scope: TeamQueryScope,
   limit = 10,
 ): Promise<DashboardActivityItem[]> {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("request_activities")
-    .select(
-      `
+  const select = scopesToTeam(scope)
+    ? `
+      *,
+      requests!inner (
+        title,
+        team_id
+      )
+    `
+    : `
       *,
       requests ( title )
-    `,
-    )
+    `;
+
+  let q = supabase
+    .from("request_activities")
+    .select(select)
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (scopesToTeam(scope) && scope.teamId) {
+    q = q.eq("requests.team_id", scope.teamId);
+  }
+
+  const { data, error } = await q;
 
   assertNoError("getRecentActivitiesGlobal", error);
 
@@ -143,26 +175,31 @@ export async function getRecentActivitiesGlobal(
 
 /** Richieste aperte ordinate per ultimo aggiornamento. */
 export async function getRecentlyUpdatedRequests(
+  scope: TeamQueryScope,
   limit = 6,
 ): Promise<Request[]> {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("requests")
-    .select(REQUEST_SELECT_WITH_ASSIGNEE)
-    .neq("status", "closed")
-    .order("updated_at", { ascending: false })
-    .limit(limit);
+  const { data, error } = await applyTeamIdFilter(
+    supabase
+      .from("requests")
+      .select(REQUEST_SELECT_WITH_ASSIGNEE)
+      .neq("status", "closed")
+      .order("updated_at", { ascending: false })
+      .limit(limit),
+    scope,
+  );
 
   assertNoError("getRecentlyUpdatedRequests", error);
   return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
-/** Almeno una richiesta nel DB (per empty state). */
-export async function getRequestsTotalCount(): Promise<number> {
+/** Almeno una richiesta visibile (per empty state). */
+export async function getRequestsTotalCount(scope: TeamQueryScope): Promise<number> {
   const supabase = await createSupabaseServerClient();
-  const { count, error } = await supabase
-    .from("requests")
-    .select("*", { count: "exact", head: true });
+  const { count, error } = await applyTeamIdFilter(
+    supabase.from("requests").select("*", { count: "exact", head: true }),
+    scope,
+  );
 
   assertNoError("getRequestsTotalCount", error);
   return count ?? 0;

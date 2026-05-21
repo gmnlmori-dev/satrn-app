@@ -44,7 +44,7 @@ export function ThemePreferencePanel({ className }: { className?: string }) {
     <SettingsGroup
       className={className}
       title="Aspetto"
-      footer="La scelta vale per l’area autenticata su questo browser. La pagina di accesso resta scura."
+      footer="La scelta vale su questo browser, inclusa la pagina di accesso."
     >
       <SettingsRow
         label="Tema chiaro"

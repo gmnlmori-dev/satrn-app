@@ -23,7 +23,7 @@ export function StatTile({
       <p
         className={cn(
           "mt-1 text-2xl font-semibold tabular-nums tracking-tight",
-          variant === "danger" && "text-danger",
+          variant === "danger" && value > 0 && "text-danger",
           variant === "accent" && "text-accent",
           variant === "default" && "text-fg-primary",
         )}

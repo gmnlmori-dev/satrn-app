@@ -24,14 +24,17 @@ const DASHBOARD_FEED_LIMIT = 5;
 export default async function DashboardPage() {
   const profile = await getCurrentProfileSummary();
   const userId = profile?.userId ?? "";
+  const teamScope = profile
+    ? { role: profile.role, teamId: profile.teamId }
+    : { role: "operator" as const, teamId: "" };
 
   const [counts, mineCounts, activities, recentRequests, totalRequests] =
     await Promise.all([
-      getDashboardOperationalCounts(),
-      getDashboardMineCounts(userId),
-      getRecentActivitiesGlobal(DASHBOARD_FEED_LIMIT),
-      getRecentlyUpdatedRequests(DASHBOARD_FEED_LIMIT),
-      getRequestsTotalCount(),
+      getDashboardOperationalCounts(teamScope),
+      getDashboardMineCounts(userId, teamScope),
+      getRecentActivitiesGlobal(teamScope, DASHBOARD_FEED_LIMIT),
+      getRecentlyUpdatedRequests(teamScope, DASHBOARD_FEED_LIMIT),
+      getRequestsTotalCount(teamScope),
     ]);
 
   return (
@@ -51,7 +54,10 @@ export default async function DashboardPage() {
       ) : (
         <>
           {mineCounts ? <DashboardMyWorkStrip counts={mineCounts} /> : null}
-          <DashboardOperationalStrip counts={counts} />
+          <DashboardOperationalStrip
+            counts={counts}
+            teamScoped={teamScope.role !== "admin"}
+          />
           <div className="grid gap-5 lg:grid-cols-2">
             <DashboardRecentActivities items={activities} />
             <DashboardRecentPanel items={recentRequests} />
