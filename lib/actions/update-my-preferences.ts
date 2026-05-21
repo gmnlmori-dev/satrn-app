@@ -44,6 +44,14 @@ export async function updateMyPreferences(
     .eq("user_id", profile.userId);
 
   if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("preferences") && msg.includes("schema cache")) {
+      return {
+        ok: false,
+        message:
+          "Preferenza non salvabile: manca la colonna preferences su profiles. Esegui supabase/sql/profile_preferences.sql nel SQL Editor Supabase.",
+      };
+    }
     return { ok: false, message: error.message };
   }
 

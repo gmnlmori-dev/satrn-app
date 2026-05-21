@@ -6,10 +6,7 @@ import { ThemeToggle } from "@/components/app/theme-toggle";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
 import { appRoleLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
-import {
-  uiFocusRingInset,
-  uiTransition,
-} from "@/lib/ui-classes";
+import { uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 function userInitial(fullName: string, email: string): string {
@@ -47,10 +44,29 @@ function SettingsGlyph({ active }: { active: boolean }) {
   );
 }
 
+function LogoutGlyph() {
+  return (
+    <svg
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.75}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+      />
+    </svg>
+  );
+}
+
 const footerActionClass = cn(
   uiTransition,
   uiFocusRingInset,
-  "inline-flex min-h-8 flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-fg-secondary",
+  "flex min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] font-medium leading-none text-fg-secondary",
   "hover:bg-surface hover:text-fg-primary",
 );
 
@@ -63,8 +79,8 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
   if (!me) {
     return (
       <div className="shrink-0 border-t border-line-default p-2.5">
-        <div className="flex items-center justify-end gap-1 rounded-lg border border-line-default bg-elevated/40 p-2">
-          <ThemeToggle className="flex-1 justify-center" />
+        <div className="flex items-center justify-center rounded-lg border border-line-default bg-elevated/40 p-2">
+          <ThemeToggle compact className="h-9 w-9 justify-center px-0" />
         </div>
       </div>
     );
@@ -77,7 +93,7 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="shrink-0 border-t border-line-default p-2.5">
-      <div className="overflow-hidden rounded-lg border border-line-default bg-elevated/40">
+      <div className="rounded-lg border border-line-default bg-elevated/40">
         <div className="flex items-center gap-2.5 px-2.5 py-2.5">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent"
@@ -97,7 +113,7 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
 
-        <div className="flex items-stretch gap-0.5 border-t border-line-default bg-sidebar/60 p-1">
+        <div className="grid grid-cols-3 gap-0.5 border-t border-line-default bg-sidebar/60 p-1">
           <Link
             href="/app/settings"
             onClick={onNavigate}
@@ -106,11 +122,12 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
               settingsActive && "bg-surface text-fg-primary",
             )}
             aria-current={settingsActive ? "page" : undefined}
+            title="Impostazioni"
           >
             <SettingsGlyph active={settingsActive} />
-            <span className="truncate">Impostazioni</span>
+            <span className="max-w-full truncate">Impost.</span>
           </Link>
-          <ThemeToggle className={cn(footerActionClass, "flex-1")} />
+          <ThemeToggle compact className={footerActionClass} />
           <button
             type="button"
             onClick={async () => {
@@ -119,9 +136,11 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
               router.push("/login");
               router.refresh();
             }}
-            className={cn(footerActionClass, "text-fg-tertiary hover:text-danger")}
+            className={cn(footerActionClass, "hover:text-danger")}
+            title="Esci"
           >
-            Esci
+            <LogoutGlyph />
+            <span className="max-w-full truncate">Esci</span>
           </button>
         </div>
       </div>

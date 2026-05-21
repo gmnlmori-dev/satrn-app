@@ -7,6 +7,12 @@
 -- Crea team "Generale", backfill team_id, helper RLS, policy per team.
 
 -- ---------------------------------------------------------------------------
+-- Preferenze profilo (idempotente; vedi anche profile_preferences.sql)
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS preferences jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+-- ---------------------------------------------------------------------------
 -- Tabella teams
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.teams (
