@@ -3,8 +3,8 @@ import { requestActivityRowToActivity, requestRowToRequest } from "@/lib/supabas
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
-  applyTeamIdFilter,
   scopesToTeam,
+  teamIdForScope,
   type TeamQueryScope,
 } from "@/lib/supabase/team-scope";
 import type { RequestActivityRow, RequestRowWithAssignee } from "@/types/database";
@@ -36,13 +36,16 @@ function requestCountQuery(
   assignedUserId?: string,
 ) {
   const { startTodayIso, startTomorrowIso, endWeekIso } = bounds;
-  let q = applyTeamIdFilter(
-    supabase
-      .from("requests")
-      .select("*", { count: "exact", head: true })
-      .neq("status", "closed"),
-    scope,
-  );
+  const teamId = teamIdForScope(scope);
+
+  let q = supabase
+    .from("requests")
+    .select("*", { count: "exact", head: true })
+    .neq("status", "closed");
+
+  if (teamId) {
+    q = q.eq("team_id", teamId);
+  }
 
   if (assignedUserId) {
     q = q.eq("assigned_user_id", assignedUserId);
@@ -70,15 +73,17 @@ export async function getDashboardOperationalCounts(
 ): Promise<DashboardOperationalCounts> {
   const supabase = await createSupabaseServerClient();
   const bounds = getFollowUpWindowBounds();
+  const teamId = teamIdForScope(scope);
 
-  const inboxQuery = applyTeamIdFilter(
-    supabase
-      .from("inbox_items")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["new", "reviewed"])
-      .is("linked_request_id", null),
-    scope,
-  );
+  let inboxQuery = supabase
+    .from("inbox_items")
+    .select("*", { count: "exact", head: true })
+    .in("status", ["new", "reviewed"])
+    .is("linked_request_id", null);
+
+  if (teamId) {
+    inboxQuery = inboxQuery.eq("team_id", teamId);
+  }
 
   const [overdue, today, upcoming, inbox] = await Promise.all([
     requestCountQuery(supabase, bounds, "overdue", scope),
@@ -137,7 +142,8 @@ export async function getRecentActivitiesGlobal(
   limit = 10,
 ): Promise<DashboardActivityItem[]> {
   const supabase = await createSupabaseServerClient();
-  const select = scopesToTeam(scope)
+  const teamId = teamIdForScope(scope);
+  const select = teamId
     ? `
       *,
       requests!inner (
@@ -156,8 +162,8 @@ export async function getRecentActivitiesGlobal(
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (scopesToTeam(scope) && scope.teamId) {
-    q = q.eq("requests.team_id", scope.teamId);
+  if (teamId) {
+    q = q.eq("requests.team_id", teamId);
   }
 
   const { data, error } = await q;
@@ -179,15 +185,20 @@ export async function getRecentlyUpdatedRequests(
   limit = 6,
 ): Promise<Request[]> {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await applyTeamIdFilter(
-    supabase
-      .from("requests")
-      .select(REQUEST_SELECT_WITH_ASSIGNEE)
-      .neq("status", "closed")
-      .order("updated_at", { ascending: false })
-      .limit(limit),
-    scope,
-  );
+  const teamId = teamIdForScope(scope);
+
+  let q = supabase
+    .from("requests")
+    .select(REQUEST_SELECT_WITH_ASSIGNEE)
+    .neq("status", "closed")
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  if (teamId) {
+    q = q.eq("team_id", teamId);
+  }
+
+  const { data, error } = await q;
 
   assertNoError("getRecentlyUpdatedRequests", error);
   return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
@@ -196,10 +207,15 @@ export async function getRecentlyUpdatedRequests(
 /** Almeno una richiesta visibile (per empty state). */
 export async function getRequestsTotalCount(scope: TeamQueryScope): Promise<number> {
   const supabase = await createSupabaseServerClient();
-  const { count, error } = await applyTeamIdFilter(
-    supabase.from("requests").select("*", { count: "exact", head: true }),
-    scope,
-  );
+  const teamId = teamIdForScope(scope);
+
+  let q = supabase.from("requests").select("*", { count: "exact", head: true });
+
+  if (teamId) {
+    q = q.eq("team_id", teamId);
+  }
+
+  const { count, error } = await q;
 
   assertNoError("getRequestsTotalCount", error);
   return count ?? 0;

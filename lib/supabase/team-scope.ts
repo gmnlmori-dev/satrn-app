@@ -10,11 +10,10 @@ export function scopesToTeam(scope: TeamQueryScope): boolean {
   return scope.role !== "admin";
 }
 
-export function applyTeamIdFilter<
-  T extends { eq: (column: string, value: string) => T },
->(query: T, scope: TeamQueryScope, column = "team_id"): T {
+/** team_id da applicare alle query, o null se admin / senza team. */
+export function teamIdForScope(scope: TeamQueryScope): string | null {
   if (scopesToTeam(scope) && scope.teamId) {
-    return query.eq(column, scope.teamId);
+    return scope.teamId;
   }
-  return query;
+  return null;
 }
