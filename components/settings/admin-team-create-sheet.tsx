@@ -2,19 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { AdminSlideOver } from "@/components/settings/admin-slide-over";
-import { AdminUserCreateForm } from "@/components/settings/admin-user-create-form";
+import { AdminTeamCreateForm } from "@/components/settings/admin-team-create-form";
 
-import type { ProfileSummary } from "@/types/profile";
-import type { TeamSelectOption } from "@/types/team";
-
-export function AdminUserCreateSheet({
+export function AdminTeamCreateSheet({
   open,
   onClose,
-  teams,
 }: {
   open: boolean;
   onClose: () => void;
-  teams: TeamSelectOption[];
 }) {
   const router = useRouter();
 
@@ -22,11 +17,10 @@ export function AdminUserCreateSheet({
     <AdminSlideOver
       open={open}
       onClose={onClose}
-      title="Nuovo utente"
-      description="Crea un account di accesso senza uscire dalla schermata corrente."
+      title="Nuovo team"
+      description="Crea un team per isolare utenti, richieste e inbox."
     >
-      <AdminUserCreateForm
-        teams={teams}
+      <AdminTeamCreateForm
         onCancel={onClose}
         onSuccess={() => {
           onClose();

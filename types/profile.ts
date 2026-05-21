@@ -9,6 +9,8 @@ export type ProfileSummary = {
   fullName: string;
   role: AppRole;
   isActive: boolean;
+  teamId: string;
+  teamName?: string;
   preferences: UserPreferences;
 };
 

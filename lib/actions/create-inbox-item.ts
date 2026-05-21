@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type CreateInboxItemResult =
@@ -20,6 +21,11 @@ export async function createInboxItem(
     return { ok: false, message: "Il titolo (oggetto) è obbligatorio." };
   }
 
+  const me = await getCurrentProfileSummary();
+  if (!me?.userId || !me.isActive || !me.teamId) {
+    return { ok: false, message: "Sessione non valida." };
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("inbox_items")
@@ -30,6 +36,7 @@ export async function createInboxItem(
       sender_email,
       raw_content,
       status: "new",
+      team_id: me.teamId,
     })
     .select("id")
     .single();

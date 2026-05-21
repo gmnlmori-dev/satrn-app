@@ -47,7 +47,7 @@ export async function updateRequestAssignment(
 
   const { data: current, error: loadErr } = await supabase
     .from("requests")
-    .select("assigned_user_id")
+    .select("assigned_user_id, team_id")
     .eq("id", requestId)
     .maybeSingle();
 
@@ -55,6 +55,7 @@ export async function updateRequestAssignment(
   if (!current) return { ok: false, message: "Richiesta non trovata." };
 
   const beforeId = current.assigned_user_id as string | null;
+  const requestTeamId = current.team_id as string;
   const normNext = nextAssignedUserId === "" ? null : nextAssignedUserId;
   if (beforeId === normNext) {
     const { data: unchanged } = await supabase
@@ -77,7 +78,7 @@ export async function updateRequestAssignment(
   if (normNext) {
     const { data: tgt, error: tgtErr } = await supabase
       .from("profiles")
-      .select("full_name, email, is_active")
+      .select("full_name, email, is_active, team_id")
       .eq("user_id", normNext)
       .maybeSingle();
 
@@ -86,6 +87,12 @@ export async function updateRequestAssignment(
     }
     if (!(tgt as { is_active: boolean }).is_active) {
       return { ok: false, message: "L’utente selezionato non è attivo." };
+    }
+    if ((tgt as { team_id: string }).team_id !== requestTeamId) {
+      return {
+        ok: false,
+        message: "L’utente selezionato non appartiene al team della richiesta.",
+      };
     }
     targetProfile = {
       full_name: (tgt as { full_name: string }).full_name ?? null,

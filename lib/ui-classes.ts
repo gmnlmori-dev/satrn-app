@@ -78,3 +78,52 @@ export const uiLink = cn(
   uiTransition,
   "text-accent underline-offset-2 hover:underline",
 );
+
+/** Layout condiviso slide-over (Nuova richiesta, Nuovo inbox, Nuovo utente, …). */
+export const slideOverPanel = cn(
+  "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)]",
+  "top-12",
+  "z-[55] w-full max-w-xl md:z-[45] md:max-w-none md:w-[min(51.25rem,100vw)]",
+);
+
+export const slideOverBackdrop = cn(
+  "fixed bottom-0 right-0 z-40 top-12 left-0 md:left-52 bg-canvas/70",
+);
+
+export const slideOverInner = cn(
+  "flex min-h-0 flex-1 flex-col pl-5 pr-4 sm:pr-5 md:pl-[calc(14rem+1.25rem)]",
+);
+
+/** Header allineato al contenuto form (senza px extra). */
+export const slideOverHeader = cn(
+  "flex shrink-0 items-start justify-between gap-3 border-b border-line-default py-3.5 sm:py-4",
+);
+
+export const slideOverBody = cn(
+  "flex min-h-0 flex-1 flex-col overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:pt-4",
+);
+
+export const slideOverTitle = cn(
+  "text-lg font-semibold tracking-tight text-fg-primary",
+);
+
+export const slideOverDescription = cn(
+  "mt-1 max-w-lg text-sm leading-relaxed text-fg-secondary",
+);
+
+/** Campi filtro toolbar — flex wrap, larghezze minime per evitare troncamento select. */
+export const uiFilterFieldsRow = cn("flex w-full flex-wrap items-end gap-4");
+
+export const uiFilterField = cn(
+  "flex w-full min-w-[min(100%,11.5rem)] flex-1 flex-col sm:w-auto sm:max-w-[15rem]",
+);
+
+export const uiFilterFieldWide = cn(
+  "flex w-full min-w-[min(100%,15rem)] flex-1 flex-col sm:w-auto sm:max-w-[20rem]",
+);
+
+export const uiFilterFieldSort = cn(
+  "flex w-full min-w-[min(100%,17rem)] flex-1 flex-col sm:w-auto sm:max-w-[22rem]",
+);
+
+export const uiFilterSelect = cn(uiControl, "max-w-none");

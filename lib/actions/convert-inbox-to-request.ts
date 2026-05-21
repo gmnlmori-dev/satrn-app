@@ -28,6 +28,8 @@ export async function convertInboxToRequest(
     };
   }
 
+  fd.set("teamId", item.teamId);
+
   const result = await createRequest(fd);
   if (!result.ok) {
     return result;

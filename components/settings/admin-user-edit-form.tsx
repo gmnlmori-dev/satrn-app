@@ -6,6 +6,7 @@ import { adminUpdateProfile } from "@/lib/actions/update-profile-admin";
 import {
   AdminFormSection,
   AdminUserRoleFields,
+  AdminUserTeamFields,
   RequiredMark,
   adminUserInputClass,
   useAdminFormIds,
@@ -14,13 +15,16 @@ import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 import type { AppRole, ProfileSummary } from "@/types/profile";
+import type { TeamSelectOption } from "@/types/team";
 
 export function AdminUserEditForm({
   user,
+  teams,
   onSuccess,
   onCancel,
 }: {
   user: ProfileSummary;
+  teams: TeamSelectOption[];
   onSuccess: () => void;
   onCancel: () => void;
 }) {
@@ -31,6 +35,7 @@ export function AdminUserEditForm({
   const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState<AppRole>(user.role);
   const [isActive, setIsActive] = useState(user.isActive);
+  const [teamId, setTeamId] = useState(user.teamId);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
@@ -55,6 +60,7 @@ export function AdminUserEditForm({
         email,
         role,
         is_active: isActive,
+        team_id: teamId,
       });
       if (!profileResult.ok) {
         setError(profileResult.message);
@@ -116,14 +122,23 @@ export function AdminUserEditForm({
           </AdminFormSection>
 
           <AdminFormSection title="Permessi">
-            <AdminUserRoleFields
-              idPrefix={p("fields")}
-              role={role}
-              isActive={isActive}
-              onRoleChange={setRole}
-              onActiveChange={setIsActive}
-              disabled={pending}
-            />
+            <div className="space-y-3">
+              <AdminUserTeamFields
+                idPrefix={p("fields")}
+                teamId={teamId}
+                teams={teams}
+                onTeamChange={setTeamId}
+                disabled={pending}
+              />
+              <AdminUserRoleFields
+                idPrefix={p("fields")}
+                role={role}
+                isActive={isActive}
+                onRoleChange={setRole}
+                onActiveChange={setIsActive}
+                disabled={pending}
+              />
+            </div>
           </AdminFormSection>
 
           <AdminFormSection title="Password">

@@ -3,6 +3,16 @@ import type { AppRole } from "@/types/profile";
 import type { InboxItemStatus } from "@/types/inbox";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
+/** Riga tabella `public.teams`. */
+export type TeamRow = {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 /** Riga tabella `public.profiles`. */
 export type ProfileRow = {
   user_id: string;
@@ -10,9 +20,14 @@ export type ProfileRow = {
   full_name: string;
   role: AppRole;
   is_active: boolean;
+  team_id: string;
   preferences?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ProfileRowWithTeam = ProfileRow & {
+  team?: Pick<TeamRow, "id" | "name" | "slug"> | null;
 };
 
 /** Riga tabella `public.requests` (snake_case come in Postgres). */
@@ -33,6 +48,7 @@ export type RequestRow = {
   updated_at: string;
   assigned_user_id: string | null;
   assigned_at: string | null;
+  team_id: string;
 };
 
 /** Risultato select con FK verso profiles (alias `assignee`). */
@@ -72,6 +88,7 @@ export type InboxItemRow = {
   raw_content: string;
   status: InboxItemStatus;
   linked_request_id: string | null;
+  team_id: string;
   created_at: string;
   updated_at: string;
 };

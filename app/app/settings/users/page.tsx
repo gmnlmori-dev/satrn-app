@@ -5,6 +5,7 @@ import {
   getCurrentProfileSummary,
   getProfilesForAdminList,
 } from "@/lib/supabase/profile-queries";
+import { getTeamsForSelect } from "@/lib/supabase/team-queries";
 
 export const metadata = {
   title: "Utenti",
@@ -16,11 +17,14 @@ export default async function AdminUsersSettingsPage() {
     redirect("/app/dashboard");
   }
 
-  const profiles = await getProfilesForAdminList();
+  const [profiles, teams] = await Promise.all([
+    getProfilesForAdminList(),
+    getTeamsForSelect(),
+  ]);
 
   return (
     <div className="space-y-6 md:space-y-7">
-      <AdminUsersTable profiles={profiles} />
+      <AdminUsersTable profiles={profiles} teams={teams} />
     </div>
   );
 }

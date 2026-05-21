@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { insertRequestActivity } from "@/lib/request-activity-log";
+import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { nextActionAtFromFormData } from "@/lib/date";
 import type { RequestPriority, RequestStatus } from "@/types/request";
@@ -57,6 +58,20 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
 
   const next_action_at = nextActionAtFromFormData(fd);
 
+  const me = await getCurrentProfileSummary();
+  if (!me?.userId || !me.isActive || !me.teamId) {
+    return { ok: false, message: "Sessione non valida." };
+  }
+
+  const teamIdFromForm = String(fd.get("teamId") ?? "").trim();
+  let team_id = me.teamId;
+  if (teamIdFromForm) {
+    if (me.role !== "admin" && teamIdFromForm !== me.teamId) {
+      return { ok: false, message: "Team non consentito per questa operazione." };
+    }
+    team_id = teamIdFromForm;
+  }
+
   const supabase = await createSupabaseServerClient();
   const last_interaction_at = new Date().toISOString();
 
@@ -74,6 +89,7 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
       next_action,
       next_action_at,
       last_interaction_at,
+      team_id,
     })
     .select("id")
     .single();

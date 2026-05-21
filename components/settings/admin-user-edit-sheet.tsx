@@ -4,14 +4,17 @@ import { useRouter } from "next/navigation";
 import { AdminSlideOver } from "@/components/settings/admin-slide-over";
 import { AdminUserEditForm } from "@/components/settings/admin-user-edit-form";
 import type { ProfileSummary } from "@/types/profile";
+import type { TeamSelectOption } from "@/types/team";
 
 export function AdminUserEditSheet({
   open,
   user,
+  teams,
   onClose,
 }: {
   open: boolean;
   user: ProfileSummary | null;
+  teams: TeamSelectOption[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -26,6 +29,7 @@ export function AdminUserEditSheet({
     >
       <AdminUserEditForm
         user={user}
+        teams={teams}
         onCancel={onClose}
         onSuccess={() => {
           onClose();

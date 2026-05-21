@@ -13,6 +13,7 @@ export interface InboxItem {
   rawContent: string;
   status: InboxItemStatus;
   linkedRequestId: string | null;
+  teamId: string;
   createdAt: string;
   updatedAt: string;
 }

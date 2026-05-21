@@ -19,7 +19,7 @@ export default async function RequestDetailPage({ params }: Props) {
     getRequestNotes(id),
     getRequestActivities(id),
     getCurrentProfileSummary(),
-    getActiveAssigneeOptions(),
+    getActiveAssigneeOptions(request.teamId),
   ]);
 
   return (

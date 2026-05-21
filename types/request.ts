@@ -27,6 +27,7 @@ export interface Request {
   assignedAt: string | null;
   /** Nome mostrato in UI (priorità `full_name`, altrimenti email) */
   assignedToLabel: string | null;
+  teamId: string;
 }
 
 export interface RequestNote {

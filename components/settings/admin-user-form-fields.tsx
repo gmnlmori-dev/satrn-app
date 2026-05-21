@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { uiControl } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 import type { AppRole } from "@/types/profile";
+import type { TeamSelectOption } from "@/types/team";
 
 export const ADMIN_USER_ROLES: AppRole[] = ["admin", "manager", "operator"];
 
@@ -77,6 +78,46 @@ export function AdminUserRoleFields({
           Account attivo
         </label>
       </div>
+    </div>
+  );
+}
+
+export function AdminUserTeamFields({
+  teamId,
+  teams,
+  onTeamChange,
+  disabled,
+  idPrefix,
+}: {
+  teamId: string;
+  teams: TeamSelectOption[];
+  onTeamChange: (id: string) => void;
+  disabled?: boolean;
+  idPrefix: string;
+}) {
+  return (
+    <div>
+      <label htmlFor={`${idPrefix}-team`} className={uiFormLabel}>
+        Team <RequiredMark />
+      </label>
+      <select
+        id={`${idPrefix}-team`}
+        className={adminUserInputClass}
+        value={teamId}
+        disabled={disabled || teams.length === 0}
+        required
+        onChange={(e) => onTeamChange(e.target.value)}
+      >
+        {teams.length === 0 ? (
+          <option value="">Nessun team attivo</option>
+        ) : (
+          teams.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))
+        )}
+      </select>
     </div>
   );
 }

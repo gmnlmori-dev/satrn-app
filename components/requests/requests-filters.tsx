@@ -10,12 +10,18 @@ import {
   type ToolbarFilters,
 } from "@/lib/requests-query";
 import { cn } from "@/lib/cn";
-import { uiBtnSecondary, uiControl } from "@/lib/ui-classes";
+import {
+  uiBtnSecondary,
+  uiFilterField,
+  uiFilterFieldsRow,
+  uiFilterFieldSort,
+  uiFilterFieldWide,
+  uiFilterSelect,
+} from "@/lib/ui-classes";
 
 import { uiFilterLabel } from "@/lib/typography";
 
 const filterLabelClass = uiFilterLabel;
-const controlClass = uiControl;
 
 const sortOptions: { value: SortOption; label: string }[] = [
   { value: "updated_desc", label: "Aggiornato · più recenti" },
@@ -48,6 +54,27 @@ type Props = {
   filterBaseline?: ToolbarFilters;
 };
 
+function FilterField({
+  className,
+  label,
+  htmlFor,
+  children,
+}: {
+  className?: string;
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <label htmlFor={htmlFor} className={filterLabelClass}>
+        {label}
+      </label>
+      <div className="mt-1">{children}</div>
+    </div>
+  );
+}
+
 export function RequestsFilters({
   filters,
   onFiltersChange,
@@ -64,14 +91,15 @@ export function RequestsFilters({
     !filtersActive(filters, baseline) && (hideSort || sort === "updated_desc");
 
   return (
-    <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
-      <div className="min-w-0 sm:col-span-1">
-        <label htmlFor="req-filter-assign-scope" className={filterLabelClass}>
-          Assegnatario
-        </label>
+    <div className={uiFilterFieldsRow}>
+      <FilterField
+        className={uiFilterFieldWide}
+        label="Assegnatario"
+        htmlFor="req-filter-assign-scope"
+      >
         <select
           id="req-filter-assign-scope"
-          className={controlClass}
+          className={uiFilterSelect}
           value={filters.assignScope}
           onChange={(e) => {
             const assignScope = e.target.value as ToolbarFilters["assignScope"];
@@ -88,16 +116,17 @@ export function RequestsFilters({
           <option value="unassigned">Non assegnate</option>
           <option value="user">Utente specifico…</option>
         </select>
-      </div>
+      </FilterField>
 
       {filters.assignScope === "user" ? (
-        <div className="min-w-0 sm:col-span-1">
-          <label htmlFor="req-filter-assign-user" className={filterLabelClass}>
-            Utente
-          </label>
+        <FilterField
+          className={uiFilterFieldWide}
+          label="Utente"
+          htmlFor="req-filter-assign-user"
+        >
           <select
             id="req-filter-assign-user"
-            className={controlClass}
+            className={uiFilterSelect}
             value={filters.assignUserId}
             onChange={(e) =>
               onFiltersChange({
@@ -113,16 +142,17 @@ export function RequestsFilters({
               </option>
             ))}
           </select>
-        </div>
+        </FilterField>
       ) : null}
 
-      <div className="min-w-0 sm:col-span-1">
-        <label htmlFor="req-filter-status" className={filterLabelClass}>
-          Stato
-        </label>
+      <FilterField
+        className={uiFilterField}
+        label="Stato"
+        htmlFor="req-filter-status"
+      >
         <select
           id="req-filter-status"
-          className={controlClass}
+          className={uiFilterSelect}
           value={filters.status}
           onChange={(e) =>
             onFiltersChange({
@@ -138,15 +168,16 @@ export function RequestsFilters({
             </option>
           ))}
         </select>
-      </div>
+      </FilterField>
 
-      <div className="min-w-0 sm:col-span-1">
-        <label htmlFor="req-filter-priority" className={filterLabelClass}>
-          Priorità
-        </label>
+      <FilterField
+        className={uiFilterField}
+        label="Priorità"
+        htmlFor="req-filter-priority"
+      >
         <select
           id="req-filter-priority"
-          className={controlClass}
+          className={uiFilterSelect}
           value={filters.priority}
           onChange={(e) =>
             onFiltersChange({
@@ -162,15 +193,16 @@ export function RequestsFilters({
             </option>
           ))}
         </select>
-      </div>
+      </FilterField>
 
-      <div className="min-w-0 sm:col-span-1">
-        <label htmlFor="req-filter-source" className={filterLabelClass}>
-          Fonte
-        </label>
+      <FilterField
+        className={uiFilterField}
+        label="Fonte"
+        htmlFor="req-filter-source"
+      >
         <select
           id="req-filter-source"
-          className={controlClass}
+          className={uiFilterSelect}
           value={filters.source}
           onChange={(e) =>
             onFiltersChange({
@@ -186,16 +218,17 @@ export function RequestsFilters({
             </option>
           ))}
         </select>
-      </div>
+      </FilterField>
 
       {hideSort ? null : (
-        <div className="min-w-0 sm:col-span-2 lg:col-span-2 xl:col-span-2">
-          <label htmlFor="req-sort" className={filterLabelClass}>
-            Ordina per
-          </label>
+        <FilterField
+          className={uiFilterFieldSort}
+          label="Ordina per"
+          htmlFor="req-sort"
+        >
           <select
             id="req-sort"
-            className={controlClass}
+            className={uiFilterSelect}
             value={sort}
             onChange={(e) => onSortChange(e.target.value as SortOption)}
           >
@@ -205,15 +238,15 @@ export function RequestsFilters({
               </option>
             ))}
           </select>
-        </div>
+        </FilterField>
       )}
 
-      <div className="flex min-w-0 items-end sm:col-span-2 lg:col-span-4 xl:col-span-1">
+      <div className="flex w-full shrink-0 items-end sm:w-auto">
         <button
           type="button"
           onClick={onReset}
           disabled={resetDisabled}
-          className={cn(uiBtnSecondary, "w-full")}
+          className={cn(uiBtnSecondary, "w-full whitespace-nowrap sm:w-auto")}
         >
           Reset filtri
         </button>

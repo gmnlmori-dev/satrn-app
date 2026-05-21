@@ -27,6 +27,7 @@ export async function adminUpdateProfile(params: {
   is_active?: boolean;
   full_name?: string;
   email?: string;
+  team_id?: string;
 }): Promise<AdminUpdateProfileResult> {
   const guard = await assertAdminActor();
   if (!guard.ok) return guard;
@@ -69,6 +70,14 @@ export async function adminUpdateProfile(params: {
       return { ok: false, message: mapAdminAuthError(authErr.message) };
     }
     patch.email = newEmail;
+  }
+
+  if (params.team_id !== undefined) {
+    const teamId = params.team_id.trim();
+    if (!teamId) {
+      return { ok: false, message: "Il team è obbligatorio." };
+    }
+    patch.team_id = teamId;
   }
 
   if (Object.keys(patch).length === 0) {

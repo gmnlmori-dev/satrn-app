@@ -23,6 +23,7 @@ export async function adminCreateUser(params: {
   full_name?: string;
   role?: AppRole;
   is_active?: boolean;
+  team_id: string;
 }): Promise<AdminCreateUserResult> {
   const guard = await assertAdminActor();
   if (!guard.ok) return guard;
@@ -37,6 +38,10 @@ export async function adminCreateUser(params: {
     params.role && ROLES.includes(params.role) ? params.role : "operator";
   const fullName = (params.full_name ?? "").trim();
   const isActive = params.is_active !== false;
+  const teamId = params.team_id?.trim();
+  if (!teamId) {
+    return { ok: false, message: "Il team è obbligatorio." };
+  }
 
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin.auth.admin.createUser({
@@ -57,6 +62,7 @@ export async function adminCreateUser(params: {
 
   const profilePatch: Parameters<typeof adminUpdateProfile>[0] = {
     userId,
+    team_id: teamId,
   };
   if (role !== "operator") profilePatch.role = role;
   if (fullName) profilePatch.full_name = fullName;
@@ -65,7 +71,8 @@ export async function adminCreateUser(params: {
   if (
     profilePatch.role !== undefined ||
     profilePatch.full_name !== undefined ||
-    profilePatch.is_active !== undefined
+    profilePatch.is_active !== undefined ||
+    profilePatch.team_id !== undefined
   ) {
     const upd = await adminUpdateProfile(profilePatch);
     if (!upd.ok) {

@@ -4,11 +4,18 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NewRequestForm } from "@/components/requests/new-request-form";
 import { cn } from "@/lib/cn";
-import { uiBtnIcon } from "@/lib/ui-classes";
+import {
+  slideOverBackdrop,
+  slideOverBody,
+  slideOverDescription,
+  slideOverHeader,
+  slideOverInner,
+  slideOverPanel,
+  slideOverTitle,
+  uiBtnIcon,
+} from "@/lib/ui-classes";
 
 /** Allineato a `TOP_BAR_H` in app-chrome (h-12) — non copre la top bar. */
-const BELOW_TOP_BAR = "top-12";
-
 const SLIDE_EASE = "duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
 /**
@@ -76,10 +83,7 @@ export function NewRequestSlideOver({
         type="button"
         aria-label="Chiudi pannello"
         className={cn(
-          "fixed bottom-0 right-0 z-40",
-          BELOW_TOP_BAR,
-          "left-0 md:left-52",
-          "bg-canvas/70",
+          slideOverBackdrop,
           "transition-opacity",
           SLIDE_EASE,
           "motion-reduce:transition-none",
@@ -95,9 +99,7 @@ export function NewRequestSlideOver({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)]",
-          BELOW_TOP_BAR,
-          "z-[55] w-full max-w-xl md:z-[45] md:max-w-none md:w-[min(51.25rem,100vw)]",
+          slideOverPanel,
           "transition-transform",
           SLIDE_EASE,
           "motion-reduce:transition-none motion-reduce:translate-x-0",
@@ -106,16 +108,13 @@ export function NewRequestSlideOver({
             : "translate-x-full md:-translate-x-full"
         )}
       >
-        <div className="flex min-h-0 flex-1 flex-col pl-5 pr-4 sm:pr-5 md:pl-[calc(14rem+1.25rem)]">
-          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-line-default px-4 py-3.5 sm:px-5 sm:py-4">
+        <div className={slideOverInner}>
+          <header className={slideOverHeader}>
             <div className="min-w-0 pr-2">
-              <h2
-                id={titleId}
-                className="text-lg font-semibold tracking-tight text-fg-primary"
-              >
+              <h2 id={titleId} className={slideOverTitle}>
                 Nuova richiesta
               </h2>
-              <p className="mt-1 max-w-lg text-sm leading-relaxed text-fg-secondary">
+              <p className={slideOverDescription}>
                 Aggiungi alla coda operativa senza uscire dalla schermata corrente.
               </p>
             </div>
@@ -141,7 +140,7 @@ export function NewRequestSlideOver({
             </button>
           </header>
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:pt-4">
+          <div className={slideOverBody}>
             <NewRequestForm
               onCancel={onClose}
               onSuccess={(requestId) => {

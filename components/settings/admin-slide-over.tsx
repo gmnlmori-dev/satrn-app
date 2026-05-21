@@ -3,10 +3,17 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
-import { uiBtnIcon } from "@/lib/ui-classes";
+import {
+  slideOverBackdrop,
+  slideOverBody,
+  slideOverDescription,
+  slideOverHeader,
+  slideOverInner,
+  slideOverPanel,
+  slideOverTitle,
+  uiBtnIcon,
+} from "@/lib/ui-classes";
 
-/** Allineato a new-request-slide-over / inbox-new-slide-over */
-const BELOW_TOP_BAR = "top-12";
 const SLIDE_EASE = "duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]";
 
 export function AdminSlideOver({
@@ -78,10 +85,7 @@ export function AdminSlideOver({
         type="button"
         aria-label="Chiudi pannello"
         className={cn(
-          "fixed bottom-0 right-0 z-40",
-          BELOW_TOP_BAR,
-          "left-0 md:left-52",
-          "bg-canvas/70",
+          slideOverBackdrop,
           "transition-opacity",
           SLIDE_EASE,
           "motion-reduce:transition-none",
@@ -99,9 +103,7 @@ export function AdminSlideOver({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)]",
-          BELOW_TOP_BAR,
-          "z-[55] w-full max-w-xl md:z-[45] md:max-w-none md:w-[min(51.25rem,100vw)]",
+          slideOverPanel,
           "transition-transform",
           SLIDE_EASE,
           "motion-reduce:transition-none motion-reduce:translate-x-0",
@@ -110,19 +112,14 @@ export function AdminSlideOver({
             : "translate-x-full md:-translate-x-full",
         )}
       >
-        <div className="flex min-h-0 flex-1 flex-col pl-5 pr-4 sm:pr-5 md:pl-[calc(14rem+1.25rem)]">
-          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-line-default px-4 py-3.5 sm:px-5 sm:py-4">
+        <div className={slideOverInner}>
+          <header className={slideOverHeader}>
             <div className="min-w-0 pr-2">
-              <h2
-                id={titleId}
-                className="text-lg font-semibold tracking-tight text-fg-primary"
-              >
+              <h2 id={titleId} className={slideOverTitle}>
                 {title}
               </h2>
               {description ? (
-                <p className="mt-1 max-w-lg text-sm leading-relaxed text-fg-secondary">
-                  {description}
-                </p>
+                <p className={slideOverDescription}>{description}</p>
               ) : null}
             </div>
             <button
@@ -148,9 +145,7 @@ export function AdminSlideOver({
             </button>
           </header>
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:pt-4">
-            {children}
-          </div>
+          <div className={slideOverBody}>{children}</div>
         </div>
       </div>
     </>

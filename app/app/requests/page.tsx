@@ -15,11 +15,11 @@ export const metadata = {
 };
 
 export default async function RequestsPage() {
-  const [requests, profile, assignees] = await Promise.all([
+  const [requests, profile] = await Promise.all([
     getRequests(),
     getCurrentProfileSummary(),
-    getActiveAssigneeOptions(),
   ]);
+  const assignees = await getActiveAssigneeOptions(profile?.teamId ?? "");
   const defaultAssignScope = profile
     ? defaultAssignScopeToFilter(
         resolveDefaultAssignScope(profile.preferences, profile.role),

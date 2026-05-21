@@ -48,6 +48,7 @@ export function requestRowToRequest(row: RequestRowWithAssignee): Request {
     assignedUserId: row.assigned_user_id ?? null,
     assignedAt: row.assigned_at ?? null,
     assignedToLabel: assigneeDisplayName(row.assignee),
+    teamId: row.team_id,
   };
 }
 
@@ -70,6 +71,7 @@ export function inboxItemRowToInboxItem(row: InboxItemRow): InboxItem {
     rawContent: row.raw_content,
     status: row.status,
     linkedRequestId: row.linked_request_id,
+    teamId: row.team_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

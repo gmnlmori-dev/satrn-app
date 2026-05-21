@@ -5,6 +5,7 @@ import { adminCreateUser } from "@/lib/actions/admin-create-user";
 import {
   AdminFormSection,
   AdminUserRoleFields,
+  AdminUserTeamFields,
   RequiredMark,
   adminUserInputClass,
   useAdminFormIds,
@@ -13,11 +14,14 @@ import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 import type { AppRole } from "@/types/profile";
+import type { TeamSelectOption } from "@/types/team";
 
 export function AdminUserCreateForm({
+  teams,
   onSuccess,
   onCancel,
 }: {
+  teams: TeamSelectOption[];
   onSuccess: () => void;
   onCancel: () => void;
 }) {
@@ -26,6 +30,7 @@ export function AdminUserCreateForm({
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<AppRole>("operator");
   const [isActive, setIsActive] = useState(true);
+  const [teamId, setTeamId] = useState(teams[0]?.id ?? "");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +43,10 @@ export function AdminUserCreateForm({
       setError("Le password non coincidono.");
       return;
     }
+    if (!teamId) {
+      setError("Seleziona un team.");
+      return;
+    }
 
     setPending(true);
     try {
@@ -47,6 +56,7 @@ export function AdminUserCreateForm({
         full_name: String(fd.get("fullName") ?? ""),
         role,
         is_active: isActive,
+        team_id: teamId,
       });
       if (!result.ok) {
         setError(result.message);
@@ -115,17 +125,26 @@ export function AdminUserCreateForm({
           </AdminFormSection>
 
           <AdminFormSection title="Profilo">
-            <div>
-              <label htmlFor={p("fullName")} className={uiFormLabel}>
-                Nome visualizzato
-              </label>
-              <input
-                id={p("fullName")}
-                name="fullName"
-                autoComplete="name"
+            <div className="space-y-3">
+              <div>
+                <label htmlFor={p("fullName")} className={uiFormLabel}>
+                  Nome visualizzato
+                </label>
+                <input
+                  id={p("fullName")}
+                  name="fullName"
+                  autoComplete="name"
+                  disabled={pending}
+                  className={adminUserInputClass}
+                  placeholder="Es. Mario Rossi"
+                />
+              </div>
+              <AdminUserTeamFields
+                idPrefix={p("fields")}
+                teamId={teamId}
+                teams={teams}
+                onTeamChange={setTeamId}
                 disabled={pending}
-                className={adminUserInputClass}
-                placeholder="Es. Mario Rossi"
               />
             </div>
           </AdminFormSection>

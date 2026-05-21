@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { AdminUserCreateSheet } from "@/components/settings/admin-user-create-sheet";
-import { AdminUserEditSheet } from "@/components/settings/admin-user-edit-sheet";
+import { AdminTeamCreateSheet } from "@/components/settings/admin-team-create-sheet";
+import { AdminTeamEditSheet } from "@/components/settings/admin-team-edit-sheet";
 import {
   useAppSlideCoordinator,
   useExclusiveAppSlide,
   useRegisterAppSlideClose,
 } from "@/components/app/app-slide-coordinator";
-import { appRoleLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary } from "@/lib/ui-classes";
 import {
@@ -17,26 +16,19 @@ import {
   dataTableTdClass,
 } from "@/lib/table-ui";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
-import type { ProfileSummary } from "@/types/profile";
-import type { TeamSelectOption } from "@/types/team";
+import type { TeamSummary } from "@/types/team";
 
-export function AdminUsersTable({
-  profiles,
-  teams,
-}: {
-  profiles: ProfileSummary[];
-  teams: TeamSelectOption[];
-}) {
-  const [editUser, setEditUser] = useState<ProfileSummary | null>(null);
+export function AdminTeamsTable({ teams }: { teams: TeamSummary[] }) {
+  const [editTeam, setEditTeam] = useState<TeamSummary | null>(null);
   const { openExclusive } = useAppSlideCoordinator();
-  const createSlide = useExclusiveAppSlide("admin-user-create");
+  const createSlide = useExclusiveAppSlide("admin-team-create");
 
-  const closeEdit = useCallback(() => setEditUser(null), []);
-  useRegisterAppSlideClose("admin-user-edit", closeEdit);
+  const closeEdit = useCallback(() => setEditTeam(null), []);
+  useRegisterAppSlideClose("admin-team-edit", closeEdit);
 
   const openEdit = useCallback(
-    (user: ProfileSummary) => {
-      openExclusive("admin-user-edit", () => setEditUser(user));
+    (team: TeamSummary) => {
+      openExclusive("admin-team-edit", () => setEditTeam(team));
     },
     [openExclusive],
   );
@@ -45,10 +37,10 @@ export function AdminUsersTable({
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className={uiPageTitle}>Utenti</h1>
+          <h1 className={uiPageTitle}>Team</h1>
           <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-            Crea account collegati a Supabase Auth, modifica profilo e imposta
-            le password di accesso. Solo gli admin gestiscono questo elenco.
+            Organizza utenti, richieste e inbox per team. Solo gli admin
+            gestiscono questo elenco.
           </p>
         </div>
         <button
@@ -56,7 +48,7 @@ export function AdminUsersTable({
           className={cn(uiBtnPrimary, "shrink-0 self-start")}
           onClick={createSlide.openSlide}
         >
-          Nuovo utente
+          Nuovo team
         </button>
       </header>
 
@@ -73,21 +65,9 @@ export function AdminUsersTable({
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
+                  className="w-[10rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
                 >
-                  Email
-                </th>
-                <th
-                  scope="col"
-                  className="w-[9rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
-                >
-                  Team
-                </th>
-                <th
-                  scope="col"
-                  className="w-[8rem] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-fg-tertiary md:px-5"
-                >
-                  Ruolo
+                  Slug
                 </th>
                 <th
                   scope="col"
@@ -104,54 +84,44 @@ export function AdminUsersTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-line-default">
-              {profiles.length === 0 ? (
+              {teams.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={4}
                     className="px-4 py-8 text-center text-sm text-fg-tertiary md:px-5"
                   >
-                    Nessun utente. Crea il primo con «Nuovo utente».
+                    Nessun team. Crea il primo con «Nuovo team».
                   </td>
                 </tr>
               ) : (
-                profiles.map((u) => (
-                  <tr key={u.userId}>
+                teams.map((t) => (
+                  <tr key={t.id}>
                     <td className={cn(dataTableTdClass, "font-medium")}>
-                      {u.fullName?.trim() || "—"}
+                      {t.name}
                     </td>
                     <td
                       className={cn(
                         dataTableTdClass,
-                        "break-all text-fg-secondary",
+                        "font-mono text-xs text-fg-secondary",
                       )}
                     >
-                      {u.email || "—"}
-                    </td>
-                    <td className={dataTableTdClass}>
-                      <span className="text-sm text-fg-primary">
-                        {u.teamName?.trim() || "—"}
-                      </span>
-                    </td>
-                    <td className={dataTableTdClass}>
-                      <span className="text-sm text-fg-primary">
-                        {appRoleLabel[u.role]}
-                      </span>
+                      {t.slug}
                     </td>
                     <td className={dataTableTdClass}>
                       <span
                         className={cn(
                           "text-sm",
-                          u.isActive ? "text-success" : "text-fg-tertiary",
+                          t.isActive ? "text-success" : "text-fg-tertiary",
                         )}
                       >
-                        {u.isActive ? "Attivo" : "Disattivato"}
+                        {t.isActive ? "Attivo" : "Disattivato"}
                       </span>
                     </td>
                     <td className={dataTableTdClass}>
                       <button
                         type="button"
                         className={cn(uiBtnSecondary, "px-2.5 py-1 text-xs")}
-                        onClick={() => openEdit(u)}
+                        onClick={() => openEdit(t)}
                       >
                         Modifica
                       </button>
@@ -164,16 +134,14 @@ export function AdminUsersTable({
         </div>
       </div>
 
-      <AdminUserCreateSheet
+      <AdminTeamCreateSheet
         open={createSlide.open}
         onClose={createSlide.closeSlide}
-        teams={teams}
       />
-      <AdminUserEditSheet
-        open={editUser !== null}
-        user={editUser}
-        teams={teams}
-        onClose={() => setEditUser(null)}
+      <AdminTeamEditSheet
+        open={editTeam !== null}
+        team={editTeam}
+        onClose={() => setEditTeam(null)}
       />
     </div>
   );
