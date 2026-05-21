@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { canAssignRequests } from "@/lib/permissions";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -32,6 +33,19 @@ function parsePriority(value: string): RequestPriority | null {
 export type CreateRequestResult =
   | { ok: true; id: string }
   | { ok: false; message: string };
+
+function assigneeCaption(
+  p: {
+    full_name: string | null;
+    email: string | null;
+  } | null,
+): string {
+  if (!p) return "Nessuno";
+  const n = (p.full_name ?? "").trim();
+  const e = (p.email ?? "").trim();
+  if (n && e) return `${n} (${e})`;
+  return n || e || "Utente sconosciuto";
+}
 
 /**
  * Inserisce una riga in `public.requests`. Timestamp gestiti da DB o da
@@ -72,6 +86,46 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
   const supabase = await createSupabaseServerClient();
   const last_interaction_at = new Date().toISOString();
 
+  let assigned_user_id: string | null = null;
+  let assigned_at: string | null = null;
+  let assigneeProfile:
+    | { full_name: string | null; email: string | null }
+    | null = null;
+
+  if (canAssignRequests(me.role)) {
+    const rawAssignee = String(fd.get("assignedUserId") ?? "").trim();
+    const normAssignee = rawAssignee === "" ? null : rawAssignee;
+    if (normAssignee) {
+      const { data: tgt, error: tgtErr } = await supabase
+        .from("profiles")
+        .select("full_name, email, is_active, team_id")
+        .eq("user_id", normAssignee)
+        .maybeSingle();
+
+      if (tgtErr || !tgt) {
+        return {
+          ok: false,
+          message: "Destinatario assegnazione non trovato.",
+        };
+      }
+      if (!(tgt as { is_active: boolean }).is_active) {
+        return { ok: false, message: "L’utente selezionato non è attivo." };
+      }
+      if ((tgt as { team_id: string }).team_id !== team_id) {
+        return {
+          ok: false,
+          message: "L’utente selezionato non appartiene al team della richiesta.",
+        };
+      }
+      assigneeProfile = {
+        full_name: (tgt as { full_name: string }).full_name ?? null,
+        email: (tgt as { email: string }).email ?? null,
+      };
+      assigned_user_id = normAssignee;
+      assigned_at = last_interaction_at;
+    }
+  }
+
   const { data, error } = await supabase
     .from("requests")
     .insert({
@@ -87,6 +141,8 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
       next_action_at,
       last_interaction_at,
       team_id,
+      assigned_user_id,
+      assigned_at,
     })
     .select("id")
     .single();
@@ -104,6 +160,19 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     type: "request_created",
     body: `Richiesta creata: ${title}`,
   });
+
+  if (assigned_user_id) {
+    await insertRequestActivity(supabase, {
+      requestId: id,
+      type: "assigned_user_changed",
+      body: `Assegnazione: Nessuno → ${assigneeCaption(assigneeProfile)}`,
+      meta: {
+        from_assigned_user_id: null,
+        to_assigned_user_id: assigned_user_id,
+        changed_by_user_id: me.userId,
+      },
+    });
+  }
 
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");

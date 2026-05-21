@@ -17,7 +17,6 @@ export function DashboardMyWorkStrip({ counts }: { counts: DashboardMineCounts }
           label="Oggi"
           value={counts.today}
           href="/app/follow-up?scope=mine#follow-up-today"
-          variant="accent"
         />
         <StatTile
           label="Prossimi 7 giorni"

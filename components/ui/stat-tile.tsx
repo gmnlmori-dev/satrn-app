@@ -38,7 +38,6 @@ export function StatTile({
     uiTransition,
     "flex min-h-[4.75rem] flex-col justify-center px-4 py-3 outline-none md:px-5",
     href && "hover:bg-elevated",
-    variant === "danger" && "border-l-2 border-l-danger",
   );
 
   if (href) {

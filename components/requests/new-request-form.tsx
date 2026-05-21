@@ -1,7 +1,9 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
+import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { createRequest } from "@/lib/actions/create-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
@@ -45,11 +47,20 @@ export function NewRequestForm({
   onCancel,
   className,
 }: NewRequestFormProps) {
+  const me = useOptionalCurrentProfile();
   const uid = useId();
   const p = (name: string) => `${uid}-${name}`;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createTeamId, setCreateTeamId] = useState(me?.teamId ?? "");
   const { pulseTopBar } = useDetailSaveFeedback();
+
+  useEffect(() => {
+    if (me?.teamId) setCreateTeamId(me.teamId);
+  }, [me?.teamId]);
+
+  const assigneeTeamId =
+    me?.role === "admin" ? createTeamId : (me?.teamId ?? "");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -154,6 +165,14 @@ export function NewRequestForm({
           <FormSection title="Classificazione">
             <div className="grid gap-3 sm:grid-cols-2">
               <AdminCreateTeamSelect
+                idPrefix={p("create")}
+                disabled={pending}
+                inputClass={inputClass}
+                teamId={createTeamId}
+                onTeamChange={setCreateTeamId}
+              />
+              <CreateRequestAssigneeSelect
+                teamId={assigneeTeamId}
                 idPrefix={p("create")}
                 disabled={pending}
                 inputClass={inputClass}

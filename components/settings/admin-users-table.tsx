@@ -16,7 +16,6 @@ import {
   dataTableShellClass,
   dataTableTdClass,
 } from "@/lib/table-ui";
-import { uiPageLead, uiPageTitle } from "@/lib/typography";
 import type { ProfileSummary } from "@/types/profile";
 import type { TeamSelectOption } from "@/types/team";
 
@@ -42,15 +41,12 @@ export function AdminUsersTable({
   );
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className={uiPageTitle}>Utenti</h1>
-          <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-            Crea account collegati a Supabase Auth, modifica profilo e imposta
-            le password di accesso. Solo gli admin gestiscono questo elenco.
-          </p>
-        </div>
+    <div className="space-y-5">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-2xl text-sm leading-relaxed text-fg-secondary">
+          Account collegati a Supabase Auth, profili, password e team di
+          appartenenza.
+        </p>
         <button
           type="button"
           className={cn(uiBtnPrimary, "shrink-0 self-start")}

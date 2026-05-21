@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { convertInboxToRequest } from "@/lib/actions/convert-inbox-to-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
+import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
 import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
@@ -162,6 +163,12 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
 
         <FormSection title="Classificazione">
           <div className="grid gap-3 sm:grid-cols-2">
+            <CreateRequestAssigneeSelect
+              teamId={item.teamId}
+              idPrefix={p("convert")}
+              disabled={pending}
+              inputClass={inputClass}
+            />
             <div>
               <label htmlFor={p("status")} className={uiFormLabel}>
                 Stato iniziale

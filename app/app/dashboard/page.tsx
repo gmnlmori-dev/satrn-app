@@ -19,6 +19,8 @@ export const metadata = {
   title: "Dashboard",
 };
 
+const DASHBOARD_FEED_LIMIT = 5;
+
 export default async function DashboardPage() {
   const profile = await getCurrentProfileSummary();
   const userId = profile?.userId ?? "";
@@ -27,8 +29,8 @@ export default async function DashboardPage() {
     await Promise.all([
       getDashboardOperationalCounts(),
       getDashboardMineCounts(userId),
-      getRecentActivitiesGlobal(10),
-      getRecentlyUpdatedRequests(6),
+      getRecentActivitiesGlobal(DASHBOARD_FEED_LIMIT),
+      getRecentlyUpdatedRequests(DASHBOARD_FEED_LIMIT),
       getRequestsTotalCount(),
     ]);
 
