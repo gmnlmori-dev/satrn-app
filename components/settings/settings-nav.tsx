@@ -49,9 +49,9 @@ export function SettingsNav() {
   return (
     <nav
       aria-label="Sezioni impostazioni"
-      className="overflow-x-auto border-b border-line-default"
+      className="border-b border-line-default"
     >
-      <ul className="-mb-px flex min-w-min gap-1">
+      <ul className="flex flex-wrap gap-1 pb-2.5">
         {items.map((item) => {
           const active = item.match(pathname);
           return (
@@ -62,10 +62,10 @@ export function SettingsNav() {
                 className={cn(
                   uiTransition,
                   uiFocusRingInset,
-                  "inline-flex whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium",
+                  "inline-flex rounded-md px-3 py-1.5 text-sm font-medium",
                   active
-                    ? "border-accent text-fg-primary"
-                    : "border-transparent text-fg-secondary hover:border-line-strong hover:text-fg-primary",
+                    ? "bg-elevated text-fg-primary"
+                    : "text-fg-secondary hover:bg-elevated/70 hover:text-fg-primary",
                 )}
               >
                 {item.label}

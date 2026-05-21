@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 
 const styles: Record<RequestPriority, string> = {
   high: "border-danger/40 bg-danger-muted text-danger",
-  medium: "border-warning/40 bg-warning-muted text-warning",
+  medium: "border-warning/40 bg-warning-muted text-warning-fg",
   low: "border-line-default bg-field text-fg-tertiary",
 };
 

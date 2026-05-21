@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 const styles: Record<RequestStatus, string> = {
   new: "border-accent/50 bg-accent-subtle text-accent",
   in_review: "border-line-strong bg-elevated text-fg-primary",
-  waiting: "border-warning/40 bg-warning-muted text-warning",
+  waiting: "border-warning/40 bg-warning-muted text-warning-fg",
   follow_up: "border-success/40 bg-success-muted text-success",
   closed: "border-line-default bg-field text-fg-tertiary",
 };

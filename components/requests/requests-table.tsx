@@ -16,8 +16,15 @@ import {
 } from "@/lib/table-ui";
 import { uiMono } from "@/lib/typography";
 import { uiTransition } from "@/lib/ui-classes";
+
 const clampTwoLines =
   "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]";
+
+/** Altezza fissa titolo (2 righe text-sm leading-snug). */
+const requestTitleBlockClass = "min-h-[2.75rem]";
+
+/** Altezza uniforme riga: 2 righe titolo (+ sottotitolo azienda su mobile). */
+const requestTableRowHeightClass = "h-[5.25rem] sm:h-[4.5rem]";
 const priorityBarClass: Record<RequestPriority, string> = {
   high: "bg-danger",
   medium: "bg-warning",
@@ -54,23 +61,30 @@ function Row({
       onKeyDown={onKeyDown}
       className={cn(
         dataTableRowClass,
-        "group min-h-[4.5rem] cursor-pointer",
+        "group cursor-pointer",
         isOdd && "bg-canvas/50",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus",
       )}
     >
-      <td className={cn(dataTableTdClass, "relative overflow-hidden")}>
+      <td
+        className={cn(
+          dataTableTdClass,
+          requestTableRowHeightClass,
+          "relative overflow-hidden align-top",
+        )}
+      >
         <span
           aria-hidden
           className={cn(
-            "absolute bottom-3 left-0 top-3 w-1 rounded-r-full transition-colors",
+            "absolute bottom-2.5 left-0 top-2.5 w-1 rounded-r-full transition-colors",
             priorityBarClass[r.priority]
           )}
         />
         <span
           className={cn(
             "block pl-2 text-sm font-medium leading-snug text-fg-primary underline-offset-2 group-hover:underline",
-            clampTwoLines
+            requestTitleBlockClass,
+            clampTwoLines,
           )}
           title={r.title}
         >
@@ -82,8 +96,9 @@ function Row({
       </td>
       <td
         className={cn(
+          requestTableRowHeightClass,
           "hidden overflow-hidden px-4 py-3 align-middle text-[15px] leading-snug text-fg-secondary sm:table-cell sm:px-5",
-          dataTableColSepClass
+          dataTableColSepClass,
         )}
       >
         <span className={cn("block", clampTwoLines)} title={r.companyName}>
@@ -92,8 +107,9 @@ function Row({
       </td>
       <td
         className={cn(
+          requestTableRowHeightClass,
           "hidden overflow-hidden px-4 py-3 align-middle md:table-cell sm:px-5",
-          dataTableColSepClass
+          dataTableColSepClass,
         )}
       >
         <div
@@ -103,11 +119,18 @@ function Row({
           {r.contactName}
         </div>
       </td>
-      <td className={cn("overflow-hidden px-4 py-3 align-middle sm:px-5", dataTableColSepClass)}>
+      <td
+        className={cn(
+          requestTableRowHeightClass,
+          "overflow-hidden px-4 py-3 align-middle sm:px-5",
+          dataTableColSepClass,
+        )}
+      >
         <StatusBadge status={r.status} />
       </td>
       <td
         className={cn(
+          requestTableRowHeightClass,
           "hidden overflow-hidden px-4 py-3 align-middle md:table-cell sm:px-5",
           dataTableColSepClass,
         )}
@@ -124,6 +147,7 @@ function Row({
       </td>
       <td
         className={cn(
+          requestTableRowHeightClass,
           "hidden min-w-0 max-w-md overflow-hidden px-4 py-3 align-middle 2xl:table-cell sm:px-5",
           dataTableColSepClass,
         )}
@@ -140,8 +164,9 @@ function Row({
       </td>
       <td
         className={cn(
+          requestTableRowHeightClass,
           "overflow-hidden px-4 py-3 align-middle sm:px-5",
-          dataTableColSepClass
+          dataTableColSepClass,
         )}
       >
         <time

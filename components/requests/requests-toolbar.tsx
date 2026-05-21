@@ -136,7 +136,7 @@ export function RequestsToolbar({
           </span>
           <span className="flex min-w-0 items-center gap-2">
             {showResetHint ? (
-              <span className="rounded-md border border-warning/30 bg-warning-muted px-2 py-0.5 text-[11px] font-medium text-warning">
+              <span className="rounded-md border border-warning/30 bg-warning-muted px-2 py-0.5 text-[11px] font-medium text-warning-fg">
                 Attivi
               </span>
             ) : null}

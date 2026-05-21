@@ -66,7 +66,7 @@ function LogoutGlyph() {
 const footerActionClass = cn(
   uiTransition,
   uiFocusRingInset,
-  "flex min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] font-medium leading-none text-fg-secondary",
+  "inline-flex h-9 items-center justify-center rounded-md text-fg-secondary",
   "hover:bg-surface hover:text-fg-primary",
 );
 
@@ -122,10 +122,10 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
               settingsActive && "bg-surface text-fg-primary",
             )}
             aria-current={settingsActive ? "page" : undefined}
+            aria-label="Impostazioni"
             title="Impostazioni"
           >
             <SettingsGlyph active={settingsActive} />
-            <span className="max-w-full truncate">Impost.</span>
           </Link>
           <ThemeToggle compact className={footerActionClass} />
           <button
@@ -137,10 +137,10 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
               router.refresh();
             }}
             className={cn(footerActionClass, "hover:text-danger")}
+            aria-label="Esci"
             title="Esci"
           >
             <LogoutGlyph />
-            <span className="max-w-full truncate">Esci</span>
           </button>
         </div>
       </div>

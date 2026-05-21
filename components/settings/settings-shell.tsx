@@ -4,11 +4,13 @@ import { PageHeader } from "@/components/ui/page-header";
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-5xl space-y-7 md:space-y-8">
-      <PageHeader
-        title="Impostazioni"
-        lead="Preferenze personali e gestione dell’organizzazione."
-      />
-      <SettingsNav />
+      <div className="space-y-4">
+        <PageHeader
+          title="Impostazioni"
+          lead="Preferenze personali e gestione dell’organizzazione."
+        />
+        <SettingsNav />
+      </div>
       <div>{children}</div>
     </div>
   );

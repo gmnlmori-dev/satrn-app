@@ -25,6 +25,7 @@ html.dark {
   --danger-muted: #3d2020;
   --warning: #cca700;
   --warning-muted: #3d3520;
+  --warning-fg: var(--warning);
   --success: #3fb950;
   --success-muted: #1e3a28;
 
@@ -56,8 +57,9 @@ html.light {
 
   --danger: #dc2626;
   --danger-muted: #fee2e2;
-  --warning: #cca700;
-  --warning-muted: #f7edc4;
+  --warning: #e6a800;
+  --warning-muted: #fff3bf;
+  --warning-fg: #7c5200;
   --success: #15803d;
   --success-muted: #dcfce7;
 
@@ -91,6 +93,7 @@ html.light {
   --danger-muted: #3d2020;
   --warning: #cca700;
   --warning-muted: #3d3520;
+  --warning-fg: var(--warning);
   --success: #3fb950;
   --success-muted: #1e3a28;
 
@@ -129,6 +132,7 @@ html.light {
   --color-danger-muted: var(--danger-muted);
   --color-warning: var(--warning);
   --color-warning-muted: var(--warning-muted);
+  --color-warning-fg: var(--warning-fg);
   --color-success: var(--success);
   --color-success-muted: var(--success-muted);
 

@@ -7,7 +7,7 @@ const toneClass: Record<Tone, string> = {
     "border-line-default bg-surface text-fg-secondary",
   accent: "border-accent/30 bg-accent-muted text-accent",
   danger: "border-danger/30 bg-danger-muted text-danger",
-  warning: "border-warning/30 bg-warning-muted text-warning",
+  warning: "border-warning/30 bg-warning-muted text-warning-fg",
   success: "border-success/30 bg-success-muted text-success",
 };
 
