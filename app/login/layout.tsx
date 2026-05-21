@@ -3,5 +3,5 @@ export default function LoginLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="login-shell min-h-full">{children}</div>;
+  return <div className="min-h-full flex-1">{children}</div>;
 }

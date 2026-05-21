@@ -2,8 +2,13 @@
 
 import { useCallback, useState } from "react";
 import { updateMyPreferences } from "@/lib/actions/update-my-preferences";
-import type { DefaultAssignScopePreference } from "@/lib/user-preferences";
+import type {
+  DefaultAssignScopePreference,
+  DefaultRequestsCalendarLayoutPreference,
+  DefaultRequestsViewPreference,
+} from "@/lib/user-preferences";
 import { AppleToggle } from "@/components/ui/apple-toggle";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   SettingsGroup,
   SettingsRow,
@@ -11,38 +16,87 @@ import {
 
 type Props = {
   initialScope: DefaultAssignScopePreference;
+  initialView: DefaultRequestsViewPreference;
+  initialCalendarLayout: DefaultRequestsCalendarLayoutPreference;
   className?: string;
 };
 
 export function AssignScopePreferencePanel({
   initialScope,
+  initialView,
+  initialCalendarLayout,
   className,
 }: Props) {
   const [scope, setScope] = useState(initialScope);
-  const [saving, setSaving] = useState(false);
+  const [view, setView] = useState(initialView);
+  const [calendarLayout, setCalendarLayout] = useState(initialCalendarLayout);
+  const [savingScope, setSavingScope] = useState(false);
+  const [savingView, setSavingView] = useState(false);
+  const [savingCalendarLayout, setSavingCalendarLayout] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isMine = scope === "mine";
+  const saving = savingScope || savingView || savingCalendarLayout;
 
-  const onToggle = useCallback(
+  const onToggleScope = useCallback(
     async (nextMine: boolean) => {
       const next: DefaultAssignScopePreference = nextMine ? "mine" : "all";
-      if (next === scope || saving) return;
+      if (next === scope || savingScope) return;
 
       const previous = scope;
-      setSaving(true);
+      setSavingScope(true);
       setError(null);
       setScope(next);
 
       const res = await updateMyPreferences({ defaultAssignScope: next });
-      setSaving(false);
+      setSavingScope(false);
 
       if (!res.ok) {
         setScope(previous);
         setError(res.message);
       }
     },
-    [scope, saving],
+    [scope, savingScope],
+  );
+
+  const onViewChange = useCallback(
+    async (next: DefaultRequestsViewPreference) => {
+      if (next === view || savingView) return;
+
+      const previous = view;
+      setSavingView(true);
+      setError(null);
+      setView(next);
+
+      const res = await updateMyPreferences({ defaultRequestsView: next });
+      setSavingView(false);
+
+      if (!res.ok) {
+        setView(previous);
+        setError(res.message);
+      }
+    },
+    [view, savingView],
+  );
+
+  const onCalendarLayoutChange = useCallback(
+    async (next: DefaultRequestsCalendarLayoutPreference) => {
+      if (next === calendarLayout || savingCalendarLayout) return;
+
+      const previous = calendarLayout;
+      setSavingCalendarLayout(true);
+      setError(null);
+      setCalendarLayout(next);
+
+      const res = await updateMyPreferences({ defaultRequestsCalendarLayout: next });
+      setSavingCalendarLayout(false);
+
+      if (!res.ok) {
+        setCalendarLayout(previous);
+        setError(res.message);
+      }
+    },
+    [calendarLayout, savingCalendarLayout],
   );
 
   return (
@@ -56,7 +110,7 @@ export function AssignScopePreferencePanel({
           </span>
         ) : (
           <>
-            Imposta il filtro predefinito su{" "}
+            Imposta filtro e vista predefiniti per{" "}
             <span className="text-fg-secondary">Da seguire</span> e{" "}
             <span className="text-fg-secondary">Richieste</span>.
           </>
@@ -75,11 +129,53 @@ export function AssignScopePreferencePanel({
           <AppleToggle
             checked={isMine}
             disabled={saving}
-            onChange={(v) => void onToggle(v)}
+            onChange={(v) => void onToggleScope(v)}
             aria-label="Mostra solo le mie richieste"
           />
         }
       />
+      <SettingsRow
+        label="Vista predefinita"
+        description={
+          view === "calendar"
+            ? "All’apertura di Richieste mostri il calendario scadenze."
+            : "All’apertura di Richieste mostri l’elenco tabellare."
+        }
+        disabled={saving}
+        control={
+          <SegmentedControl
+            ariaLabel="Vista predefinita richieste"
+            value={view}
+            options={[
+              { value: "list", label: "Elenco" },
+              { value: "calendar", label: "Calendario" },
+            ]}
+            onChange={(v) => void onViewChange(v)}
+          />
+        }
+      />
+      {view === "calendar" ? (
+        <SettingsRow
+          label="Calendario predefinito"
+          description={
+            calendarLayout === "week"
+              ? "Il calendario si apre sulla settimana corrente."
+              : "Il calendario si apre sul mese corrente."
+          }
+          disabled={saving}
+          control={
+            <SegmentedControl
+              ariaLabel="Layout calendario predefinito"
+              value={calendarLayout}
+              options={[
+                { value: "month", label: "Mese" },
+                { value: "week", label: "Settimana" },
+              ]}
+              onChange={(v) => void onCalendarLayoutChange(v)}
+            />
+          }
+        />
+      ) : null}
     </SettingsGroup>
   );
 }

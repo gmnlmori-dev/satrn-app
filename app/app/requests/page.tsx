@@ -8,6 +8,8 @@ import { getRequests } from "@/lib/supabase/queries";
 import {
   defaultAssignScopeToFilter,
   resolveDefaultAssignScope,
+  resolveDefaultRequestsCalendarLayout,
+  resolveDefaultRequestsView,
 } from "@/lib/user-preferences";
 
 export const metadata = {
@@ -25,6 +27,12 @@ export default async function RequestsPage() {
         resolveDefaultAssignScope(profile.preferences, profile.role),
       )
     : "all";
+  const defaultViewMode = profile
+    ? resolveDefaultRequestsView(profile.preferences)
+    : "list";
+  const defaultCalendarLayout = profile
+    ? resolveDefaultRequestsCalendarLayout(profile.preferences)
+    : "month";
 
   return (
     <Suspense fallback={null}>
@@ -33,6 +41,8 @@ export default async function RequestsPage() {
         currentUserId={profile?.userId ?? ""}
         assigneeOptions={assignees}
         defaultAssignScope={defaultAssignScope}
+        defaultViewMode={defaultViewMode}
+        defaultCalendarLayout={defaultCalendarLayout}
       />
     </Suspense>
   );

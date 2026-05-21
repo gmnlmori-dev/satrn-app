@@ -32,11 +32,20 @@ import {
   type ToolbarFilters,
   type AssignScopeFilter,
 } from "@/lib/requests-query";
+import type {
+  DefaultRequestsCalendarLayoutPreference,
+  DefaultRequestsViewPreference,
+} from "@/lib/user-preferences";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 
-function viewFromSearchParam(raw: string | null): RequestsViewMode {
-  return raw === "calendar" ? "calendar" : "list";
+function viewFromSearchParam(
+  raw: string | null,
+  fallback: DefaultRequestsViewPreference,
+): RequestsViewMode {
+  if (raw === "calendar") return "calendar";
+  if (raw === "list") return "list";
+  return fallback;
 }
 
 function StatDot() {
@@ -137,11 +146,15 @@ export function RequestsWorkspace({
   currentUserId,
   assigneeOptions,
   defaultAssignScope = "all",
+  defaultViewMode = "list",
+  defaultCalendarLayout = "month",
 }: {
   requests: Request[];
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
   defaultAssignScope?: AssignScopeFilter;
+  defaultViewMode?: DefaultRequestsViewPreference;
+  defaultCalendarLayout?: DefaultRequestsCalendarLayoutPreference;
 }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -158,12 +171,12 @@ export function RequestsWorkspace({
   const [toolbar, setToolbar] = useState<ToolbarFilters>(toolbarBaseline);
   const [sort, setSort] = useState<SortOption>("updated_desc");
   const [viewMode, setViewMode] = useState<RequestsViewMode>(() =>
-    viewFromSearchParam(urlView),
+    viewFromSearchParam(urlView, defaultViewMode),
   );
 
   useEffect(() => {
-    setViewMode(viewFromSearchParam(urlView));
-  }, [urlView]);
+    setViewMode(viewFromSearchParam(urlView, defaultViewMode));
+  }, [urlView, defaultViewMode]);
 
   const sources = useMemo(() => collectSources(requests), [requests]);
 
@@ -204,6 +217,16 @@ export function RequestsWorkspace({
     },
     [searchParams, pathname, router],
   );
+
+  useEffect(() => {
+    if (urlView != null || defaultViewMode === "list") return;
+    replaceSearch((params) => {
+      params.set("view", defaultViewMode);
+      if (defaultViewMode === "calendar" && !params.get("month")) {
+        params.set("month", monthParamFromDate(new Date()));
+      }
+    });
+  }, [urlView, defaultViewMode, replaceSearch]);
 
   const setView = useCallback(
     (mode: RequestsViewMode) => {
@@ -344,6 +367,7 @@ export function RequestsWorkspace({
               withoutDeadlineCount={withoutDeadlineCount}
               monthParam={urlMonth}
               onMonthParamChange={onMonthParamChange}
+              defaultLayout={defaultCalendarLayout}
             />
           )}
         </section>

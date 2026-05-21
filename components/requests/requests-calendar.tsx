@@ -27,10 +27,11 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { RequestsCalendarEvent } from "@/components/requests/requests-calendar-event";
 import { RequestsCalendarDayPanel } from "@/components/requests/requests-calendar-day-panel";
+import type { DefaultRequestsCalendarLayoutPreference } from "@/lib/user-preferences";
 
 const MAX_EVENTS_PER_CELL = 3;
 
-type CalendarLayout = "month" | "week";
+type CalendarLayout = DefaultRequestsCalendarLayoutPreference;
 
 type DayOverflow = {
   date: Date;
@@ -43,6 +44,7 @@ type Props = {
   withoutDeadlineCount: number;
   monthParam: string | null;
   onMonthParamChange: (month: string) => void;
+  defaultLayout?: CalendarLayout;
 };
 
 function ChevronIcon({ dir }: { dir: "left" | "right" }) {
@@ -170,14 +172,15 @@ export function RequestsCalendar({
   withoutDeadlineCount,
   monthParam,
   onMonthParamChange,
+  defaultLayout = "month",
 }: Props) {
   const today = useMemo(() => new Date(), []);
-  const initialAnchor = useMemo(() => {
-    return parseMonthParam(monthParam) ?? today;
-  }, [monthParam, today]);
 
-  const [anchor, setAnchor] = useState(initialAnchor);
-  const [layout, setLayout] = useState<CalendarLayout>("month");
+  const [layout, setLayout] = useState<CalendarLayout>(defaultLayout);
+  const [anchor, setAnchor] = useState(() => {
+    if (defaultLayout === "week") return today;
+    return parseMonthParam(monthParam) ?? today;
+  });
   const [dayPanel, setDayPanel] = useState<DayOverflow | null>(null);
 
   useEffect(() => {
