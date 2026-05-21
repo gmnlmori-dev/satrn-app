@@ -111,7 +111,6 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
               <input
                 id={p("companyName")}
                 name="companyName"
-                required
                 disabled={pending}
                 autoComplete="organization"
                 className={inputClass}
@@ -138,7 +137,6 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
               <input
                 id={p("contactName")}
                 name="contactName"
-                required
                 disabled={pending}
                 autoComplete="name"
                 className={inputClass}
@@ -153,7 +151,6 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
                 id={p("contactEmail")}
                 name="contactEmail"
                 type="email"
-                required
                 disabled={pending}
                 autoComplete="email"
                 className={inputClass}
@@ -210,7 +207,6 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
             <textarea
               id={p("description")}
               name="description"
-              required
               disabled={pending}
               rows={6}
               className={cn(inputClass, "min-h-[120px] resize-y")}

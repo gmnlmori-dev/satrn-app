@@ -4,7 +4,12 @@ import { cn } from "@/lib/cn";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { formatDateTime } from "@/lib/date";
+import { statusLabel } from "@/lib/labels";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
+import {
+  DashboardFeedCard,
+  type DashboardFeedItem,
+} from "@/components/dashboard/dashboard-activity-feed";
 import { uiCard } from "@/lib/surfaces";
 import { uiMono, uiSectionTitle } from "@/lib/typography";
 
@@ -62,22 +67,24 @@ export function DashboardTodayPanel({ items }: { items: Request[] }) {
 }
 
 export function DashboardRecentPanel({ items }: { items: Request[] }) {
+  const feedItems: DashboardFeedItem[] = items.map((r) => ({
+    id: r.id,
+    href: `/app/requests/${r.id}`,
+    typeLabel: statusLabel[r.status],
+    createdAt: r.updatedAt,
+    contextLine: r.companyName?.trim() || null,
+    body: r.title,
+  }));
+
   return (
-    <PanelShell title="Attività recenti" actionHref="/app/requests" actionLabel="Scrivania">
-      {items.length === 0 ? (
-        <AppEmptyHint title="Nessuna attività" description="Note e aggiornamenti sulle richieste appariranno nella timeline globale." />
-      ) : (
-        <ul className="divide-y divide-line-default">
-          {items.map((r) => (
-            <li key={r.id}>
-              <Link href={`/app/requests/${r.id}`} className="group block py-3 first:pt-0 last:pb-0 hover:bg-elevated">
-                <p className="text-sm font-medium text-fg-primary group-hover:text-accent">{r.title}</p>
-                <p className="mt-0.5 text-xs text-fg-tertiary">{r.companyName}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </PanelShell>
+    <DashboardFeedCard
+      title="Attività recenti"
+      description="Richieste aggiornate di recente."
+      actionHref="/app/requests"
+      actionLabel="Scrivania"
+      items={feedItems}
+      emptyTitle="Nessuna attività"
+      emptyDescription="Le richieste modificate di recente compariranno qui."
+    />
   );
 }
