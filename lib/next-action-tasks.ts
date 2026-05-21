@@ -16,6 +16,8 @@ export type CalendarTaskEntry = {
   requestId: string;
   requestTitle: string;
   requestPriority: RequestPriority;
+  teamName: string | null;
+  createdByLabel: string | null;
   task: NextActionTask;
 };
 
@@ -135,6 +137,8 @@ export function extractCalendarTasks(requests: Request[]): CalendarTaskEntry[] {
         requestId: request.id,
         requestTitle: request.title,
         requestPriority: request.priority,
+        teamName: request.teamName,
+        createdByLabel: request.createdByLabel,
         task,
       });
     }

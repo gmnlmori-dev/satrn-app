@@ -39,6 +39,7 @@ export default async function RequestsPage() {
       <RequestsWorkspace
         requests={requests}
         currentUserId={profile?.userId ?? ""}
+        currentUserRole={profile?.role ?? "operator"}
         assigneeOptions={assignees}
         defaultAssignScope={defaultAssignScope}
         defaultViewMode={defaultViewMode}

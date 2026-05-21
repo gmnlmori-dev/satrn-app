@@ -138,6 +138,7 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
       team_id,
       assigned_user_id,
       assigned_at,
+      created_by_user_id: me.userId,
     })
     .select("id")
     .single();

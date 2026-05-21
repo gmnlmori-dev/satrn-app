@@ -14,9 +14,17 @@ import { uiCard } from "@/lib/surfaces";
 type Props = {
   date: Date;
   entries: CalendarTaskEntry[];
+  showRequestMeta?: boolean;
   onClose: () => void;
   onEntriesChange: (entries: CalendarTaskEntry[]) => void;
 };
+
+function formatRequestMeta(entry: CalendarTaskEntry): string {
+  const parts: string[] = [];
+  if (entry.teamName) parts.push(entry.teamName);
+  if (entry.createdByLabel) parts.push(`Creata da ${entry.createdByLabel}`);
+  return parts.join(" · ");
+}
 
 function hasTime(iso: string): boolean {
   return toTimeInputValue(iso) !== "";
@@ -25,6 +33,7 @@ function hasTime(iso: string): boolean {
 export function RequestsCalendarTasksPanel({
   date,
   entries,
+  showRequestMeta = false,
   onClose,
   onEntriesChange,
 }: Props) {
@@ -189,6 +198,11 @@ export function RequestsCalendarTasksPanel({
                             )}
                           >
                             {formatTime(entry.task.dueAt)}
+                          </p>
+                        ) : null}
+                        {showRequestMeta ? (
+                          <p className="mt-0.5 text-xs text-fg-tertiary">
+                            {formatRequestMeta(entry) || "—"}
                           </p>
                         ) : null}
                       </div>

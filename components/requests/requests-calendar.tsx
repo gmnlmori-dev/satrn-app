@@ -54,6 +54,7 @@ type Props = {
   requests: Request[];
   filteredCount: number;
   withoutDeadlineCount: number;
+  showTaskRequestMeta?: boolean;
   monthParam: string | null;
   onMonthParamChange: (month: string) => void;
   defaultLayout?: CalendarLayout;
@@ -81,10 +82,10 @@ function ChevronIcon({ dir }: { dir: "left" | "right" }) {
 function ChecklistIcon({ className }: { className?: string }) {
   return (
     <svg
-      className={cn("h-3 w-3 shrink-0", className)}
+      className={cn("h-3.5 w-3.5 shrink-0", className)}
       fill="none"
       viewBox="0 0 24 24"
-      strokeWidth={1.75}
+      strokeWidth={2}
       stroke="currentColor"
       aria-hidden
     >
@@ -101,10 +102,12 @@ function CalendarTasksBadge({
   count,
   overdue,
   onClick,
+  className,
 }: {
   count: number;
   overdue: boolean;
   onClick: () => void;
+  className?: string;
 }) {
   if (count <= 0) return null;
 
@@ -117,10 +120,11 @@ function CalendarTasksBadge({
       }}
       className={cn(
         uiTransition,
-        "inline-flex h-5 min-w-[1.25rem] items-center gap-0.5 rounded-[4px] border px-1 text-[10px] font-medium tabular-nums",
+        "inline-flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center gap-0.5 rounded-[5px] border px-1.5 text-[11px] font-semibold tabular-nums shadow-sm",
         overdue
-          ? "border-danger/50 bg-danger-muted/40 text-danger hover:bg-danger-muted/60"
-          : "border-line-default bg-surface text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+          ? "border-danger/60 bg-danger-muted/55 text-danger hover:bg-danger-muted/75"
+          : "border-accent/40 bg-accent-muted/70 text-accent hover:bg-accent-muted",
+        className,
       )}
       aria-label={`${count} task in scadenza`}
     >
@@ -161,7 +165,7 @@ function MonthCell({
     >
       <div
         className={cn(
-          "mb-1 flex shrink-0 items-center justify-between gap-1 px-0.5 text-xs tabular-nums",
+          "relative mb-1 flex shrink-0 items-center justify-between gap-1 px-0.5 text-xs tabular-nums",
           cell.isToday
             ? "font-semibold text-accent"
             : cell.isCurrentMonth
@@ -177,7 +181,9 @@ function MonthCell({
             onClick={() => onTasks({ date: cell.date, entries: tasks })}
           />
           {events.length > 0 ? (
-            <span className="text-[10px] text-fg-tertiary">{events.length}</span>
+            <span className="rounded-[4px] bg-canvas px-1 text-[10px] font-medium text-fg-tertiary">
+              {events.length}
+            </span>
           ) : null}
         </div>
       </div>
@@ -226,21 +232,22 @@ function WeekColumn({
     >
       <div
         className={cn(
-          "border-b border-line-default px-2 py-2 text-center text-xs",
+          "relative min-h-[3.5rem] border-b border-line-default px-2 py-2 text-center text-xs",
           cell.isToday ? "font-semibold text-accent" : "text-fg-secondary",
         )}
       >
+        <CalendarTasksBadge
+          count={tasks.length}
+          overdue={taskOverdue}
+          onClick={() => onTasks({ date: cell.date, entries: tasks })}
+          className="absolute right-1 top-1"
+        />
         <span className="block uppercase tracking-wide">
           {formatWeekdayShort(cell.date)}
         </span>
-        <div className="mt-0.5 flex items-center justify-center gap-1.5">
-          <span className="tabular-nums">{cell.date.getDate()}</span>
-          <CalendarTasksBadge
-            count={tasks.length}
-            overdue={taskOverdue}
-            onClick={() => onTasks({ date: cell.date, entries: tasks })}
-          />
-        </div>
+        <span className="mt-0.5 block tabular-nums leading-none">
+          {cell.date.getDate()}
+        </span>
       </div>
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-1.5">
         {events.length === 0 ? (
@@ -259,6 +266,7 @@ export function RequestsCalendar({
   requests,
   filteredCount,
   withoutDeadlineCount,
+  showTaskRequestMeta = false,
   monthParam,
   onMonthParamChange,
   defaultLayout = "month",
@@ -495,6 +503,7 @@ export function RequestsCalendar({
         <RequestsCalendarTasksPanel
           date={tasksPanel.date}
           entries={tasksPanel.entries}
+          showRequestMeta={showTaskRequestMeta}
           onClose={() => setTasksPanel(null)}
           onEntriesChange={(entries) =>
             setTasksPanel((prev) =>

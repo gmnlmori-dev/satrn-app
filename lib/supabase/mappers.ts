@@ -29,6 +29,16 @@ function assigneeDisplayName(
   return mail || null;
 }
 
+function profileDisplayName(
+  p: RequestRowWithAssignee["creator"],
+): string | null {
+  if (!p) return null;
+  const name = (p.full_name ?? "").trim();
+  if (name) return name;
+  const mail = (p.email ?? "").trim();
+  return mail || null;
+}
+
 export function requestRowToRequest(row: RequestRowWithAssignee): Request {
   return {
     id: row.id,
@@ -49,6 +59,9 @@ export function requestRowToRequest(row: RequestRowWithAssignee): Request {
     assignedAt: row.assigned_at ?? null,
     assignedToLabel: assigneeDisplayName(row.assignee),
     teamId: row.team_id,
+    teamName: row.team?.name?.trim() || null,
+    createdByUserId: row.created_by_user_id ?? null,
+    createdByLabel: profileDisplayName(row.creator),
   };
 }
 

@@ -16,6 +16,15 @@ export const REQUEST_SELECT_WITH_ASSIGNEE = `
     user_id,
     full_name,
     email
+  ),
+  creator:profiles!requests_created_by_user_id_fkey (
+    user_id,
+    full_name,
+    email
+  ),
+  team:teams!requests_team_id_fkey (
+    id,
+    name
   )
 `;
 

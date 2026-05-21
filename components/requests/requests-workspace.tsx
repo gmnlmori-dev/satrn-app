@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Request } from "@/types/request";
-import type { AssigneeOption } from "@/types/profile";
+import type { AppRole, AssigneeOption } from "@/types/profile";
+import { canViewAllTeamsRequestMeta } from "@/lib/permissions";
 import {
   RequestsDatabaseEmptyState,
   RequestsEmptyState,
@@ -144,6 +145,7 @@ function PriorityLegend() {
 export function RequestsWorkspace({
   requests,
   currentUserId,
+  currentUserRole = "operator",
   assigneeOptions,
   defaultAssignScope = "all",
   defaultViewMode = "list",
@@ -151,6 +153,7 @@ export function RequestsWorkspace({
 }: {
   requests: Request[];
   currentUserId: string;
+  currentUserRole?: AppRole;
   assigneeOptions: AssigneeOption[];
   defaultAssignScope?: AssignScopeFilter;
   defaultViewMode?: DefaultRequestsViewPreference;
@@ -207,6 +210,7 @@ export function RequestsWorkspace({
   );
 
   const withoutDeadlineCount = filtered.length - forCalendar.length;
+  const showTaskRequestMeta = canViewAllTeamsRequestMeta(currentUserRole);
 
   const replaceSearch = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
@@ -366,6 +370,7 @@ export function RequestsWorkspace({
               requests={filtered}
               filteredCount={filtered.length}
               withoutDeadlineCount={withoutDeadlineCount}
+              showTaskRequestMeta={showTaskRequestMeta}
               monthParam={urlMonth}
               onMonthParamChange={onMonthParamChange}
               defaultLayout={defaultCalendarLayout}
