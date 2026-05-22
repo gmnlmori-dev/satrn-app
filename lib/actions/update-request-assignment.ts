@@ -31,6 +31,38 @@ function assigneeCaption(
   return n || e || "Utente sconosciuto";
 }
 
+type AssigneeProfile = {
+  full_name: string | null;
+  email: string | null;
+};
+
+type RequestAssigneeRow = {
+  user_id: string;
+  assigned_at: string;
+  assignee?: AssigneeProfile | AssigneeProfile[] | null;
+};
+
+function nestedAssigneeProfile(
+  value: AssigneeProfile | AssigneeProfile[] | null | undefined,
+): AssigneeProfile | null {
+  if (!value) return null;
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value;
+}
+
+function mapAssigneeRows(rows: unknown): RequestAssignee[] {
+  return ((rows ?? []) as RequestAssigneeRow[])
+    .map((row) => ({
+      userId: row.user_id,
+      label: assigneeCaption(nestedAssigneeProfile(row.assignee)),
+      assignedAt: row.assigned_at,
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
+    );
+}
+
 function normalizeAssigneeIds(raw: string[]): string[] {
   return [...new Set(raw.map((id) => id.trim()).filter(Boolean))].sort();
 }
@@ -153,20 +185,7 @@ export async function updateRequestAssignment(
       )
       .eq("request_id", requestId);
 
-    const assignees = ((unchangedRows ?? []) as {
-      user_id: string;
-      assigned_at: string;
-      assignee: { full_name: string | null; email: string | null } | null;
-    }[])
-      .map((row) => ({
-        userId: row.user_id,
-        label: assigneeCaption(row.assignee),
-        assignedAt: row.assigned_at,
-      }))
-      .sort(
-        (a, b) =>
-          new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
-      );
+    const assignees = mapAssigneeRows(unchangedRows);
 
     const labels = assignees.map((a) => a.label).filter(Boolean);
     return {
@@ -245,20 +264,7 @@ export async function updateRequestAssignment(
 
   if (savedErr) return { ok: false, message: savedErr.message };
 
-  const assignees = ((savedRows ?? []) as {
-    user_id: string;
-    assigned_at: string;
-    assignee: { full_name: string | null; email: string | null } | null;
-  }[])
-    .map((row) => ({
-      userId: row.user_id,
-      label: assigneeCaption(row.assignee),
-      assignedAt: row.assigned_at,
-    }))
-    .sort(
-      (a, b) =>
-        new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
-    );
+  const assignees = mapAssigneeRows(savedRows);
 
   const fromLabels = beforeIds.map((id) =>
     assigneeCaption(beforeProfilesResult.profiles.get(id) ?? null),
