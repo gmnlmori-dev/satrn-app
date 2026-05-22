@@ -224,9 +224,9 @@ export function NotesGrid({
   );
 
   return (
-    <div className="notes-masonry-grid">
+    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
       {draftOpen ? (
-        <div className="mb-3 inline-block w-full max-w-full break-inside-avoid">
+        <div className="relative min-w-0">
           <NoteCard
             draft
             currentUserId={currentUserId}
@@ -254,7 +254,7 @@ export function NotesGrid({
             key={note.id}
             data-note-id={note.id}
             className={cn(
-              "relative mb-3 inline-block w-full max-w-full break-inside-avoid",
+              "relative min-w-0",
               draggable && "cursor-grab touch-none select-none active:cursor-grabbing",
               isDragging && "z-20 opacity-50 pointer-events-none",
               pinMismatch && Boolean(draggingId) && "opacity-40",
