@@ -14,6 +14,7 @@ import {
   titleFromBody,
 } from "@/lib/team-note-access";
 import { useTeamNoteAutosave } from "@/lib/use-team-note-autosave";
+import { NoteSharingFields } from "@/components/notes/note-sharing-fields";
 import {
   uiBtnIcon,
   uiControl,
@@ -41,6 +42,40 @@ function AutosaveIndicator({
     <span className="text-xs text-fg-tertiary" role="status" aria-live="polite">
       {status === "saving" ? "Salvataggio…" : "Salvato"}
     </span>
+  );
+}
+
+function PinIcon({ pinned }: { pinned: boolean }) {
+  if (pinned) {
+    return (
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6l1.4 1 1.4-1v-6H18v-2l-2-2z" />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.75}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 17v5m-4-3h8M8 3h8l1 9.5-4 4-4-4L8 3z"
+      />
+    </svg>
+  );
+}
+
+function ColorCheckIcon() {
+  return (
+    <svg className="h-3 w-3 text-fg-primary" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+    </svg>
   );
 }
 
@@ -133,15 +168,20 @@ export function NoteCard({
     note?.sharedUserIds ?? [],
   );
   const [actionPending, setActionPending] = useState(false);
+  const [pinPending, setPinPending] = useState(false);
+  const [colorPending, setColorPending] = useState<NoteColor | null>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const editable =
     draft || (localNote ? canEditTeamNote(localNote, currentUserId) : false);
 
   const autosave = useTeamNoteAutosave({
     noteId: localNote?.id ?? null,
-    initialTitle: note?.title ?? "",
-    initialBody: note?.body ?? "",
+    initialTitle: (note ?? localNote)?.title ?? "",
+    initialBody: (note ?? localNote)?.body ?? "",
+    visibility,
+    sharedUserIds,
     enabled: editable && expanded,
     onCreated: (id, payload) => {
       const created: TeamNote = {
@@ -151,15 +191,17 @@ export function NoteCard({
         createdByLabel: null,
         title: payload.title,
         body: payload.body,
-        visibility: "private",
+        visibility: payload.visibility,
         isPinned: false,
         isArchived: false,
         color: null,
-        sharedUserIds: [],
+        sharedUserIds: payload.sharedUserIds,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       setLocalNote(created);
+      setVisibility(payload.visibility);
+      setSharedUserIds(payload.sharedUserIds);
       onDraftCreated?.(created);
     },
   });
@@ -174,9 +216,15 @@ export function NoteCard({
 
   useEffect(() => {
     if (!autoFocus || !expanded) return;
-    const t = window.setTimeout(() => titleRef.current?.focus(), 50);
+    const t = window.setTimeout(() => {
+      if (draft) {
+        bodyRef.current?.focus();
+      } else {
+        titleRef.current?.focus();
+      }
+    }, 50);
     return () => window.clearTimeout(t);
-  }, [autoFocus, expanded]);
+  }, [autoFocus, expanded, draft]);
 
   const displayTitle =
     titleFromBody(
@@ -187,37 +235,46 @@ export function NoteCard({
   const previewBody = editable && expanded ? autosave.body : (localNote?.body ?? "");
 
   async function handlePinToggle() {
-    if (!localNote || actionPending) return;
-    setActionPending(true);
+    if (!localNote || pinPending) return;
+    const next = !localNote.isPinned;
+    const previous = localNote.isPinned;
+    setLocalNote({ ...localNote, isPinned: next });
+    setPinPending(true);
     try {
-      const next = !localNote.isPinned;
       const result = await updateTeamNote(localNote.id, { isPinned: next });
-      if (result.ok) {
-        const updated = { ...localNote, isPinned: next, updatedAt: result.updatedAt };
-        setLocalNote(updated);
-        onUpdated?.(updated);
+      if (!result.ok) {
+        setLocalNote({ ...localNote, isPinned: previous });
+        return;
       }
+      const updated = { ...localNote, isPinned: next, updatedAt: result.updatedAt };
+      setLocalNote(updated);
+      onUpdated?.(updated);
     } finally {
-      setActionPending(false);
+      setPinPending(false);
     }
   }
 
   async function handleColorChange(color: NoteColor) {
-    if (!localNote || actionPending) return;
-    setActionPending(true);
+    if (!localNote || colorPending) return;
+    const dbColor = color === "default" ? null : color;
+    const previous = localNote.color;
+    setLocalNote({ ...localNote, color: dbColor });
+    setColorPending(color);
     try {
-      const result = await updateTeamNote(localNote.id, { color });
-      if (result.ok) {
-        const updated = {
-          ...localNote,
-          color,
-          updatedAt: result.updatedAt,
-        };
-        setLocalNote(updated);
-        onUpdated?.(updated);
+      const result = await updateTeamNote(localNote.id, { color: dbColor });
+      if (!result.ok) {
+        setLocalNote({ ...localNote, color: previous });
+        return;
       }
+      const updated = {
+        ...localNote,
+        color: dbColor,
+        updatedAt: result.updatedAt,
+      };
+      setLocalNote(updated);
+      onUpdated?.(updated);
     } finally {
-      setActionPending(false);
+      setColorPending(null);
     }
   }
 
@@ -285,9 +342,12 @@ export function NoteCard({
 
   async function handleVisibilityChange(next: NoteVisibility) {
     setVisibility(next);
+    const nextShared = next === "shared" ? sharedUserIds : [];
     if (next !== "shared") {
       setSharedUserIds([]);
-      if (localNote) await persistSharing(next, []);
+    }
+    if (localNote?.id) {
+      await persistSharing(next, next !== "shared" ? [] : nextShared);
     }
   }
 
@@ -296,7 +356,7 @@ export function NoteCard({
       const next = prev.includes(userId)
         ? prev.filter((id) => id !== userId)
         : [...prev, userId];
-      if (localNote && visibility === "shared") {
+      if (localNote?.id && visibility === "shared") {
         void persistSharing("shared", next);
       }
       return next;
@@ -304,6 +364,8 @@ export function NoteCard({
   }
 
   const cardColor = noteColorCardClass(localNote?.color);
+  const activeColor = localNote?.color ?? "default";
+  const isPinned = localNote?.isPinned ?? false;
 
   return (
     <article
@@ -401,6 +463,7 @@ export function NoteCard({
 
             {editable ? (
               <textarea
+                ref={bodyRef}
                 value={autosave.body}
                 onChange={(e) => autosave.setBody(e.target.value)}
                 rows={6}
@@ -417,73 +480,122 @@ export function NoteCard({
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-1">
-                {editable && localNote ? (
+                {editable ? (
                   <>
-                    <button
-                      type="button"
-                      aria-label={localNote.isPinned ? "Rimuovi pin" : "Fissa in alto"}
-                      className={cn(uiBtnIcon, "h-8 w-8", localNote.isPinned && "text-accent")}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void handlePinToggle();
-                      }}
-                      disabled={actionPending}
-                    >
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                        <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6l1.4 1 1.4-1v-6H18v-2l-2-2z" />
-                      </svg>
-                    </button>
-                    <div className="flex items-center gap-0.5">
-                      {NOTE_COLOR_OPTIONS.map((c) => (
+                    {localNote ? (
+                      <>
                         <button
-                          key={c.value}
                           type="button"
-                          aria-label={c.label}
+                          aria-label={isPinned ? "Rimuovi pin" : "Fissa in alto"}
+                          aria-pressed={isPinned}
+                          title={isPinned ? "Fissata in alto" : "Fissa in alto"}
                           className={cn(
-                            uiFocusRingInset,
-                            "h-5 w-5 rounded-full",
-                            c.swatchClass,
-                            localNote.color === c.value && "ring-2 ring-accent ring-offset-1",
+                            uiBtnIcon,
+                            "h-8 w-8 transition-all",
+                            isPinned
+                              ? "bg-accent/15 text-accent ring-1 ring-accent/40"
+                              : "text-fg-tertiary hover:bg-elevated hover:text-fg-primary",
+                            pinPending && "animate-pulse opacity-70",
                           )}
                           onClick={(e) => {
                             e.stopPropagation();
-                            void handleColorChange(c.value);
+                            void handlePinToggle();
                           }}
-                          disabled={actionPending}
-                        />
-                      ))}
-                    </div>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        aria-expanded={menuOpen}
-                        aria-label="Altre azioni"
-                        className={cn(uiBtnIcon, "h-8 w-8")}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMenuOpen((v) => !v);
-                          setSharingOpen(false);
-                        }}
-                      >
-                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                        </svg>
-                      </button>
-                      {menuOpen ? (
-                        <div
-                          className="absolute bottom-full left-0 z-10 mb-1"
-                          onClick={(e) => e.stopPropagation()}
+                          disabled={pinPending}
                         >
-                          <NoteActionsMenu
-                            pending={actionPending}
-                            onShare={() => setSharingOpen(true)}
-                            onArchive={handleArchive}
-                            onDelete={handleDelete}
-                            onClose={() => setMenuOpen(false)}
-                          />
+                          <PinIcon pinned={isPinned} />
+                        </button>
+                        <div
+                          className="flex items-center gap-1 rounded-lg bg-canvas/60 px-1 py-0.5"
+                          role="group"
+                          aria-label="Colore nota"
+                        >
+                          {NOTE_COLOR_OPTIONS.map((c) => {
+                            const selected = activeColor === c.value;
+                            const saving = colorPending === c.value;
+                            return (
+                              <button
+                                key={c.value}
+                                type="button"
+                                aria-label={c.label}
+                                aria-pressed={selected}
+                                title={c.label}
+                                className={cn(
+                                  uiFocusRingInset,
+                                  "relative flex h-6 w-6 items-center justify-center rounded-full transition-all",
+                                  c.swatchClass,
+                                  selected && "ring-2 ring-accent ring-offset-1 scale-110",
+                                  saving && "animate-pulse opacity-60",
+                                  colorPending && !saving && !selected && "opacity-40",
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (selected) return;
+                                  void handleColorChange(c.value);
+                                }}
+                                disabled={Boolean(colorPending)}
+                              >
+                                {selected ? <ColorCheckIcon /> : null}
+                              </button>
+                            );
+                          })}
                         </div>
-                      ) : null}
-                    </div>
+                      </>
+                    ) : null}
+                    <button
+                      type="button"
+                      aria-expanded={sharingOpen}
+                      aria-label="Visibilità e condivisione"
+                      title={noteVisibilityLabel(visibility)}
+                      className={cn(
+                        uiBtnIcon,
+                        "h-8 w-8",
+                        sharingOpen && "bg-accent/15 text-accent",
+                        visibility !== "private" && "text-accent",
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSharingOpen((v) => !v);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" aria-hidden>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                      </svg>
+                    </button>
+                    {localNote ? (
+                      <div className="relative">
+                        <button
+                          type="button"
+                          aria-expanded={menuOpen}
+                          aria-label="Altre azioni"
+                          className={cn(uiBtnIcon, "h-8 w-8")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMenuOpen((v) => !v);
+                            setSharingOpen(false);
+                          }}
+                        >
+                          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                          </svg>
+                        </button>
+                        {menuOpen ? (
+                          <div
+                            className="absolute bottom-full left-0 z-10 mb-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <NoteActionsMenu
+                              pending={actionPending}
+                              onShare={() => setSharingOpen(true)}
+                              onArchive={handleArchive}
+                              onDelete={handleDelete}
+                              onClose={() => setMenuOpen(false)}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </>
                 ) : (
                   <span className="rounded-full bg-canvas/70 px-2 py-0.5 text-[11px] font-medium text-fg-tertiary">
@@ -550,39 +662,20 @@ export function NoteCard({
               </div>
             </div>
 
-            {sharingOpen && editable && localNote ? (
+            {sharingOpen && editable ? (
               <div
                 className="mt-3 rounded-lg border border-line-default bg-canvas/60 p-3"
                 onClick={(e) => e.stopPropagation()}
               >
-                <p className="text-xs font-medium text-fg-primary">Condivisione</p>
-                <select
-                  value={visibility}
-                  onChange={(e) => void handleVisibilityChange(e.target.value as NoteVisibility)}
-                  className={cn(uiControl, "mt-2 w-full py-2 text-sm")}
+                <NoteSharingFields
+                  compact
+                  visibility={visibility}
+                  sharedUserIds={sharedUserIds}
+                  sharingOptions={sharingOptions}
+                  onVisibilityChange={(v) => void handleVisibilityChange(v)}
+                  onToggleSharedUser={toggleSharedUser}
                   disabled={actionPending}
-                >
-                  <option value="private">Privata</option>
-                  <option value="team">Tutto il team</option>
-                  <option value="shared">Utenti specifici</option>
-                </select>
-                {visibility === "shared" ? (
-                  <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto">
-                    {sharingOptions.map((opt) => (
-                      <li key={opt.userId}>
-                        <label className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 hover:bg-elevated">
-                          <input
-                            type="checkbox"
-                            checked={sharedUserIds.includes(opt.userId)}
-                            onChange={() => toggleSharedUser(opt.userId)}
-                            disabled={actionPending}
-                          />
-                          <span className="text-sm text-fg-secondary">{opt.label}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+                />
               </div>
             ) : null}
           </>

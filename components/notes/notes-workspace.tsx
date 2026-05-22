@@ -38,8 +38,9 @@ export function NotesWorkspace({
   const [sharingOptions, setSharingOptions] = useState<AssigneeOption[]>([]);
 
   useEffect(() => {
+    if (composerOpen) return;
     setNotes(initialNotes);
-  }, [initialNotes]);
+  }, [initialNotes, composerOpen]);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,13 +1,16 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { createTeamNote } from "@/lib/actions/create-team-note";
+import { listNoteSharingOptions } from "@/lib/actions/list-note-sharing-options";
+import { NoteSharingFields } from "@/components/notes/note-sharing-fields";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { cn } from "@/lib/cn";
 import { titleFromBody } from "@/lib/team-note-access";
 import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 import type { NoteVisibility } from "@/types/note";
+import type { AssigneeOption } from "@/types/profile";
 
 const inputClass = cn(uiControl, "py-2.5 text-[15px]");
 
@@ -24,7 +27,33 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [visibility, setVisibility] = useState<NoteVisibility>("private");
+  const [sharedUserIds, setSharedUserIds] = useState<string[]>([]);
+  const [sharingOptions, setSharingOptions] = useState<AssigneeOption[]>([]);
   const { pulseTopBar } = useDetailSaveFeedback();
+
+  useEffect(() => {
+    let cancelled = false;
+    listNoteSharingOptions().then((result) => {
+      if (!cancelled && result.ok) setSharingOptions(result.options);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function toggleSharedUser(userId: string) {
+    setSharedUserIds((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
+    );
+  }
+
+  function handleVisibilityChange(next: NoteVisibility) {
+    setVisibility(next);
+    if (next !== "shared") setSharedUserIds([]);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,11 +66,16 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
       setError("Scrivi un titolo o il testo della nota.");
       return;
     }
+    if (visibility === "shared" && sharedUserIds.length === 0) {
+      setError("Seleziona almeno un utente per la condivisione.");
+      return;
+    }
 
     const fd = new FormData();
     fd.set("title", trimmedTitle || titleFromBody(trimmedBody));
     fd.set("body", trimmedBody);
-    fd.set("visibility", "private" satisfies NoteVisibility);
+    fd.set("visibility", visibility);
+    fd.set("sharedUserIds", JSON.stringify(sharedUserIds));
 
     setPending(true);
     try {
@@ -53,6 +87,8 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
       pulseTopBar();
       setTitle("");
       setBody("");
+      setVisibility("private");
+      setSharedUserIds([]);
       onSuccess(result.id);
     } finally {
       setPending(false);
@@ -97,6 +133,15 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
               placeholder="Scrivi il contenuto della nota…"
             />
           </div>
+          <NoteSharingFields
+            idPrefix={p("sharing")}
+            visibility={visibility}
+            sharedUserIds={sharedUserIds}
+            sharingOptions={sharingOptions}
+            onVisibilityChange={handleVisibilityChange}
+            onToggleSharedUser={toggleSharedUser}
+            disabled={pending}
+          />
         </div>
 
         <div className="shrink-0 border-t border-line-default bg-surface pr-3.5 sm:pr-5 pt-4">

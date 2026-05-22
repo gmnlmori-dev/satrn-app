@@ -21,9 +21,26 @@ export async function createTeamNote(
   const titleRaw = String(fd.get("title") ?? "").trim();
   const body = String(fd.get("body") ?? "").trim();
   const visibility = parseVisibility(String(fd.get("visibility") ?? "private"));
+  const sharedRaw = String(fd.get("sharedUserIds") ?? "[]");
+  let sharedUserIds: string[] = [];
+  try {
+    const parsed = JSON.parse(sharedRaw) as unknown;
+    if (Array.isArray(parsed)) {
+      sharedUserIds = parsed.filter((id): id is string => typeof id === "string");
+    }
+  } catch {
+    sharedUserIds = [];
+  }
 
   if (!body && !titleRaw) {
     return { ok: false, message: "Scrivi qualcosa nella nota." };
+  }
+
+  if (visibility === "shared" && sharedUserIds.length === 0) {
+    return {
+      ok: false,
+      message: "Seleziona almeno un utente per la condivisione.",
+    };
   }
 
   const me = await getCurrentProfileSummary();
@@ -55,6 +72,25 @@ export async function createTeamNote(
       ok: false,
       message: "Nessun identificativo restituito dal database.",
     };
+  }
+
+  if (visibility === "shared" && sharedUserIds.length > 0) {
+    const uniqueShared = [
+      ...new Set(sharedUserIds.filter((user_id) => user_id !== me.userId)),
+    ];
+    if (uniqueShared.length > 0) {
+      const { error: sharedError } = await supabase
+        .from("team_note_shared_users")
+        .insert(
+          uniqueShared.map((user_id) => ({
+            note_id: id,
+            user_id,
+          })),
+        );
+      if (sharedError) {
+        return { ok: false, message: sharedError.message };
+      }
+    }
   }
 
   revalidatePath("/app/notes");
