@@ -15,7 +15,7 @@ import {
   reorderUserNotesInPinGroup,
   sortNotesForGrid,
 } from "@/lib/team-note-access";
-import { uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
+import { uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 import type { NotesTabFilter, TeamNote } from "@/types/note";
 import type { AssigneeOption } from "@/types/profile";
@@ -150,33 +150,21 @@ export function NotesWorkspace({
   );
 
   const reorderEnabled = search.trim().length === 0;
+  const showGrid = tab === "mine" || filtered.length > 0 || composerOpen;
 
   return (
     <div className="space-y-6 md:space-y-7">
       <header className="min-w-0">
         <h1 className={uiPageTitle}>Note</h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-          Blocchi rapidi stile Keep: scrivi direttamente sulle card con
-          autosalvataggio, oppure crea una nota dal menu Crea con salvataggio
-          esplicito.
+          Clicca una card per aprirla e scrivere: le modifiche si salvano da
+          sole. Usa «Prendi una nota…» per crearne una nuova, trascina una card
+          chiusa per riordinarla e, passando sopra con il mouse, il menu
+          azioni per pin, colore, condivisione e archiviazione.
         </p>
       </header>
 
       <Panel padding className="space-y-3">
-        {!composerOpen ? (
-          <button
-            type="button"
-            onClick={handleOpenComposer}
-            className={cn(
-              uiControl,
-              uiTransition,
-              "w-full py-3 text-left text-sm text-fg-tertiary shadow-sm hover:shadow-md",
-            )}
-          >
-            Prendi una nota…
-          </button>
-        ) : null}
-
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SegmentedControl
             ariaLabel="Filtro note"
@@ -200,13 +188,13 @@ export function NotesWorkspace({
         </div>
       </Panel>
 
-      {filtered.length === 0 && !composerOpen ? (
+      {filtered.length === 0 && !showGrid && !composerOpen ? (
         <AppEmptyState
           title="Nessuna nota"
           description={
             tab === "archived"
               ? "Non ci sono note archiviate."
-              : "Crea la prima nota con il composer in alto o dal menu Crea."
+              : "Crea la prima nota dal menu Crea."
           }
           icon="none"
         >
@@ -218,13 +206,15 @@ export function NotesWorkspace({
             Nuova nota
           </button>
         </AppEmptyState>
-      ) : filtered.length > 0 || composerOpen ? (
+      ) : showGrid ? (
         <NotesGrid
           notes={gridNotes}
           currentUserId={currentUserId}
           teamId={teamId}
           sharingOptions={sharingOptions}
           draftOpen={composerOpen && tab === "mine"}
+          composerTriggerOpen={!composerOpen && tab === "mine"}
+          onOpenComposer={handleOpenComposer}
           reorderEnabled={reorderEnabled}
           onDraftCreated={handleDraftCreated}
           onNoteUpdated={handleNoteUpdated}

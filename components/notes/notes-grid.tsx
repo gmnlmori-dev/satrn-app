@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { NoteCard } from "@/components/notes/note-card";
 import { cn } from "@/lib/cn";
+import { uiControl, uiTransition } from "@/lib/ui-classes";
 import { canEditTeamNote } from "@/lib/team-note-access";
 import type { TeamNote } from "@/types/note";
 import type { AssigneeOption } from "@/types/profile";
@@ -13,6 +14,8 @@ type NotesGridProps = {
   teamId?: string;
   sharingOptions: AssigneeOption[];
   draftOpen?: boolean;
+  composerTriggerOpen?: boolean;
+  onOpenComposer?: () => void;
   reorderEnabled?: boolean;
   onDraftCreated?: (note: TeamNote) => void;
   onNoteUpdated?: (note: TeamNote) => void;
@@ -105,6 +108,8 @@ export function NotesGrid({
   teamId,
   sharingOptions,
   draftOpen = false,
+  composerTriggerOpen = false,
+  onOpenComposer,
   reorderEnabled = true,
   onDraftCreated,
   onNoteUpdated,
@@ -326,26 +331,39 @@ export function NotesGrid({
 
   return (
     <div className="w-full">
-      {draftOpen ? (
-        <div className="relative mb-3 min-w-0">
-          <NoteCard
-            draft
-            currentUserId={currentUserId}
-            teamId={teamId}
-            sharingOptions={sharingOptions}
-            autoFocus
-            onDraftCreated={onDraftCreated}
-            onUpdated={onNoteUpdated}
-            onCollapseDraft={onCollapseDraft}
-          />
-        </div>
-      ) : null}
       <div className="flex items-start gap-3">
         {noteColumns.map((columnNotes, columnIndex) => (
           <div
             key={columnIndex}
             className="flex min-w-0 flex-1 flex-col gap-3"
           >
+            {columnIndex === 0 && draftOpen ? (
+              <div className="relative min-w-0">
+                <NoteCard
+                  draft
+                  currentUserId={currentUserId}
+                  teamId={teamId}
+                  sharingOptions={sharingOptions}
+                  autoFocus
+                  onDraftCreated={onDraftCreated}
+                  onUpdated={onNoteUpdated}
+                  onCollapseDraft={onCollapseDraft}
+                />
+              </div>
+            ) : null}
+            {columnIndex === 0 && composerTriggerOpen && onOpenComposer ? (
+              <button
+                type="button"
+                onClick={onOpenComposer}
+                className={cn(
+                  uiControl,
+                  uiTransition,
+                  "w-full py-3 text-left text-sm text-fg-tertiary shadow-sm hover:shadow-md",
+                )}
+              >
+                Prendi una nota…
+              </button>
+            ) : null}
             {columnNotes.map((note) => renderNote(note))}
           </div>
         ))}
