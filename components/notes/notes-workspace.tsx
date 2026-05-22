@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOpenCreateNote } from "@/components/app/create-note-context";
 import { listNoteSharingOptions } from "@/lib/actions/list-note-sharing-options";
+import { reorderTeamNotes } from "@/lib/actions/reorder-team-notes";
 import { NotesGrid } from "@/components/notes/notes-grid";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/cn";
 import {
   filterNotesBySearch,
   filterNotesByTab,
+  reorderUserNotesInPinGroup,
   sortNotesForGrid,
 } from "@/lib/team-note-access";
 import { uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
@@ -65,13 +67,22 @@ export function NotesWorkspace({
 
   const handleDraftCreated = useCallback((note: TeamNote) => {
     setNotes((prev) => {
-      if (prev.some((n) => n.id === note.id)) {
-        return prev.map((n) => (n.id === note.id ? note : n));
+      const minSort = prev
+        .filter(
+          (n) =>
+            n.createdByUserId === currentUserId &&
+            !n.isPinned &&
+            !n.isArchived,
+        )
+        .reduce((min, n) => Math.min(min, n.sortOrder), 0);
+      const withSort = { ...note, sortOrder: minSort - 1 };
+      if (prev.some((n) => n.id === withSort.id)) {
+        return prev.map((n) => (n.id === withSort.id ? withSort : n));
       }
-      return [note, ...prev];
+      return [withSort, ...prev];
     });
     setComposingNoteId(note.id);
-  }, []);
+  }, [currentUserId]);
 
   const handleNoteUpdated = useCallback((note: TeamNote) => {
     setNotes((prev) => prev.map((n) => (n.id === note.id ? note : n)));
@@ -102,6 +113,43 @@ export function NotesWorkspace({
       ),
     );
   }, []);
+
+  const handleReorder = useCallback(
+    async (draggedId: string, targetId: string, insertBefore: boolean) => {
+      const previous = notes;
+      const next = reorderUserNotesInPinGroup(
+        notes,
+        currentUserId,
+        draggedId,
+        targetId,
+        insertBefore,
+      );
+      if (!next) return;
+
+      setNotes(next);
+
+      const dragged = next.find((n) => n.id === draggedId);
+      if (!dragged) return;
+
+      const orderedIds = next
+        .filter(
+          (n) =>
+            n.createdByUserId === currentUserId &&
+            n.isPinned === dragged.isPinned &&
+            n.isArchived === dragged.isArchived,
+        )
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((n) => n.id);
+
+      const result = await reorderTeamNotes(orderedIds, dragged.isPinned);
+      if (!result.ok) {
+        setNotes(previous);
+      }
+    },
+    [notes, currentUserId],
+  );
+
+  const reorderEnabled = search.trim().length === 0;
 
   return (
     <div className="space-y-6 md:space-y-7">
@@ -177,11 +225,13 @@ export function NotesWorkspace({
           teamId={teamId}
           sharingOptions={sharingOptions}
           draftOpen={composerOpen && tab === "mine"}
+          reorderEnabled={reorderEnabled}
           onDraftCreated={handleDraftCreated}
           onNoteUpdated={handleNoteUpdated}
           onNoteArchived={handleNoteArchived}
           onNoteDeleted={handleNoteDeleted}
           onCollapseDraft={handleCollapseComposer}
+          onReorder={handleReorder}
         />
       ) : null}
     </div>

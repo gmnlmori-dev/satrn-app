@@ -117,6 +117,7 @@ type NoteCardProps = {
   onArchived?: (noteId: string) => void;
   onDeleted?: (noteId: string) => void;
   onCollapseDraft?: () => void;
+  onExpandedChange?: (expanded: boolean) => void;
 };
 
 function NoteActionsMenu({
@@ -182,6 +183,7 @@ export function NoteCard({
   onArchived,
   onDeleted,
   onCollapseDraft,
+  onExpandedChange,
 }: NoteCardProps) {
   const [expanded, setExpanded] = useState(draft);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -226,6 +228,7 @@ export function NoteCard({
         isPinned: false,
         isArchived: false,
         color: payload.color,
+        sortOrder: 0,
         sharedUserIds: payload.sharedUserIds,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -276,6 +279,10 @@ export function NoteCard({
     return () => document.removeEventListener("mousedown", onDocumentMouseDown);
   }, [colorOpen]);
 
+  useEffect(() => {
+    onExpandedChange?.(expanded);
+  }, [expanded, onExpandedChange]);
+
   const displayTitle =
     titleFromBody(
       editable && expanded ? autosave.body : (localNote?.body ?? ""),
@@ -296,7 +303,12 @@ export function NoteCard({
         setLocalNote({ ...localNote, isPinned: previous });
         return;
       }
-      const updated = { ...localNote, isPinned: next, updatedAt: result.updatedAt };
+      const updated = {
+        ...localNote,
+        isPinned: next,
+        updatedAt: result.updatedAt,
+        sortOrder: result.sortOrder,
+      };
       setLocalNote(updated);
       onUpdated?.(updated);
     } finally {

@@ -26,6 +26,7 @@ export async function getTeamNotes(): Promise<TeamNote[]> {
     .from("team_notes")
     .select(TEAM_NOTE_SELECT)
     .order("is_pinned", { ascending: false })
+    .order("sort_order", { ascending: true })
     .order("updated_at", { ascending: false });
 
   assertNoError("getTeamNotes", error);

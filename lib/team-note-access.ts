@@ -60,8 +60,54 @@ export function filterNotesBySearch(notes: TeamNote[], query: string): TeamNote[
 export function sortNotesForGrid(notes: TeamNote[]): TeamNote[] {
   return [...notes].sort((a, b) => {
     if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
     return b.updatedAt.localeCompare(a.updatedAt);
   });
+}
+
+export function reorderUserNotesInPinGroup(
+  notes: TeamNote[],
+  userId: string,
+  draggedId: string,
+  targetId: string,
+  insertBefore: boolean,
+): TeamNote[] | null {
+  const dragged = notes.find((n) => n.id === draggedId);
+  const target = notes.find((n) => n.id === targetId);
+  if (!dragged || !target) return null;
+  if (!canEditTeamNote(dragged, userId) || !canEditTeamNote(target, userId)) {
+    return null;
+  }
+  if (dragged.isPinned !== target.isPinned) return null;
+
+  const pinGroup = dragged.isPinned;
+  const groupNotes = notes
+    .filter(
+      (n) =>
+        n.createdByUserId === userId &&
+        n.isPinned === pinGroup &&
+        n.isArchived === dragged.isArchived,
+    )
+    .sort((a, b) => {
+      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      return b.updatedAt.localeCompare(a.updatedAt);
+    });
+
+  const withoutDragged = groupNotes.filter((n) => n.id !== draggedId);
+  const targetIdx = withoutDragged.findIndex((n) => n.id === targetId);
+  if (targetIdx === -1) return null;
+
+  const insertAt = insertBefore ? targetIdx : targetIdx + 1;
+  const reordered = [
+    ...withoutDragged.slice(0, insertAt),
+    dragged,
+    ...withoutDragged.slice(insertAt),
+  ];
+
+  const sortMap = new Map(reordered.map((note, index) => [note.id, index]));
+  return notes.map((note) =>
+    sortMap.has(note.id) ? { ...note, sortOrder: sortMap.get(note.id)! } : note,
+  );
 }
 
 export const NOTE_COLOR_OPTIONS: {

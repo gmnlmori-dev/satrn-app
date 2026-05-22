@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.team_notes (
   is_pinned boolean NOT NULL DEFAULT false,
   is_archived boolean NOT NULL DEFAULT false,
   color text,
+  sort_order integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );

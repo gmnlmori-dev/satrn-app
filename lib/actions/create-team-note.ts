@@ -52,6 +52,19 @@ export async function createTeamNote(
   const colorRaw = String(fd.get("color") ?? "").trim();
   const color = colorRaw ? parseNoteColor(colorRaw) : null;
   const supabase = await createSupabaseServerClient();
+
+  const { data: minSortRow } = await supabase
+    .from("team_notes")
+    .select("sort_order")
+    .eq("created_by_user_id", me.userId)
+    .eq("is_pinned", false)
+    .eq("is_archived", false)
+    .order("sort_order", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const sortOrder = (minSortRow?.sort_order ?? 0) - 1;
+
   const { data, error } = await supabase
     .from("team_notes")
     .insert({
@@ -61,6 +74,7 @@ export async function createTeamNote(
       body,
       visibility,
       color,
+      sort_order: sortOrder,
     })
     .select("id")
     .single();

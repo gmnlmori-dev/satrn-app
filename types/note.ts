@@ -19,6 +19,7 @@ export interface TeamNote {
   isPinned: boolean;
   isArchived: boolean;
   color: NoteColor | null;
+  sortOrder: number;
   sharedUserIds: string[];
   createdAt: string;
   updatedAt: string;

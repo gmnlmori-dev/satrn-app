@@ -146,6 +146,7 @@ export function teamNoteRowToNote(row: TeamNoteRowWithRelations): TeamNote {
     isPinned: row.is_pinned,
     isArchived: row.is_archived,
     color: parseNoteColor(row.color),
+    sortOrder: row.sort_order ?? 0,
     sharedUserIds: (row.team_note_shared_users ?? []).map((s) => s.user_id),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
