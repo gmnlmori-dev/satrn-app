@@ -94,13 +94,24 @@ export async function updateMyPreferences(
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
-    .from("profiles")
-    .update({ preferences: next })
-    .eq("user_id", profile.userId);
+  const { error } = await supabase.rpc("update_my_preferences", {
+    prefs: next,
+  });
 
   if (error) {
     const msg = error.message.toLowerCase();
+    if (
+      msg.includes("update_my_preferences") &&
+      (msg.includes("does not exist") ||
+        msg.includes("schema cache") ||
+        msg.includes("could not find"))
+    ) {
+      return {
+        ok: false,
+        message:
+          "Preferenza non salvabile: esegui supabase/sql/profile_preferences.sql nel SQL Editor Supabase.",
+      };
+    }
     if (msg.includes("preferences") && msg.includes("schema cache")) {
       return {
         ok: false,
