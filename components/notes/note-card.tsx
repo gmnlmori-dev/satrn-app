@@ -485,11 +485,14 @@ export function NoteCard({
     return () => document.removeEventListener("mousedown", onDocumentMouseDown);
   }, [expanded, collapseAndSave]);
 
+  const popoverOpen = menuOpen || colorOpen || sharingOpen;
+
   return (
     <article
       ref={cardRef}
       className={cn(
-        "group relative flex w-full max-w-full min-w-0 flex-col overflow-hidden rounded-xl border border-line-default shadow-sm transition-shadow",
+        "group relative flex w-full max-w-full min-w-0 flex-col rounded-xl border border-line-default shadow-sm transition-shadow",
+        popoverOpen ? "z-30 overflow-visible" : "overflow-hidden",
         cardColor,
         !expanded && !draft && "cursor-pointer hover:shadow-md",
         draft && "ring-1 ring-accent/30",
@@ -509,7 +512,10 @@ export function NoteCard({
           <>
             {editable && localNote ? (
               <div
-                className="absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-100"
+                className={cn(
+                  "absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-100",
+                  menuOpen && "opacity-100",
+                )}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="relative">
@@ -525,7 +531,7 @@ export function NoteCard({
                     </svg>
                   </button>
                   {menuOpen ? (
-                    <div className="absolute right-0 top-full mt-1">
+                    <div className="absolute right-0 top-full z-20 mt-1">
                       <NoteActionsMenu
                         pending={actionPending}
                         onShare={() => {

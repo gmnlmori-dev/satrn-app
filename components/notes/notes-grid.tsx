@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { NoteCard } from "@/components/notes/note-card";
 import { cn } from "@/lib/cn";
 import { canEditTeamNote } from "@/lib/team-note-access";
@@ -61,6 +61,44 @@ function isInteractiveDragTarget(target: EventTarget | null) {
   );
 }
 
+function getNotesColumnCount(): number {
+  if (typeof window === "undefined") return 4;
+  if (window.matchMedia("(min-width: 768px)").matches) return 4;
+  if (window.matchMedia("(min-width: 640px)").matches) return 2;
+  return 1;
+}
+
+function subscribeNotesColumnCount(onChange: () => void) {
+  const queries = [
+    window.matchMedia("(min-width: 768px)"),
+    window.matchMedia("(min-width: 640px)"),
+  ];
+  for (const query of queries) {
+    query.addEventListener("change", onChange);
+  }
+  return () => {
+    for (const query of queries) {
+      query.removeEventListener("change", onChange);
+    }
+  };
+}
+
+function useNotesColumnCount() {
+  return useSyncExternalStore(
+    subscribeNotesColumnCount,
+    getNotesColumnCount,
+    () => 4,
+  );
+}
+
+function splitNotesIntoColumns(items: TeamNote[], columnCount: number): TeamNote[][] {
+  const columns = Array.from({ length: columnCount }, () => [] as TeamNote[]);
+  for (let index = 0; index < items.length; index += 1) {
+    columns[index % columnCount]?.push(items[index]!);
+  }
+  return columns;
+}
+
 export function NotesGrid({
   notes,
   currentUserId,
@@ -75,6 +113,12 @@ export function NotesGrid({
   onCollapseDraft,
   onReorder,
 }: NotesGridProps) {
+  const columnCount = useNotesColumnCount();
+  const noteColumns = useMemo(
+    () => splitNotesIntoColumns(notes, columnCount),
+    [notes, columnCount],
+  );
+
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingPinned, setDraggingPinned] = useState<boolean | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
@@ -223,10 +267,67 @@ export function NotesGrid({
     [canDragNote],
   );
 
+  const renderNote = (note: TeamNote) => {
+    const draggable = canDragNote(note);
+    const isDragging = draggingId === note.id;
+    const dropEdge = dropTarget?.id === note.id ? dropTarget.edge : null;
+    const pinMismatch =
+      draggingPinned !== null &&
+      draggingId !== note.id &&
+      note.isPinned !== draggingPinned;
+
+    return (
+      <div
+        key={note.id}
+        data-note-id={note.id}
+        className={cn(
+          "relative min-w-0",
+          draggable && "cursor-grab touch-none select-none active:cursor-grabbing",
+          isDragging && "z-20 opacity-50 pointer-events-none",
+          pinMismatch && Boolean(draggingId) && "opacity-40",
+        )}
+        onPointerDown={handlePointerDown(note)}
+        onClickCapture={(e) => {
+          if (suppressExpandRef.current.has(note.id)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {dropEdge === "top" ? (
+          <div className="pointer-events-none absolute -top-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
+        ) : null}
+        {dropEdge === "bottom" ? (
+          <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
+        ) : null}
+        {dropEdge === "left" ? (
+          <div className="pointer-events-none absolute -left-1.5 top-2 bottom-2 z-30 w-0.5 rounded-full bg-accent" />
+        ) : null}
+        {dropEdge === "right" ? (
+          <div className="pointer-events-none absolute -right-1.5 top-2 bottom-2 z-30 w-0.5 rounded-full bg-accent" />
+        ) : null}
+        <NoteCard
+          note={note}
+          currentUserId={currentUserId}
+          sharingOptions={sharingOptions}
+          onUpdated={onNoteUpdated}
+          onArchived={onNoteArchived}
+          onDeleted={onNoteDeleted}
+          onExpandedChange={(expanded) => {
+            setExpandedNoteId((prev) => {
+              if (expanded) return note.id;
+              return prev === note.id ? null : prev;
+            });
+          }}
+        />
+      </div>
+    );
+  };
+
   return (
-    <div className="grid w-full grid-cols-1 items-start gap-3 sm:grid-cols-2 md:grid-cols-4">
+    <div className="w-full">
       {draftOpen ? (
-        <div className="relative min-w-0">
+        <div className="relative mb-3 min-w-0">
           <NoteCard
             draft
             currentUserId={currentUserId}
@@ -239,63 +340,16 @@ export function NotesGrid({
           />
         </div>
       ) : null}
-      {notes.map((note) => {
-        const draggable = canDragNote(note);
-        const isDragging = draggingId === note.id;
-        const dropEdge =
-          dropTarget?.id === note.id ? dropTarget.edge : null;
-        const pinMismatch =
-          draggingPinned !== null &&
-          draggingId !== note.id &&
-          note.isPinned !== draggingPinned;
-
-        return (
+      <div className="flex items-start gap-3">
+        {noteColumns.map((columnNotes, columnIndex) => (
           <div
-            key={note.id}
-            data-note-id={note.id}
-            className={cn(
-              "relative min-w-0",
-              draggable && "cursor-grab touch-none select-none active:cursor-grabbing",
-              isDragging && "z-20 opacity-50 pointer-events-none",
-              pinMismatch && Boolean(draggingId) && "opacity-40",
-            )}
-            onPointerDown={handlePointerDown(note)}
-            onClickCapture={(e) => {
-              if (suppressExpandRef.current.has(note.id)) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
+            key={columnIndex}
+            className="flex min-w-0 flex-1 flex-col gap-3"
           >
-            {dropEdge === "top" ? (
-              <div className="pointer-events-none absolute -top-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
-            ) : null}
-            {dropEdge === "bottom" ? (
-              <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
-            ) : null}
-            {dropEdge === "left" ? (
-              <div className="pointer-events-none absolute -left-1.5 top-2 bottom-2 z-30 w-0.5 rounded-full bg-accent" />
-            ) : null}
-            {dropEdge === "right" ? (
-              <div className="pointer-events-none absolute -right-1.5 top-2 bottom-2 z-30 w-0.5 rounded-full bg-accent" />
-            ) : null}
-            <NoteCard
-              note={note}
-              currentUserId={currentUserId}
-              sharingOptions={sharingOptions}
-              onUpdated={onNoteUpdated}
-              onArchived={onNoteArchived}
-              onDeleted={onNoteDeleted}
-              onExpandedChange={(expanded) => {
-                setExpandedNoteId((prev) => {
-                  if (expanded) return note.id;
-                  return prev === note.id ? null : prev;
-                });
-              }}
-            />
+            {columnNotes.map((note) => renderNote(note))}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
