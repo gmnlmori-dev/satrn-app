@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { DashboardMyWorkStrip } from "@/components/dashboard/dashboard-my-work-strip";
-import { DashboardOperationalStrip } from "@/components/dashboard/dashboard-operational-strip";
+import { DashboardQueueOverview } from "@/components/dashboard/dashboard-queue-overview";
 import { DashboardRecentActivities } from "@/components/dashboard/dashboard-recent-activities";
 import { DashboardRecentPanel } from "@/components/dashboard/dashboard-panels";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
@@ -28,6 +27,14 @@ export default async function DashboardPage() {
     ? { role: profile.role, teamId: profile.teamId }
     : { role: "operator" as const, teamId: "" };
 
+  const viewer = profile
+    ? {
+        userId: profile.userId,
+        teamId: profile.teamId,
+        role: profile.role,
+      }
+    : { userId: "", teamId: "", role: "operator" as const };
+
   const [counts, mineCounts, activities, recentRequests, totalRequests] =
     await Promise.all([
       getDashboardOperationalCounts(teamScope),
@@ -53,14 +60,14 @@ export default async function DashboardPage() {
         </AppEmptyState>
       ) : (
         <>
-          {mineCounts ? <DashboardMyWorkStrip counts={mineCounts} /> : null}
-          <DashboardOperationalStrip
-            counts={counts}
+          <DashboardQueueOverview
+            mineCounts={mineCounts}
+            queueCounts={counts}
             teamScoped={teamScope.role !== "admin"}
           />
           <div className="grid gap-5 lg:grid-cols-2">
-            <DashboardRecentActivities items={activities} />
-            <DashboardRecentPanel items={recentRequests} />
+            <DashboardRecentActivities items={activities} viewer={viewer} />
+            <DashboardRecentPanel items={recentRequests} viewer={viewer} />
           </div>
         </>
       )}

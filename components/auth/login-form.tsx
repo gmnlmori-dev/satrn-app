@@ -33,7 +33,7 @@ export function LoginForm({ inactive }: { inactive?: boolean }) {
       setError(signInError.message);
       return;
     }
-    router.push("/app/dashboard");
+    router.push("/");
     router.refresh();
   }
 

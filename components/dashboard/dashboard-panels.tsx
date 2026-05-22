@@ -5,6 +5,10 @@ import { uiBtnSecondary } from "@/lib/ui-classes";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { formatDateTime } from "@/lib/date";
 import { statusLabel } from "@/lib/labels";
+import {
+  resolveDashboardFeedScope,
+  type DashboardViewerContext,
+} from "@/lib/dashboard-feed-scope";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import {
   DashboardFeedCard,
@@ -66,25 +70,45 @@ export function DashboardTodayPanel({ items }: { items: Request[] }) {
   );
 }
 
-export function DashboardRecentPanel({ items }: { items: Request[] }) {
-  const feedItems: DashboardFeedItem[] = items.map((r) => ({
-    id: r.id,
-    href: `/app/requests/${r.id}`,
-    typeLabel: statusLabel[r.status],
-    createdAt: r.updatedAt,
-    contextLine: r.companyName?.trim() || null,
-    body: r.title,
-  }));
+export function DashboardRecentPanel({
+  items,
+  viewer,
+}: {
+  items: Request[];
+  viewer: DashboardViewerContext;
+}) {
+  const feedItems: DashboardFeedItem[] = items.map((r) => {
+    const contextParts = [r.companyName?.trim(), r.assignedToLabel?.trim()].filter(
+      Boolean,
+    );
+
+    return {
+      id: r.id,
+      href: `/app/requests/${r.id}`,
+      typeLabel: statusLabel[r.status],
+      createdAt: r.updatedAt,
+      contextLine: contextParts.length > 0 ? contextParts.join(" · ") : null,
+      body: r.title,
+      scopeTag: resolveDashboardFeedScope({
+        viewer,
+        requestTeamId: r.teamId,
+        requestTeamName: r.teamName,
+        assignedUserId: r.assignedUserId,
+      }),
+    };
+  });
 
   return (
     <DashboardFeedCard
       title="Attività recenti"
-      description="Richieste aggiornate di recente."
+      description="Richieste aggiornate di recente, con tag di ambito."
       actionHref="/app/requests"
       actionLabel="Scrivania"
       items={feedItems}
       emptyTitle="Nessuna attività"
       emptyDescription="Le richieste modificate di recente compariranno qui."
+      showScopeLegend
+      scopeLegendOtherTeam={viewer.role === "admin"}
     />
   );
 }

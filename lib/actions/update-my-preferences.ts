@@ -5,6 +5,7 @@ import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   type DefaultAssignScopePreference,
+  type DefaultHomePagePreference,
   type DefaultRequestsCalendarLayoutPreference,
   type DefaultRequestsViewPreference,
   type UserPreferences,
@@ -32,6 +33,19 @@ function normalizeDefaultRequestsCalendarLayout(
   value: unknown,
 ): DefaultRequestsCalendarLayoutPreference | undefined {
   if (value === "month" || value === "week") return value;
+  return undefined;
+}
+
+function normalizeDefaultHomePage(
+  value: unknown,
+): DefaultHomePagePreference | undefined {
+  if (
+    value === "dashboard" ||
+    value === "follow-up" ||
+    value === "requests"
+  ) {
+    return value;
+  }
   return undefined;
 }
 
@@ -71,6 +85,14 @@ export async function updateMyPreferences(
     next.defaultRequestsCalendarLayout = layout;
   }
 
+  if ("defaultHomePage" in patch) {
+    const home = normalizeDefaultHomePage(patch.defaultHomePage);
+    if (!home) {
+      return { ok: false, message: "Pagina predefinita non valida." };
+    }
+    next.defaultHomePage = home;
+  }
+
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from("profiles")
@@ -93,6 +115,9 @@ export async function updateMyPreferences(
   revalidatePath("/app/follow-up");
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");
+  revalidatePath("/app/inbox");
+  revalidatePath("/");
+  revalidatePath("/app");
 
   return { ok: true };
 }

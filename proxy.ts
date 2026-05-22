@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicEnv } from "./lib/supabase/env";
+import {
+  parseUserPreferences,
+  resolveDefaultHomePath,
+} from "./lib/user-preferences";
 
 /** Copia i cookie di sessione Supabase sulla risposta di redirect (dopo refresh token). */
 function copyCookies(from: NextResponse, to: NextResponse) {
@@ -46,9 +50,19 @@ export async function proxy(request: NextRequest) {
 
   if (pathname === "/login" || pathname.startsWith("/login/")) {
     if (user) {
-      const redirect = NextResponse.redirect(
-        new URL("/app/dashboard", request.url),
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const home = resolveDefaultHomePath(
+        parseUserPreferences(
+          (prof as { preferences?: unknown } | null)?.preferences,
+        ),
       );
+
+      const redirect = NextResponse.redirect(new URL(home, request.url));
       copyCookies(response, redirect);
       return redirect;
     }

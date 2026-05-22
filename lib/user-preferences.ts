@@ -12,10 +12,31 @@ export type DefaultRequestsViewPreference = "list" | "calendar";
 /** Layout predefinito del calendario richieste. */
 export type DefaultRequestsCalendarLayoutPreference = "month" | "week";
 
+/** Pagina predefinita dopo login / apertura app. */
+export type DefaultHomePagePreference =
+  | "dashboard"
+  | "follow-up"
+  | "requests";
+
+export const DEFAULT_HOME_PAGE_PATHS: Record<DefaultHomePagePreference, string> =
+  {
+    dashboard: "/app/dashboard",
+    "follow-up": "/app/follow-up",
+    requests: "/app/requests",
+  };
+
+export const DEFAULT_HOME_PAGE_LABELS: Record<DefaultHomePagePreference, string> =
+  {
+    dashboard: "Dashboard",
+    "follow-up": "Da seguire",
+    requests: "Richieste",
+  };
+
 export type UserPreferences = {
   defaultAssignScope?: DefaultAssignScopePreference;
   defaultRequestsView?: DefaultRequestsViewPreference;
   defaultRequestsCalendarLayout?: DefaultRequestsCalendarLayoutPreference;
+  defaultHomePage?: DefaultHomePagePreference;
 };
 
 export function parseUserPreferences(raw: unknown): UserPreferences {
@@ -33,6 +54,13 @@ export function parseUserPreferences(raw: unknown): UserPreferences {
     o.defaultRequestsCalendarLayout === "week"
   ) {
     prefs.defaultRequestsCalendarLayout = o.defaultRequestsCalendarLayout;
+  }
+  if (
+    o.defaultHomePage === "dashboard" ||
+    o.defaultHomePage === "follow-up" ||
+    o.defaultHomePage === "requests"
+  ) {
+    prefs.defaultHomePage = o.defaultHomePage;
   }
   return prefs;
 }
@@ -57,6 +85,19 @@ export function resolveDefaultRequestsCalendarLayout(
   preferences: UserPreferences,
 ): DefaultRequestsCalendarLayoutPreference {
   return preferences.defaultRequestsCalendarLayout ?? "month";
+}
+
+export function resolveDefaultHomePage(
+  preferences: UserPreferences,
+): DefaultHomePagePreference {
+  return preferences.defaultHomePage ?? "dashboard";
+}
+
+export function resolveDefaultHomePath(
+  preferences: UserPreferences | undefined,
+): string {
+  const page = resolveDefaultHomePage(preferences ?? {});
+  return DEFAULT_HOME_PAGE_PATHS[page];
 }
 
 export function defaultAssignScopeToFilter(

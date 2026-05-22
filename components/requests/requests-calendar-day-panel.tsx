@@ -12,10 +12,12 @@ export function RequestsCalendarDayPanel({
   date,
   requests,
   onClose,
+  onRequestSelect,
 }: {
   date: Date;
   requests: Request[];
   onClose: () => void;
+  onRequestSelect: (request: Request) => void;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,7 +68,7 @@ export function RequestsCalendarDayPanel({
         <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
           {requests.map((r) => (
             <li key={r.id}>
-              <RequestsCalendarEvent request={r} />
+              <RequestsCalendarEvent request={r} onSelect={onRequestSelect} />
             </li>
           ))}
         </ul>

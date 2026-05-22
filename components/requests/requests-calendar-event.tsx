@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Request, RequestPriority } from "@/types/request";
 import { cn } from "@/lib/cn";
 import { formatTime, isRequestOverdue } from "@/lib/date";
@@ -10,29 +9,30 @@ const priorityBar: Record<RequestPriority, string> = {
   low: "bg-fg-tertiary",
 };
 
-export function RequestsCalendarEvent({
+const eventShellClass = (
+  overdue: boolean,
+  compact?: boolean,
+) =>
+  cn(
+    uiTransition,
+    "flex min-w-0 w-full items-stretch overflow-hidden rounded-[6px] border text-left",
+    overdue
+      ? "border-danger/50 bg-danger-muted/40 hover:bg-danger-muted/60"
+      : "border-line-default bg-elevated hover:bg-surface",
+    compact ? "text-[11px]" : "text-xs",
+  );
+
+function EventContent({
   request,
   compact,
+  overdue,
 }: {
   request: Request;
   compact?: boolean;
+  overdue: boolean;
 }) {
-  const overdue =
-    request.nextActionAt &&
-    isRequestOverdue(request.nextActionAt, request.status);
-
   return (
-    <Link
-      href={`/app/requests/${request.id}`}
-      className={cn(
-        uiTransition,
-        "flex min-w-0 items-stretch overflow-hidden rounded-[6px] border text-left",
-        overdue
-          ? "border-danger/50 bg-danger-muted/40 hover:bg-danger-muted/60"
-          : "border-line-default bg-elevated hover:bg-surface",
-        compact ? "text-[11px]" : "text-xs",
-      )}
-    >
+    <>
       <span
         className={cn("w-1 shrink-0", priorityBar[request.priority])}
         aria-hidden
@@ -52,6 +52,43 @@ export function RequestsCalendarEvent({
           </span>
         ) : null}
       </span>
-    </Link>
+    </>
+  );
+}
+
+export function RequestsCalendarEvent({
+  request,
+  compact,
+  onSelect,
+}: {
+  request: Request;
+  compact?: boolean;
+  onSelect?: (request: Request) => void;
+}) {
+  const overdue = Boolean(
+    request.nextActionAt &&
+      isRequestOverdue(request.nextActionAt, request.status),
+  );
+
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(request);
+        }}
+        className={eventShellClass(overdue, compact)}
+        aria-label={`Anteprima richiesta: ${request.title}`}
+      >
+        <EventContent request={request} compact={compact} overdue={overdue} />
+      </button>
+    );
+  }
+
+  return (
+    <div className={eventShellClass(overdue, compact)}>
+      <EventContent request={request} compact={compact} overdue={overdue} />
+    </div>
   );
 }

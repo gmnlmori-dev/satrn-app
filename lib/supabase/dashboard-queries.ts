@@ -134,6 +134,9 @@ export async function getDashboardMineCounts(
 
 export type DashboardActivityItem = RequestActivity & {
   requestTitle: string | null;
+  requestTeamId: string;
+  requestTeamName: string | null;
+  assignedUserId: string | null;
 };
 
 /** Ultime attività (timeline), con titolo richiesta se disponibile. */
@@ -143,17 +146,24 @@ export async function getRecentActivitiesGlobal(
 ): Promise<DashboardActivityItem[]> {
   const supabase = await createSupabaseServerClient();
   const teamId = teamIdForScope(scope);
+  const requestSelect = `
+    title,
+    team_id,
+    assigned_user_id,
+    team:teams!requests_team_id_fkey ( name )
+  `;
   const select = teamId
     ? `
       *,
       requests!inner (
-        title,
-        team_id
+        ${requestSelect}
       )
     `
     : `
       *,
-      requests ( title )
+      requests (
+        ${requestSelect}
+      )
     `;
 
   let q = supabase
@@ -171,11 +181,22 @@ export async function getRecentActivitiesGlobal(
   assertNoError("getRecentActivitiesGlobal", error);
 
   return ((data ?? []) as (RequestActivityRow & {
-    requests: { title: string } | null;
+    requests: {
+      title: string;
+      team_id: string;
+      assigned_user_id: string | null;
+      team: { name: string } | null;
+    } | null;
   })[]).map((row) => {
     const base = requestActivityRowToActivity(row);
-    const title = row.requests?.title ?? null;
-    return { ...base, requestTitle: title };
+    const req = row.requests;
+    return {
+      ...base,
+      requestTitle: req?.title ?? null,
+      requestTeamId: req?.team_id ?? "",
+      requestTeamName: req?.team?.name ?? null,
+      assignedUserId: req?.assigned_user_id ?? null,
+    };
   });
 }
 

@@ -33,6 +33,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { RequestsCalendarEvent } from "@/components/requests/requests-calendar-event";
 import { RequestsCalendarDayPanel } from "@/components/requests/requests-calendar-day-panel";
+import { RequestsCalendarRequestPreviewPanel } from "@/components/requests/requests-calendar-request-preview-panel";
 import { RequestsCalendarTasksPanel } from "@/components/requests/requests-calendar-tasks-panel";
 import type { DefaultRequestsCalendarLayoutPreference } from "@/lib/user-preferences";
 
@@ -143,12 +144,14 @@ function MonthCell({
   tasks,
   onMore,
   onTasks,
+  onRequestSelect,
 }: {
   cell: CalendarCell;
   events: Request[];
   tasks: CalendarTaskEntry[];
   onMore: (payload: DayOverflow) => void;
   onTasks: (payload: DayTasksOverflow) => void;
+  onRequestSelect: (request: Request) => void;
 }) {
   const visible = events.slice(0, MAX_EVENTS_PER_CELL);
   const hidden = events.length - visible.length;
@@ -189,7 +192,12 @@ function MonthCell({
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
         {visible.map((r) => (
-          <RequestsCalendarEvent key={r.id} request={r} compact />
+          <RequestsCalendarEvent
+            key={r.id}
+            request={r}
+            compact
+            onSelect={onRequestSelect}
+          />
         ))}
         {hidden > 0 ? (
           <button
@@ -215,11 +223,13 @@ function WeekColumn({
   events,
   tasks,
   onTasks,
+  onRequestSelect,
 }: {
   cell: CalendarCell;
   events: Request[];
   tasks: CalendarTaskEntry[];
   onTasks: (payload: DayTasksOverflow) => void;
+  onRequestSelect: (request: Request) => void;
 }) {
   const taskOverdue = tasks.some((entry) => isCalendarTaskOverdue(entry.task));
 
@@ -254,7 +264,11 @@ function WeekColumn({
           <span className="px-1 py-2 text-[11px] text-fg-tertiary">—</span>
         ) : (
           events.map((r) => (
-            <RequestsCalendarEvent key={r.id} request={r} />
+            <RequestsCalendarEvent
+              key={r.id}
+              request={r}
+              onSelect={onRequestSelect}
+            />
           ))
         )}
       </div>
@@ -280,6 +294,11 @@ export function RequestsCalendar({
   });
   const [dayPanel, setDayPanel] = useState<DayOverflow | null>(null);
   const [tasksPanel, setTasksPanel] = useState<DayTasksOverflow | null>(null);
+  const [previewRequest, setPreviewRequest] = useState<Request | null>(null);
+
+  const openRequestPreview = useCallback((request: Request) => {
+    setPreviewRequest(request);
+  }, []);
 
   useEffect(() => {
     const parsed = parseMonthParam(monthParam);
@@ -468,6 +487,7 @@ export function RequestsCalendar({
                   tasks={tasksByDay.get(cell.dateKey) ?? []}
                   onMore={setDayPanel}
                   onTasks={setTasksPanel}
+                  onRequestSelect={openRequestPreview}
                 />
               ))}
             </div>
@@ -485,6 +505,7 @@ export function RequestsCalendar({
                 events={byDay.get(cell.dateKey) ?? []}
                 tasks={tasksByDay.get(cell.dateKey) ?? []}
                 onTasks={setTasksPanel}
+                onRequestSelect={openRequestPreview}
               />
             ))}
           </div>
@@ -496,6 +517,15 @@ export function RequestsCalendar({
           date={dayPanel.date}
           requests={dayPanel.requests}
           onClose={() => setDayPanel(null)}
+          onRequestSelect={openRequestPreview}
+        />
+      ) : null}
+
+      {previewRequest ? (
+        <RequestsCalendarRequestPreviewPanel
+          request={previewRequest}
+          showRequestMeta={showTaskRequestMeta}
+          onClose={() => setPreviewRequest(null)}
         />
       ) : null}
 
