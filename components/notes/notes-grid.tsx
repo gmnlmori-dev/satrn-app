@@ -224,7 +224,7 @@ export function NotesGrid({
   );
 
   return (
-    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+    <div className="grid w-full grid-cols-1 items-start gap-3 sm:grid-cols-2 md:grid-cols-4">
       {draftOpen ? (
         <div className="relative min-w-0">
           <NoteCard
