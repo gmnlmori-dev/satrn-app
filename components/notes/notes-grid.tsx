@@ -224,7 +224,7 @@ export function NotesGrid({
   );
 
   return (
-    <div className="columns-1 gap-3 sm:columns-2 md:columns-4">
+    <div className="notes-masonry-grid">
       {draftOpen ? (
         <div className="mb-3 inline-block w-full max-w-full break-inside-avoid">
           <NoteCard
