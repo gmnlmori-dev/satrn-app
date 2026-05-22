@@ -9,9 +9,11 @@ export function DashboardFeedScopeBadge({
   className?: string;
 }) {
   return (
-    <Badge tone={tag.tone} className={className} title={tag.title}>
-      {tag.label}
-    </Badge>
+    <span title={tag.title} className="inline-flex">
+      <Badge tone={tag.tone} className={className}>
+        {tag.label}
+      </Badge>
+    </span>
   );
 }
 
