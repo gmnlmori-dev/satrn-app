@@ -26,12 +26,32 @@ type NotesGridProps = {
   ) => void;
 };
 
+type DropEdge = "top" | "bottom" | "left" | "right";
+
 type DropTarget = {
   id: string;
   before: boolean;
+  edge: DropEdge;
 };
 
 const DRAG_THRESHOLD_PX = 8;
+
+function dropEdgeFromPointer(
+  rect: DOMRect,
+  clientX: number,
+  clientY: number,
+): { before: boolean; edge: DropEdge } {
+  const distTop = clientY - rect.top;
+  const distBottom = rect.bottom - clientY;
+  const distLeft = clientX - rect.left;
+  const distRight = rect.right - clientX;
+  const min = Math.min(distTop, distBottom, distLeft, distRight);
+
+  if (min === distTop) return { before: true, edge: "top" };
+  if (min === distBottom) return { before: false, edge: "bottom" };
+  if (min === distLeft) return { before: true, edge: "left" };
+  return { before: false, edge: "right" };
+}
 
 function isInteractiveDragTarget(target: EventTarget | null) {
   return Boolean(
@@ -125,7 +145,8 @@ export function NotesGrid({
 
         if (distance < bestDistance) {
           bestDistance = distance;
-          best = { id: targetId, before: clientY < centerY };
+          const { before, edge } = dropEdgeFromPointer(rect, clientX, clientY);
+          best = { id: targetId, before, edge };
         }
       }
 
@@ -203,7 +224,7 @@ export function NotesGrid({
   );
 
   return (
-    <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4">
+    <div className="columns-1 gap-3 sm:columns-2 md:columns-4">
       {draftOpen ? (
         <div className="mb-3 inline-block w-full max-w-full break-inside-avoid">
           <NoteCard
@@ -221,8 +242,8 @@ export function NotesGrid({
       {notes.map((note) => {
         const draggable = canDragNote(note);
         const isDragging = draggingId === note.id;
-        const isDropBefore = dropTarget?.id === note.id && dropTarget.before;
-        const isDropAfter = dropTarget?.id === note.id && !dropTarget.before;
+        const dropEdge =
+          dropTarget?.id === note.id ? dropTarget.edge : null;
         const pinMismatch =
           draggingPinned !== null &&
           draggingId !== note.id &&
@@ -246,8 +267,17 @@ export function NotesGrid({
               }
             }}
           >
-            {isDropBefore ? (
+            {dropEdge === "top" ? (
               <div className="pointer-events-none absolute -top-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
+            ) : null}
+            {dropEdge === "bottom" ? (
+              <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
+            ) : null}
+            {dropEdge === "left" ? (
+              <div className="pointer-events-none absolute -left-1.5 top-2 bottom-2 z-30 w-0.5 rounded-full bg-accent" />
+            ) : null}
+            {dropEdge === "right" ? (
+              <div className="pointer-events-none absolute -right-1.5 top-2 bottom-2 z-30 w-0.5 rounded-full bg-accent" />
             ) : null}
             <NoteCard
               note={note}
@@ -263,9 +293,6 @@ export function NotesGrid({
                 });
               }}
             />
-            {isDropAfter ? (
-              <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
-            ) : null}
           </div>
         );
       })}
