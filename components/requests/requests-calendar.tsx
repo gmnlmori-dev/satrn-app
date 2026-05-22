@@ -335,7 +335,11 @@ export function RequestsCalendar({
   );
 
   const requestDeadlineCount = useMemo(
-    () => requests.filter((request) => request.nextActionAt != null).length,
+    () =>
+      requests.filter(
+        (request) =>
+          request.nextActionAt != null && request.status !== "closed",
+      ).length,
     [requests],
   );
 

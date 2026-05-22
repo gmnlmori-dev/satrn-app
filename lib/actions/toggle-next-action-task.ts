@@ -64,6 +64,7 @@ export async function toggleNextActionTask(
   revalidatePath(`/app/requests/${requestId}`);
   revalidatePath("/app/dashboard");
   revalidatePath("/app/follow-up");
+  revalidatePath("/app/calendar");
 
   return { ok: true };
 }

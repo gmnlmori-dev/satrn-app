@@ -126,6 +126,33 @@ export function patchNextActionTask(
   return serializeNextAction(content);
 }
 
+/** Segna tutti i task checklist come completati (es. chiusura richiesta). */
+export function markAllNextActionTasksDone(raw: string): {
+  next: string;
+  changed: boolean;
+  completedCount: number;
+} {
+  const content = parseNextAction(raw);
+  let changed = false;
+  let completedCount = 0;
+  const tasks = content.tasks.map((task) => {
+    if (task.done) return task;
+    changed = true;
+    completedCount += 1;
+    return { ...task, done: true };
+  });
+
+  if (!changed) {
+    return { next: raw, changed: false, completedCount: 0 };
+  }
+
+  return {
+    next: serializeNextAction({ ...content, tasks }),
+    changed: true,
+    completedCount,
+  };
+}
+
 export function extractCalendarTasks(requests: Request[]): CalendarTaskEntry[] {
   const entries: CalendarTaskEntry[] = [];
   for (const request of requests) {

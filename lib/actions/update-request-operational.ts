@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { logOperationalChanges } from "@/lib/request-activity-log";
+import { markAllNextActionTasksDone } from "@/lib/next-action-tasks";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type UpdateRequestOperationalInput = {
@@ -50,6 +51,18 @@ export async function updateRequestOperational(
     payload.last_interaction_at = new Date().toISOString();
   }
 
+  if (
+    fields.status === "closed" &&
+    before.status !== "closed"
+  ) {
+    const marked = markAllNextActionTasksDone(
+      (before as { next_action: string }).next_action ?? "",
+    );
+    if (marked.changed) {
+      payload.next_action = marked.next;
+    }
+  }
+
   if (Object.keys(payload).length === 0) {
     return { ok: false, message: "Nessun campo da aggiornare." };
   }
@@ -86,6 +99,7 @@ export async function updateRequestOperational(
   revalidatePath(`/app/requests/${id}`);
   revalidatePath("/app/dashboard");
   revalidatePath("/app/follow-up");
+  revalidatePath("/app/calendar");
 
   return {
     ok: true,

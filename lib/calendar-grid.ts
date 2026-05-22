@@ -92,6 +92,7 @@ export function sortDayEvents(requests: Request[]): Request[] {
 export function groupRequestsByDay(requests: Request[]): Map<string, Request[]> {
   const map = new Map<string, Request[]>();
   for (const r of requests) {
+    if (r.status === "closed") continue;
     if (!r.nextActionAt) continue;
     const key = toDateKeyFromIso(r.nextActionAt);
     if (!key) continue;
