@@ -125,3 +125,34 @@ export type InboxItemRowWithAssignee = InboxItemRow & {
     email: string;
   } | null;
 };
+
+export type TeamNoteVisibility = "private" | "team" | "shared";
+
+/** Riga tabella `public.team_notes`. */
+export type TeamNoteRow = {
+  id: string;
+  team_id: string;
+  created_by_user_id: string;
+  title: string;
+  body: string;
+  visibility: TeamNoteVisibility;
+  is_pinned: boolean;
+  is_archived: boolean;
+  color: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TeamNoteSharedUserRow = {
+  note_id: string;
+  user_id: string;
+};
+
+export type TeamNoteRowWithRelations = TeamNoteRow & {
+  creator?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
+  team_note_shared_users?: { user_id: string }[];
+};

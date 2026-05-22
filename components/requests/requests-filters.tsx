@@ -7,6 +7,7 @@ import {
   defaultToolbarFilters,
   filtersActive,
   type SortOption,
+  type StatusFilter,
   type ToolbarFilters,
 } from "@/lib/requests-query";
 import { cn } from "@/lib/cn";
@@ -157,10 +158,11 @@ export function RequestsFilters({
           onChange={(e) =>
             onFiltersChange({
               ...filters,
-              status: e.target.value as RequestStatus | "all",
+              status: e.target.value as StatusFilter,
             })
           }
         >
+          <option value="open">Aperte (escluse chiuse)</option>
           <option value="all">Tutti gli stati</option>
           {statuses.map((s) => (
             <option key={s} value={s}>

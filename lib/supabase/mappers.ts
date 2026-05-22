@@ -4,9 +4,12 @@ import type {
   RequestActivityRow,
   RequestNoteRow,
   RequestRowWithAssignee,
+  TeamNoteRowWithRelations,
 } from "@/types/database";
 import type { RequestActivity } from "@/types/activity";
 import type { InboxItem } from "@/types/inbox";
+import type { TeamNote } from "@/types/note";
+import { parseNoteColor } from "@/lib/team-note-access";
 import type { Request, RequestAssignee, RequestNote } from "@/types/request";
 
 export function requestActivityRowToActivity(row: RequestActivityRow): RequestActivity {
@@ -126,6 +129,24 @@ export function inboxItemRowToInboxItem(row: InboxItemRowWithAssignee): InboxIte
     assignedAt: row.assigned_at,
     assignedToLabel: assigneeDisplayName(row.assignee),
     createdByUserId: row.created_by_user_id ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function teamNoteRowToNote(row: TeamNoteRowWithRelations): TeamNote {
+  return {
+    id: row.id,
+    teamId: row.team_id,
+    createdByUserId: row.created_by_user_id,
+    createdByLabel: profileDisplayName(row.creator),
+    title: row.title,
+    body: row.body,
+    visibility: row.visibility,
+    isPinned: row.is_pinned,
+    isArchived: row.is_archived,
+    color: parseNoteColor(row.color),
+    sharedUserIds: (row.team_note_shared_users ?? []).map((s) => s.user_id),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

@@ -428,3 +428,10 @@ CREATE POLICY "request_activities_team_delete"
     public.is_active_admin(auth.uid())
     AND public.request_in_user_team(request_id)
   );
+
+-- ---------------------------------------------------------------------------
+-- RLS: team_notes (dettaglio in team_notes.sql)
+-- SELECT: stesso team + visibilità (private=creatore, team=tutti, shared=creatore+junction)
+-- INSERT/UPDATE/DELETE: solo creatore + stesso team
+-- ---------------------------------------------------------------------------
+-- Vedi supabase/sql/team_notes.sql per policy complete su team_notes e team_note_shared_users.

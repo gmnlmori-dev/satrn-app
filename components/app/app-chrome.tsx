@@ -27,8 +27,10 @@ import {
 } from "@/components/app/detail-save-feedback-context";
 import { NewRequestQuerySync } from "@/components/app/new-request-query-sync";
 import { InboxNewQuerySync } from "@/components/app/inbox-new-query-sync";
+import { NoteNewQuerySync } from "@/components/app/note-new-query-sync";
 import { NewRequestSlideOver } from "@/components/requests/new-request-slide-over";
 import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
+import { NewNoteSlideOver } from "@/components/notes/new-note-slide-over";
 import { resetAppMainScroll } from "@/lib/main-scroll";
 import { SidebarUserPanel } from "@/components/app/sidebar-user-panel";
 
@@ -41,6 +43,7 @@ const nav = [
   { href: "/app/requests", label: "Richieste", glyph: "queue" as const },
   { href: "/app/calendar", label: "Calendario", glyph: "calendar" as const },
   { href: "/app/inbox", label: "Inbox", glyph: "inbox" as const },
+  { href: "/app/notes", label: "Note", glyph: "note" as const },
 ] as const;
 
 function SidebarNavGlyph({
@@ -68,6 +71,28 @@ function SidebarNavGlyph({
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5m-13.5-3h3v3.75m-4.5-6.75h.008v.008H9v-.008z"
+        />
+      </svg>
+    );
+  }
+  if (kind === "note") {
+    const cls = cn(
+      "h-4 w-4 shrink-0",
+      active ? "text-accent" : "text-fg-tertiary",
+    );
+    return (
+      <svg
+        className={cls}
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.75}
+        stroke="currentColor"
+        aria-hidden
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
         />
       </svg>
     );
@@ -208,6 +233,13 @@ function breadcrumbsForPath(
   if (normalized === "/app/requests") return [{ label: "Richieste" }];
   if (normalized === "/app/calendar") return [{ label: "Calendario" }];
   if (normalized === "/app/inbox") return [{ label: "Inbox" }];
+  if (normalized === "/app/notes") return [{ label: "Note" }];
+  if (normalized === "/app/notes/new") {
+    return [
+      { label: "Note", href: "/app/notes" },
+      { label: "Nuova nota" },
+    ];
+  }
   if (normalized === "/app/inbox/new") {
     return [
       { label: "Inbox", href: "/app/inbox" },
@@ -386,9 +418,11 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const newRequestSlide = useExclusiveAppSlide("new-request");
   const newInboxSlide = useExclusiveAppSlide("new-inbox");
+  const newNoteSlide = useExclusiveAppSlide("new-note");
   const [createOpen, setCreateOpen] = useState(false);
   const openNewRequest = newRequestSlide.openSlide;
   const openNewInbox = newInboxSlide.openSlide;
+  const openNewNote = newNoteSlide.openSlide;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -413,6 +447,9 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <InboxNewQuerySync onOpen={openNewInbox} />
         </Suspense>
+        <Suspense fallback={null}>
+          <NoteNewQuerySync onOpen={openNewNote} />
+        </Suspense>
 
         <NewRequestSlideOver
           open={newRequestSlide.open}
@@ -421,6 +458,10 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
         <InboxNewSlideOver
           open={newInboxSlide.open}
           onClose={newInboxSlide.closeSlide}
+        />
+        <NewNoteSlideOver
+          open={newNoteSlide.open}
+          onClose={newNoteSlide.closeSlide}
         />
 
         {menuOpen ? (
@@ -545,6 +586,21 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
                   >
                     Nuovo inbox
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openNewNote();
+                    }}
+                    className={cn(
+                      uiTransition,
+                      uiFocusRingInset,
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                      "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+                    )}
+                  >
+                    Nuova nota
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -556,16 +612,21 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
               const isInboxSection =
                 pathname === "/app/inbox" ||
                 Boolean(pathname?.startsWith("/app/inbox/"));
+              const isNotesSection =
+                pathname === "/app/notes" ||
+                Boolean(pathname?.startsWith("/app/notes/"));
               const active =
                 item.href === "/app/requests"
                   ? isRequestsSection
                   : item.href === "/app/inbox"
                     ? isInboxSection
-                    : item.href === "/app/follow-up"
-                      ? pathname === "/app/follow-up"
-                      : item.href === "/app/calendar"
-                        ? pathname === "/app/calendar"
-                        : pathname === item.href;
+                    : item.href === "/app/notes"
+                      ? isNotesSection
+                      : item.href === "/app/follow-up"
+                        ? pathname === "/app/follow-up"
+                        : item.href === "/app/calendar"
+                          ? pathname === "/app/calendar"
+                          : pathname === item.href;
               return (
                 <Link
                   key={item.href}

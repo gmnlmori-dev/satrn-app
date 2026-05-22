@@ -12,9 +12,12 @@ import {
 
 export type AssignScopeFilter = "all" | "mine" | "unassigned" | "user";
 
+/** Filtro stato: singolo stato, tutte (incluse chiuse) o aperte (escluse chiuse). */
+export type StatusFilter = RequestStatus | "all" | "open";
+
 export type ToolbarFilters = {
   search: string;
-  status: RequestStatus | "all";
+  status: StatusFilter;
   priority: RequestPriority | "all";
   source: string | "all";
   assignScope: AssignScopeFilter;
@@ -25,7 +28,7 @@ export const defaultToolbarFilters = (
   assignScope: AssignScopeFilter = "all",
 ): ToolbarFilters => ({
   search: "",
-  status: "all",
+  status: "open",
   priority: "all",
   source: "all",
   assignScope,
@@ -45,7 +48,11 @@ export function filterByToolbar(
 ): Request[] {
   const q = f.search.trim().toLowerCase();
   return requests.filter((r) => {
-    if (f.status !== "all" && r.status !== f.status) return false;
+    if (f.status === "open") {
+      if (r.status === "closed") return false;
+    } else if (f.status !== "all" && r.status !== f.status) {
+      return false;
+    }
     if (f.priority !== "all" && r.priority !== f.priority) return false;
     if (f.source !== "all" && r.source !== f.source) return false;
 
