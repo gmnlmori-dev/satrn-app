@@ -13,6 +13,7 @@ type NotesGridProps = {
   onDraftCreated?: (note: TeamNote) => void;
   onNoteUpdated?: (note: TeamNote) => void;
   onNoteArchived?: (noteId: string) => void;
+  onNoteDeleted?: (noteId: string) => void;
   onCollapseDraft?: () => void;
 };
 
@@ -25,6 +26,7 @@ export function NotesGrid({
   onDraftCreated,
   onNoteUpdated,
   onNoteArchived,
+  onNoteDeleted,
   onCollapseDraft,
 }: NotesGridProps) {
   return (
@@ -37,6 +39,7 @@ export function NotesGrid({
           sharingOptions={sharingOptions}
           autoFocus
           onDraftCreated={onDraftCreated}
+          onUpdated={onNoteUpdated}
           onCollapseDraft={onCollapseDraft}
         />
       ) : null}
@@ -48,6 +51,7 @@ export function NotesGrid({
           sharingOptions={sharingOptions}
           onUpdated={onNoteUpdated}
           onArchived={onNoteArchived}
+          onDeleted={onNoteDeleted}
         />
       ))}
     </div>

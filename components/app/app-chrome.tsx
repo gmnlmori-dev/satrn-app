@@ -17,6 +17,7 @@ import { useOptionalCurrentProfile } from "@/components/app/current-user-context
 import { fetchInboxSubjectForBreadcrumb } from "@/lib/actions/inbox-breadcrumb";
 import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb";
 import { CreateRequestProvider } from "@/components/app/create-request-context";
+import { CreateNoteProvider } from "@/components/app/create-note-context";
 import {
   AppSlideCoordinatorProvider,
   useExclusiveAppSlide,
@@ -439,6 +440,7 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
 
   return (
     <CreateRequestProvider open={openNewRequest}>
+      <CreateNoteProvider open={openNewNote}>
       <DetailSaveFeedbackProvider>
       <div className="flex h-screen h-dvh min-h-0 flex-row overflow-hidden bg-canvas">
         <Suspense fallback={null}>
@@ -685,6 +687,7 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       </DetailSaveFeedbackProvider>
+      </CreateNoteProvider>
     </CreateRequestProvider>
   );
 }

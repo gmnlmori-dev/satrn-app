@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { archiveTeamNote } from "@/lib/actions/archive-team-note";
+import { deleteTeamNote } from "@/lib/actions/delete-team-note";
 import { updateTeamNote } from "@/lib/actions/update-team-note";
 import { updateTeamNoteSharing } from "@/lib/actions/update-team-note-sharing";
 import { cn } from "@/lib/cn";
@@ -17,7 +18,6 @@ import {
   uiBtnIcon,
   uiControl,
   uiFocusRingInset,
-  uiTransition,
 } from "@/lib/ui-classes";
 import type { TeamNote, NoteColor, NoteVisibility } from "@/types/note";
 import type { AssigneeOption } from "@/types/profile";
@@ -54,8 +54,60 @@ type NoteCardProps = {
   onDraftCreated?: (note: TeamNote) => void;
   onUpdated?: (note: TeamNote) => void;
   onArchived?: (noteId: string) => void;
+  onDeleted?: (noteId: string) => void;
   onCollapseDraft?: () => void;
 };
+
+function NoteActionsMenu({
+  onShare,
+  onArchive,
+  onDelete,
+  onClose,
+  pending,
+}: {
+  onShare: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
+  onClose?: () => void;
+  pending: boolean;
+}) {
+  return (
+    <div className="min-w-[180px] rounded-lg border border-line-default bg-surface py-1 shadow-lg">
+      <button
+        type="button"
+        className="block w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-elevated"
+        onClick={() => {
+          onShare();
+          onClose?.();
+        }}
+      >
+        Condividi
+      </button>
+      <button
+        type="button"
+        className="block w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-elevated"
+        onClick={() => {
+          void onArchive();
+          onClose?.();
+        }}
+        disabled={pending}
+      >
+        Archivia
+      </button>
+      <button
+        type="button"
+        className="block w-full px-3 py-1.5 text-left text-sm text-danger hover:bg-elevated"
+        onClick={() => {
+          void onDelete();
+          onClose?.();
+        }}
+        disabled={pending}
+      >
+        Elimina
+      </button>
+    </div>
+  );
+}
 
 export function NoteCard({
   note,
@@ -67,6 +119,7 @@ export function NoteCard({
   onDraftCreated,
   onUpdated,
   onArchived,
+  onDeleted,
   onCollapseDraft,
 }: NoteCardProps) {
   const [expanded, setExpanded] = useState(draft);
@@ -175,6 +228,28 @@ export function NoteCard({
       const result = await archiveTeamNote(localNote.id);
       if (result.ok) {
         onArchived?.(localNote.id);
+        setExpanded(false);
+      }
+    } finally {
+      setActionPending(false);
+      setMenuOpen(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!localNote || actionPending) return;
+    if (
+      !window.confirm(
+        "Eliminare questa nota? L'azione non può essere annullata.",
+      )
+    ) {
+      return;
+    }
+    setActionPending(true);
+    try {
+      const result = await deleteTeamNote(localNote.id);
+      if (result.ok) {
+        onDeleted?.(localNote.id);
       }
     } finally {
       setActionPending(false);
@@ -245,6 +320,40 @@ export function NoteCard({
       <div className="flex min-h-[120px] flex-1 flex-col p-3.5 sm:p-4">
         {!expanded && !draft ? (
           <>
+            {editable && localNote ? (
+              <div
+                className="absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-expanded={menuOpen}
+                    aria-label="Azioni nota"
+                    className={cn(uiBtnIcon, "h-8 w-8 bg-surface/90 shadow-sm")}
+                    onClick={() => setMenuOpen((v) => !v)}
+                  >
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                    </svg>
+                  </button>
+                  {menuOpen ? (
+                    <div className="absolute right-0 top-full mt-1">
+                      <NoteActionsMenu
+                        pending={actionPending}
+                        onShare={() => {
+                          setExpanded(true);
+                          setSharingOpen(true);
+                        }}
+                        onArchive={handleArchive}
+                        onDelete={handleDelete}
+                        onClose={() => setMenuOpen(false)}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             {localNote?.isPinned ? (
               <span className="mb-1 inline-flex text-fg-tertiary" aria-label="Fissata">
                 <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -362,27 +471,16 @@ export function NoteCard({
                       </button>
                       {menuOpen ? (
                         <div
-                          className="absolute bottom-full left-0 z-10 mb-1 min-w-[160px] rounded-lg border border-line-default bg-surface py-1 shadow-lg"
+                          className="absolute bottom-full left-0 z-10 mb-1"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <button
-                            type="button"
-                            className="block w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-elevated"
-                            onClick={() => {
-                              setSharingOpen(true);
-                              setMenuOpen(false);
-                            }}
-                          >
-                            Condividi
-                          </button>
-                          <button
-                            type="button"
-                            className="block w-full px-3 py-1.5 text-left text-sm text-danger hover:bg-elevated"
-                            onClick={() => void handleArchive()}
-                            disabled={actionPending}
-                          >
-                            Archivia
-                          </button>
+                          <NoteActionsMenu
+                            pending={actionPending}
+                            onShare={() => setSharingOpen(true)}
+                            onArchive={handleArchive}
+                            onDelete={handleDelete}
+                            onClose={() => setMenuOpen(false)}
+                          />
                         </div>
                       ) : null}
                     </div>
@@ -428,9 +526,19 @@ export function NoteCard({
                   <button
                     type="button"
                     className={cn(uiBtnIcon, "h-8 w-8")}
-                    aria-label="Annulla"
+                    aria-label="Chiudi"
                     onClick={(e) => {
                       e.stopPropagation();
+                      autosave.flushSave();
+                      if (localNote) {
+                        const synced = {
+                          ...localNote,
+                          title: titleFromBody(autosave.body, autosave.title),
+                          body: autosave.body,
+                        };
+                        setLocalNote(synced);
+                        onUpdated?.(synced);
+                      }
                       onCollapseDraft();
                     }}
                   >

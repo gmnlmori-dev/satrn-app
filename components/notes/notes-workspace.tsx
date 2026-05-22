@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useExclusiveAppSlide } from "@/components/app/app-slide-coordinator";
+import { useOpenCreateNote } from "@/components/app/create-note-context";
 import { listNoteSharingOptions } from "@/lib/actions/list-note-sharing-options";
 import { NotesGrid } from "@/components/notes/notes-grid";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
@@ -29,11 +29,12 @@ export function NotesWorkspace({
   currentUserId,
   teamId = "",
 }: NotesWorkspaceProps) {
-  const newNoteSlide = useExclusiveAppSlide("new-note");
+  const openNewNote = useOpenCreateNote();
   const [notes, setNotes] = useState(initialNotes);
   const [tab, setTab] = useState<NotesTabFilter>("mine");
   const [search, setSearch] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composingNoteId, setComposingNoteId] = useState<string | null>(null);
   const [sharingOptions, setSharingOptions] = useState<AssigneeOption[]>([]);
 
   useEffect(() => {
@@ -56,14 +57,42 @@ export function NotesWorkspace({
     return sortNotesForGrid(bySearch);
   }, [notes, tab, currentUserId, search]);
 
+  const gridNotes = useMemo(() => {
+    if (!composerOpen || !composingNoteId) return filtered;
+    return filtered.filter((n) => n.id !== composingNoteId);
+  }, [filtered, composerOpen, composingNoteId]);
+
   const handleDraftCreated = useCallback((note: TeamNote) => {
-    setNotes((prev) => [note, ...prev]);
-    setComposerOpen(false);
+    setNotes((prev) => {
+      if (prev.some((n) => n.id === note.id)) {
+        return prev.map((n) => (n.id === note.id ? note : n));
+      }
+      return [note, ...prev];
+    });
+    setComposingNoteId(note.id);
   }, []);
 
   const handleNoteUpdated = useCallback((note: TeamNote) => {
     setNotes((prev) => prev.map((n) => (n.id === note.id ? note : n)));
   }, []);
+
+  const handleCollapseComposer = useCallback(() => {
+    setComposerOpen(false);
+    setComposingNoteId(null);
+  }, []);
+
+  const handleOpenComposer = useCallback(() => {
+    setComposingNoteId(null);
+    setComposerOpen(true);
+  }, []);
+
+  const handleNoteDeleted = useCallback((noteId: string) => {
+    if (composingNoteId === noteId) {
+      setComposerOpen(false);
+      setComposingNoteId(null);
+    }
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+  }, [composingNoteId]);
 
   const handleNoteArchived = useCallback((noteId: string) => {
     setNotes((prev) =>
@@ -88,7 +117,7 @@ export function NotesWorkspace({
         {!composerOpen ? (
           <button
             type="button"
-            onClick={() => setComposerOpen(true)}
+            onClick={handleOpenComposer}
             className={cn(
               uiControl,
               uiTransition,
@@ -133,16 +162,16 @@ export function NotesWorkspace({
           icon="none"
         >
           <button
-              type="button"
-              className={uiBtnSecondary}
-              onClick={newNoteSlide.openSlide}
-            >
-              Nuova nota
-            </button>
+            type="button"
+            className={uiBtnSecondary}
+            onClick={openNewNote}
+          >
+            Nuova nota
+          </button>
         </AppEmptyState>
-      ) : (
+      ) : filtered.length > 0 || composerOpen ? (
         <NotesGrid
-          notes={filtered}
+          notes={gridNotes}
           currentUserId={currentUserId}
           teamId={teamId}
           sharingOptions={sharingOptions}
@@ -150,9 +179,10 @@ export function NotesWorkspace({
           onDraftCreated={handleDraftCreated}
           onNoteUpdated={handleNoteUpdated}
           onNoteArchived={handleNoteArchived}
-          onCollapseDraft={() => setComposerOpen(false)}
+          onNoteDeleted={handleNoteDeleted}
+          onCollapseDraft={handleCollapseComposer}
         />
-      )}
+      ) : null}
     </div>
   );
 }

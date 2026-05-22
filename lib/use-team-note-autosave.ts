@@ -28,12 +28,17 @@ export function useTeamNoteAutosave({
   const [status, setStatus] = useState<TeamNoteAutosaveStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const noteIdRef = useRef<string | null>(initialNoteId);
+  const syncedNoteIdRef = useRef<string | null>(initialNoteId);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
   const pendingSaveRef = useRef(false);
 
   useEffect(() => {
+    if (initialNoteId === syncedNoteIdRef.current) {
+      return;
+    }
+    syncedNoteIdRef.current = initialNoteId;
     noteIdRef.current = initialNoteId;
     setTitle(initialTitle);
     setBody(initialBody);
@@ -61,7 +66,12 @@ export function useTeamNoteAutosave({
     const trimmedBody = body.trim();
     const trimmedTitle = title.trim();
 
-    if (!noteIdRef.current && !trimmedBody && !trimmedTitle) {
+    if (!noteIdRef.current) {
+      if (!trimmedBody) {
+        setStatus("idle");
+        return;
+      }
+    } else if (!trimmedBody && !trimmedTitle) {
       setStatus("idle");
       return;
     }

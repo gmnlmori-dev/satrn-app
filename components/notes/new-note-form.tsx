@@ -22,6 +22,7 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
   const p = (name: string) => `${uid}-${name}`;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const { pulseTopBar } = useDetailSaveFeedback();
 
@@ -30,14 +31,15 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
     if (pending) return;
     setError(null);
 
+    const trimmedTitle = title.trim();
     const trimmedBody = body.trim();
-    if (!trimmedBody) {
-      setError("Scrivi qualcosa nella nota.");
+    if (!trimmedTitle && !trimmedBody) {
+      setError("Scrivi un titolo o il testo della nota.");
       return;
     }
 
     const fd = new FormData();
-    fd.set("title", titleFromBody(trimmedBody));
+    fd.set("title", trimmedTitle || titleFromBody(trimmedBody));
     fd.set("body", trimmedBody);
     fd.set("visibility", "private" satisfies NoteVisibility);
 
@@ -49,6 +51,7 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
         return;
       }
       pulseTopBar();
+      setTitle("");
       setBody("");
       onSuccess(result.id);
     } finally {
@@ -62,7 +65,22 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
       className={cn("flex min-h-0 flex-1 flex-col", className)}
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col pr-4 sm:pr-5">
-        <div className="min-h-0 flex-1 overflow-y-auto pb-4 pr-3.5 sm:pr-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-4 pr-3.5 sm:pr-5">
+          <div>
+            <label htmlFor={p("title")} className={uiFormLabel}>
+              Titolo
+            </label>
+            <input
+              id={p("title")}
+              name="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={pending}
+              autoComplete="off"
+              className={inputClass}
+              placeholder="Titolo breve (opzionale)"
+            />
+          </div>
           <div>
             <label htmlFor={p("body")} className={uiFormLabel}>
               Nota
@@ -76,7 +94,7 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
               rows={10}
               autoFocus
               className={cn(inputClass, "min-h-[180px] resize-y")}
-              placeholder="Scrivi la tua nota…"
+              placeholder="Scrivi il contenuto della nota…"
             />
           </div>
         </div>
