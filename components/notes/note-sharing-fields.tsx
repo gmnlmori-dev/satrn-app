@@ -48,7 +48,7 @@ export function NoteSharingFields({
     VISIBILITY_OPTIONS.find((opt) => opt.value === visibility)?.hint ?? "";
 
   return (
-    <div className={cn(compact ? "space-y-2.5" : "space-y-3", className)}>
+    <div className={cn(compact ? "min-w-0 space-y-2.5" : "space-y-3", className)}>
       <div>
         {!compact ? (
           <label htmlFor={`${idPrefix}-visibility`} className={uiFormLabel}>
@@ -59,7 +59,7 @@ export function NoteSharingFields({
           <div
             role="radiogroup"
             aria-label="Visibilità nota"
-            className="flex rounded-lg border border-line-default bg-canvas/50 p-0.5"
+            className="flex min-w-0 w-full rounded-lg border border-line-default bg-canvas/50 p-0.5"
           >
             {VISIBILITY_OPTIONS.map((opt) => {
               const selected = visibility === opt.value;

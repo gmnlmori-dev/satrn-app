@@ -839,7 +839,7 @@ export function NoteCard({
 
               {sharingOpen && editable ? (
                 <div
-                  className="mt-2.5 overflow-hidden rounded-xl border border-line-default/80 bg-surface/95 shadow-sm"
+                  className="mt-2.5 w-full min-w-0 overflow-hidden rounded-xl border border-line-default/80 bg-surface/95 shadow-sm"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between border-b border-line-default/60 px-3 py-2">
