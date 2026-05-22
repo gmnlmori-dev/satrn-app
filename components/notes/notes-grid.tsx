@@ -30,29 +30,32 @@ export function NotesGrid({
   onCollapseDraft,
 }: NotesGridProps) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4">
       {draftOpen ? (
-        <NoteCard
-          draft
-          currentUserId={currentUserId}
-          teamId={teamId}
-          sharingOptions={sharingOptions}
-          autoFocus
-          onDraftCreated={onDraftCreated}
-          onUpdated={onNoteUpdated}
-          onCollapseDraft={onCollapseDraft}
-        />
+        <div className="mb-3 break-inside-avoid">
+          <NoteCard
+            draft
+            currentUserId={currentUserId}
+            teamId={teamId}
+            sharingOptions={sharingOptions}
+            autoFocus
+            onDraftCreated={onDraftCreated}
+            onUpdated={onNoteUpdated}
+            onCollapseDraft={onCollapseDraft}
+          />
+        </div>
       ) : null}
       {notes.map((note) => (
-        <NoteCard
-          key={note.id}
-          note={note}
-          currentUserId={currentUserId}
-          sharingOptions={sharingOptions}
-          onUpdated={onNoteUpdated}
-          onArchived={onNoteArchived}
-          onDeleted={onNoteDeleted}
-        />
+        <div key={note.id} className="mb-3 break-inside-avoid">
+          <NoteCard
+            note={note}
+            currentUserId={currentUserId}
+            sharingOptions={sharingOptions}
+            onUpdated={onNoteUpdated}
+            onArchived={onNoteArchived}
+            onDeleted={onNoteDeleted}
+          />
+        </div>
       ))}
     </div>
   );

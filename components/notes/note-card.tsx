@@ -97,6 +97,12 @@ function NoteToolbarDivider() {
   return <span className="mx-0.5 h-4 w-px shrink-0 bg-line-default/80" aria-hidden />;
 }
 
+function adjustTextareaHeight(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 type NoteCardProps = {
   note?: TeamNote;
   currentUserId: string;
@@ -188,8 +194,11 @@ export function NoteCard({
   const [actionPending, setActionPending] = useState(false);
   const [pinPending, setPinPending] = useState(false);
   const [colorPending, setColorPending] = useState<NoteColor | null>(null);
+  const [colorOpen, setColorOpen] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
 
   const editable =
     draft || (localNote ? canEditTeamNote(localNote, currentUserId) : false);
@@ -244,6 +253,24 @@ export function NoteCard({
     return () => window.clearTimeout(t);
   }, [autoFocus, expanded, draft]);
 
+  useEffect(() => {
+    if (!expanded || !editable) return;
+    adjustTextareaHeight(titleRef.current);
+    adjustTextareaHeight(bodyRef.current);
+  }, [expanded, editable, autosave.title, autosave.body, sharingOpen]);
+
+  useEffect(() => {
+    if (!colorOpen) return;
+
+    function onDocumentMouseDown(e: MouseEvent) {
+      if (colorPickerRef.current?.contains(e.target as Node)) return;
+      setColorOpen(false);
+    }
+
+    document.addEventListener("mousedown", onDocumentMouseDown);
+    return () => document.removeEventListener("mousedown", onDocumentMouseDown);
+  }, [colorOpen]);
+
   const displayTitle =
     titleFromBody(
       editable && expanded ? autosave.body : (localNote?.body ?? ""),
@@ -291,6 +318,7 @@ export function NoteCard({
       };
       setLocalNote(updated);
       onUpdated?.(updated);
+      setColorOpen(false);
     } finally {
       setColorPending(null);
     }
@@ -383,21 +411,73 @@ export function NoteCard({
 
   const cardColor = noteColorCardClass(localNote?.color);
   const activeColor = localNote?.color ?? "default";
+  const activeColorOption =
+    NOTE_COLOR_OPTIONS.find((c) => c.value === activeColor) ?? NOTE_COLOR_OPTIONS[0];
   const isPinned = localNote?.isPinned ?? false;
+
+  const collapseAndSave = useCallback(() => {
+    if (editable) {
+      autosave.flushSave();
+      if (localNote) {
+        const synced = {
+          ...localNote,
+          title: titleFromBody(autosave.body, autosave.title),
+          body: autosave.body,
+        };
+        setLocalNote(synced);
+        onUpdated?.(synced);
+      }
+    }
+    setExpanded(false);
+    setSharingOpen(false);
+    setMenuOpen(false);
+    setColorOpen(false);
+    if (draft) {
+      onCollapseDraft?.();
+    }
+  }, [
+    editable,
+    autosave.flushSave,
+    autosave.body,
+    autosave.title,
+    localNote,
+    onUpdated,
+    draft,
+    onCollapseDraft,
+  ]);
+
+  useEffect(() => {
+    if (!expanded) return;
+
+    function onDocumentMouseDown(e: MouseEvent) {
+      const target = e.target as Node;
+      if (cardRef.current?.contains(target)) return;
+      collapseAndSave();
+    }
+
+    document.addEventListener("mousedown", onDocumentMouseDown);
+    return () => document.removeEventListener("mousedown", onDocumentMouseDown);
+  }, [expanded, collapseAndSave]);
 
   return (
     <article
+      ref={cardRef}
       className={cn(
-        "group relative flex flex-col rounded-xl border border-line-default shadow-sm transition-shadow",
+        "group relative flex w-full flex-col rounded-xl border border-line-default shadow-sm transition-shadow",
         cardColor,
-        expanded ? "col-span-1" : "cursor-pointer hover:shadow-md",
+        !expanded && !draft && "cursor-pointer hover:shadow-md",
         draft && "ring-1 ring-accent/30",
       )}
       onClick={() => {
         if (!expanded && !draft) setExpanded(true);
       }}
     >
-      <div className="flex min-h-[120px] flex-1 flex-col p-3.5 sm:p-4">
+      <div
+        className={cn(
+          "flex flex-col p-3.5 sm:p-4",
+          !expanded && !draft && "min-h-[120px]",
+        )}
+      >
         {!expanded && !draft ? (
           <>
             {editable && localNote ? (
@@ -445,7 +525,7 @@ export function NoteCard({
               {displayTitle}
             </h3>
             {previewBody ? (
-              <p className="mt-1.5 line-clamp-6 whitespace-pre-wrap text-sm text-fg-secondary">
+              <p className="mt-1.5 whitespace-pre-wrap text-sm text-fg-secondary">
                 {previewBody}
               </p>
             ) : null}
@@ -466,12 +546,15 @@ export function NoteCard({
               <textarea
                 ref={titleRef}
                 value={autosave.title}
-                onChange={(e) => autosave.setTitle(e.target.value)}
+                onChange={(e) => {
+                  autosave.setTitle(e.target.value);
+                  adjustTextareaHeight(e.target);
+                }}
                 rows={1}
                 placeholder="Titolo"
                 className={cn(
                   uiControl,
-                  "mb-2 resize-none border-transparent bg-transparent px-0 py-0 text-sm font-medium shadow-none focus:border-line-default",
+                  "mb-2 min-h-[1.5rem] resize-none overflow-hidden border-transparent bg-transparent px-0 py-0 text-sm font-medium shadow-none focus:border-line-default",
                 )}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -483,12 +566,15 @@ export function NoteCard({
               <textarea
                 ref={bodyRef}
                 value={autosave.body}
-                onChange={(e) => autosave.setBody(e.target.value)}
-                rows={6}
+                onChange={(e) => {
+                  autosave.setBody(e.target.value);
+                  adjustTextareaHeight(e.target);
+                }}
+                rows={1}
                 placeholder="Prendi una nota…"
                 className={cn(
                   uiControl,
-                  "min-h-[100px] flex-1 resize-none border-transparent bg-transparent px-0 py-0 text-sm shadow-none focus:border-line-default",
+                  "min-h-[5rem] resize-none overflow-hidden border-transparent bg-transparent px-0 py-0 text-sm shadow-none focus:border-line-default",
                 )}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -499,7 +585,7 @@ export function NoteCard({
             <div className="mt-3 border-t border-line-default/40 pt-2.5">
               <div className="flex items-center justify-between gap-2">
                 {editable ? (
-                  <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
+                  <div className="flex min-w-0 flex-1 items-center">
                     <div className="flex shrink-0 items-center rounded-lg border border-line-default/70 bg-surface/90 p-0.5 shadow-sm">
                       {localNote ? (
                         <>
@@ -522,44 +608,84 @@ export function NoteCard({
                             <PinIcon pinned={isPinned} />
                           </button>
                           <NoteToolbarDivider />
-                          <div
-                            className="flex items-center gap-0.5 px-0.5"
-                            role="group"
-                            aria-label="Colore nota"
-                          >
-                            {NOTE_COLOR_OPTIONS.map((c) => {
-                              const selected = activeColor === c.value;
-                              const saving = colorPending === c.value;
-                              return (
-                                <button
-                                  key={c.value}
-                                  type="button"
-                                  aria-label={c.label}
-                                  aria-pressed={selected}
-                                  title={c.label}
-                                  className={cn(
-                                    uiFocusRingInset,
-                                    "relative flex h-5 w-5 items-center justify-center rounded-full transition-all",
-                                    c.swatchClass,
-                                    selected &&
-                                      "ring-2 ring-fg-primary/35 ring-offset-1 ring-offset-surface/90",
-                                    saving && "animate-pulse opacity-60",
-                                    Boolean(colorPending) &&
-                                      !saving &&
-                                      !selected &&
-                                      "opacity-35",
-                                  )}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (selected) return;
-                                    void handleColorChange(c.value);
-                                  }}
-                                  disabled={Boolean(colorPending)}
-                                >
-                                  {selected ? <ColorCheckIcon /> : null}
-                                </button>
-                              );
-                            })}
+                          <div className="relative" ref={colorPickerRef}>
+                            <button
+                              type="button"
+                              aria-expanded={colorOpen}
+                              aria-label={`Colore nota: ${activeColorOption.label}`}
+                              title={activeColorOption.label}
+                              className={cn(
+                                noteToolbarBtn,
+                                colorOpen && "bg-elevated text-fg-primary",
+                                Boolean(colorPending) && "animate-pulse opacity-70",
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setColorOpen((v) => !v);
+                                setMenuOpen(false);
+                                setSharingOpen(false);
+                              }}
+                              disabled={Boolean(colorPending)}
+                            >
+                              <span
+                                className={cn(
+                                  "flex h-4 w-4 items-center justify-center rounded-full",
+                                  activeColorOption.swatchClass,
+                                )}
+                              >
+                                {activeColor === activeColorOption.value ? (
+                                  <ColorCheckIcon />
+                                ) : null}
+                              </span>
+                            </button>
+                            {colorOpen ? (
+                              <div
+                                className="absolute bottom-full left-0 z-20 mb-1.5 rounded-lg border border-line-default bg-surface p-2 shadow-lg"
+                                role="listbox"
+                                aria-label="Colore nota"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  {NOTE_COLOR_OPTIONS.map((c) => {
+                                    const selected = activeColor === c.value;
+                                    const saving = colorPending === c.value;
+                                    return (
+                                      <button
+                                        key={c.value}
+                                        type="button"
+                                        role="option"
+                                        aria-selected={selected}
+                                        aria-label={c.label}
+                                        title={c.label}
+                                        className={cn(
+                                          uiFocusRingInset,
+                                          "relative flex h-7 w-7 items-center justify-center rounded-full transition-all",
+                                          c.swatchClass,
+                                          selected &&
+                                            "ring-2 ring-fg-primary/35 ring-offset-1 ring-offset-surface",
+                                          saving && "animate-pulse opacity-60",
+                                          Boolean(colorPending) &&
+                                            !saving &&
+                                            !selected &&
+                                            "opacity-35",
+                                        )}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (selected) {
+                                            setColorOpen(false);
+                                            return;
+                                          }
+                                          void handleColorChange(c.value);
+                                        }}
+                                        disabled={Boolean(colorPending)}
+                                      >
+                                        {selected ? <ColorCheckIcon /> : null}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ) : null}
                           </div>
                           <NoteToolbarDivider />
                         </>
@@ -578,6 +704,7 @@ export function NoteCard({
                           e.stopPropagation();
                           setSharingOpen((v) => !v);
                           setMenuOpen(false);
+                          setColorOpen(false);
                         }}
                       >
                         <svg
@@ -608,6 +735,7 @@ export function NoteCard({
                                 e.stopPropagation();
                                 setMenuOpen((v) => !v);
                                 setSharingOpen(false);
+                                setColorOpen(false);
                               }}
                             >
                               <svg
@@ -656,18 +784,7 @@ export function NoteCard({
                       aria-label="Chiudi"
                       onClick={(e) => {
                         e.stopPropagation();
-                        autosave.flushSave();
-                        if (localNote) {
-                          const synced = {
-                            ...localNote,
-                            title: titleFromBody(autosave.body, autosave.title),
-                            body: autosave.body,
-                          };
-                          setLocalNote(synced);
-                          onUpdated?.(synced);
-                        }
-                        setExpanded(false);
-                        setSharingOpen(false);
+                        collapseAndSave();
                       }}
                     >
                       <svg
@@ -687,17 +804,7 @@ export function NoteCard({
                       aria-label="Chiudi"
                       onClick={(e) => {
                         e.stopPropagation();
-                        autosave.flushSave();
-                        if (localNote) {
-                          const synced = {
-                            ...localNote,
-                            title: titleFromBody(autosave.body, autosave.title),
-                            body: autosave.body,
-                          };
-                          setLocalNote(synced);
-                          onUpdated?.(synced);
-                        }
-                        onCollapseDraft();
+                        collapseAndSave();
                       }}
                     >
                       <svg
