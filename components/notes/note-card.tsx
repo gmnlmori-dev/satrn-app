@@ -118,6 +118,7 @@ type NoteCardProps = {
   onDeleted?: (noteId: string) => void;
   onCollapseDraft?: () => void;
   onExpandedChange?: (expanded: boolean) => void;
+  blockExpandClick?: boolean;
 };
 
 function NoteActionsMenu({
@@ -184,6 +185,7 @@ export function NoteCard({
   onDeleted,
   onCollapseDraft,
   onExpandedChange,
+  blockExpandClick = false,
 }: NoteCardProps) {
   const [expanded, setExpanded] = useState(draft);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -493,6 +495,7 @@ export function NoteCard({
         draft && "ring-1 ring-accent/30",
       )}
       onClick={() => {
+        if (blockExpandClick) return;
         if (!expanded && !draft) setExpanded(true);
       }}
     >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { NoteCard } from "@/components/notes/note-card";
 import { cn } from "@/lib/cn";
 import { canEditTeamNote } from "@/lib/team-note-access";
@@ -26,23 +26,20 @@ type NotesGridProps = {
   ) => void;
 };
 
-function DragHandleIcon() {
-  return (
-    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-      <circle cx="9" cy="7" r="1.4" />
-      <circle cx="15" cy="7" r="1.4" />
-      <circle cx="9" cy="12" r="1.4" />
-      <circle cx="15" cy="12" r="1.4" />
-      <circle cx="9" cy="17" r="1.4" />
-      <circle cx="15" cy="17" r="1.4" />
-    </svg>
-  );
-}
-
 type DropTarget = {
   id: string;
   before: boolean;
 };
+
+const DRAG_THRESHOLD_PX = 8;
+
+function isInteractiveDragTarget(target: EventTarget | null) {
+  return Boolean(
+    (target as HTMLElement | null)?.closest(
+      "button, a, input, textarea, select, label, [role='button'], [role='menuitem'], [contenteditable='true']",
+    ),
+  );
+}
 
 export function NotesGrid({
   notes,
@@ -63,7 +60,32 @@ export function NotesGrid({
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
+  const notesRef = useRef(notes);
+  const onReorderRef = useRef(onReorder);
+  const draggingIdRef = useRef<string | null>(null);
+  const draggingPinnedRef = useRef<boolean | null>(null);
+  const suppressExpandRef = useRef<Set<string>>(new Set());
+  const pointerDragRef = useRef<{
+    noteId: string;
+    pinned: boolean;
+    startX: number;
+    startY: number;
+    active: boolean;
+    pointerId: number;
+  } | null>(null);
+
+  useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
+
+  useEffect(() => {
+    onReorderRef.current = onReorder;
+  }, [onReorder]);
+
   const resetDrag = useCallback(() => {
+    draggingIdRef.current = null;
+    draggingPinnedRef.current = null;
+    pointerDragRef.current = null;
     setDraggingId(null);
     setDraggingPinned(null);
     setDropTarget(null);
@@ -78,49 +100,106 @@ export function NotesGrid({
     [reorderEnabled, onReorder, currentUserId, expandedNoteId],
   );
 
-  const handleDragStart = useCallback(
-    (note: TeamNote) => (e: React.DragEvent) => {
-      if (!canDragNote(note)) {
-        e.preventDefault();
-        return;
+  const resolveDropTarget = useCallback(
+    (clientX: number, clientY: number): DropTarget | null => {
+      const draggingId = draggingIdRef.current;
+      const draggingPinned = draggingPinnedRef.current;
+      if (!draggingId || draggingPinned === null) return null;
+
+      const wrappers = document.querySelectorAll<HTMLElement>("[data-note-id]");
+      let best: DropTarget | null = null;
+      let bestDistance = Number.POSITIVE_INFINITY;
+
+      for (const wrapper of wrappers) {
+        const targetId = wrapper.dataset.noteId;
+        if (!targetId || targetId === draggingId) continue;
+
+        const targetNote = notesRef.current.find((n) => n.id === targetId);
+        if (!targetNote || !canEditTeamNote(targetNote, currentUserId)) continue;
+        if (targetNote.isPinned !== draggingPinned) continue;
+
+        const rect = wrapper.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const distance = Math.hypot(clientX - centerX, clientY - centerY);
+
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = { id: targetId, before: clientY < centerY };
+        }
       }
-      e.dataTransfer.setData("text/plain", note.id);
-      e.dataTransfer.effectAllowed = "move";
-      setDraggingId(note.id);
-      setDraggingPinned(note.isPinned);
+
+      return best;
+    },
+    [currentUserId],
+  );
+
+  useEffect(() => {
+    const onWindowPointerMove = (e: PointerEvent) => {
+      const drag = pointerDragRef.current;
+      if (!drag || drag.pointerId !== e.pointerId) return;
+
+      const dx = Math.abs(e.clientX - drag.startX);
+      const dy = Math.abs(e.clientY - drag.startY);
+
+      if (!drag.active) {
+        if (dx < DRAG_THRESHOLD_PX && dy < DRAG_THRESHOLD_PX) return;
+        drag.active = true;
+        draggingIdRef.current = drag.noteId;
+        draggingPinnedRef.current = drag.pinned;
+        setDraggingId(drag.noteId);
+        setDraggingPinned(drag.pinned);
+      }
+
+      e.preventDefault();
+      setDropTarget(resolveDropTarget(e.clientX, e.clientY));
+    };
+
+    const finishDrag = (e: PointerEvent) => {
+      const drag = pointerDragRef.current;
+      if (!drag || drag.pointerId !== e.pointerId) return;
+
+      if (drag.active) {
+        const target = resolveDropTarget(e.clientX, e.clientY);
+        if (target && target.id !== drag.noteId) {
+          onReorderRef.current?.(drag.noteId, target.id, target.before);
+        }
+        suppressExpandRef.current.add(drag.noteId);
+        window.setTimeout(() => {
+          suppressExpandRef.current.delete(drag.noteId);
+        }, 400);
+      }
+
+      resetDrag();
+    };
+
+    window.addEventListener("pointermove", onWindowPointerMove);
+    window.addEventListener("pointerup", finishDrag);
+    window.addEventListener("pointercancel", finishDrag);
+
+    return () => {
+      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointerup", finishDrag);
+      window.removeEventListener("pointercancel", finishDrag);
+    };
+  }, [resolveDropTarget, resetDrag]);
+
+  const handlePointerDown = useCallback(
+    (note: TeamNote) => (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!canDragNote(note)) return;
+      if (e.button !== 0) return;
+      if (isInteractiveDragTarget(e.target)) return;
+
+      pointerDragRef.current = {
+        noteId: note.id,
+        pinned: note.isPinned,
+        startX: e.clientX,
+        startY: e.clientY,
+        active: false,
+        pointerId: e.pointerId,
+      };
     },
     [canDragNote],
-  );
-
-  const handleDragOver = useCallback(
-    (note: TeamNote) => (e: React.DragEvent) => {
-      if (!draggingId || draggingPinned === null || draggingId === note.id) return;
-      if (note.isPinned !== draggingPinned) return;
-      if (!canEditTeamNote(note, currentUserId)) return;
-
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const before = e.clientY < rect.top + rect.height / 2;
-      setDropTarget({ id: note.id, before });
-    },
-    [draggingId, draggingPinned, currentUserId],
-  );
-
-  const handleDrop = useCallback(
-    (note: TeamNote) => (e: React.DragEvent) => {
-      e.preventDefault();
-      if (!draggingId || !dropTarget || dropTarget.id !== note.id) {
-        resetDrag();
-        return;
-      }
-      if (draggingId !== dropTarget.id) {
-        onReorder?.(draggingId, dropTarget.id, dropTarget.before);
-      }
-      resetDrag();
-    },
-    [draggingId, dropTarget, onReorder, resetDrag],
   );
 
   return (
@@ -152,29 +231,23 @@ export function NotesGrid({
         return (
           <div
             key={note.id}
+            data-note-id={note.id}
             className={cn(
               "relative mb-3 inline-block w-full max-w-full break-inside-avoid",
-              isDragging && "opacity-50",
+              draggable && "cursor-grab touch-none select-none active:cursor-grabbing",
+              isDragging && "z-20 opacity-50 pointer-events-none",
               pinMismatch && Boolean(draggingId) && "opacity-40",
             )}
-            onDragOver={handleDragOver(note)}
-            onDrop={handleDrop(note)}
+            onPointerDown={handlePointerDown(note)}
+            onClickCapture={(e) => {
+              if (suppressExpandRef.current.has(note.id)) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
           >
             {isDropBefore ? (
-              <div className="absolute -top-1.5 left-2 right-2 z-10 h-0.5 rounded-full bg-accent" />
-            ) : null}
-            {draggable ? (
-              <div
-                draggable
-                onDragStart={handleDragStart(note)}
-                onDragEnd={resetDrag}
-                className="mb-1 flex cursor-grab items-center justify-center rounded-md py-0.5 text-fg-tertiary active:cursor-grabbing hover:bg-canvas/80 hover:text-fg-secondary"
-                aria-label="Trascina per riordinare"
-                title="Trascina per riordinare"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <DragHandleIcon />
-              </div>
+              <div className="pointer-events-none absolute -top-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
             ) : null}
             <NoteCard
               note={note}
@@ -191,7 +264,7 @@ export function NotesGrid({
               }}
             />
             {isDropAfter ? (
-              <div className="absolute -bottom-1.5 left-2 right-2 z-10 h-0.5 rounded-full bg-accent" />
+              <div className="pointer-events-none absolute -bottom-1.5 left-2 right-2 z-30 h-0.5 rounded-full bg-accent" />
             ) : null}
           </div>
         );
