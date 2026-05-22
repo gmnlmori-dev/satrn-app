@@ -19,19 +19,16 @@ type QueueCountLinkProps =
   | { unavailable: true; value?: number; href?: string; danger?: boolean }
   | { unavailable?: false; value: number; href?: string; danger?: boolean };
 
-function QueueCountLink({
-  value,
-  href,
-  danger = false,
-  unavailable = false,
-}: QueueCountLinkProps) {
-  if (unavailable) {
+function QueueCountLink(props: QueueCountLinkProps) {
+  if (props.unavailable) {
     return (
       <span className="text-sm text-fg-tertiary" aria-hidden>
         —
       </span>
     );
   }
+
+  const { value, href, danger = false } = props;
 
   const numClass = cn(
     "text-xl font-semibold tabular-nums tracking-tight",
