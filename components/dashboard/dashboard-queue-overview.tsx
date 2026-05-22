@@ -15,12 +15,9 @@ import type {
   DashboardOperationalCounts,
 } from "@/lib/supabase/dashboard-queries";
 
-type QueueCountLinkProps = {
-  value: number;
-  href?: string;
-  danger?: boolean;
-  unavailable?: boolean;
-};
+type QueueCountLinkProps =
+  | { unavailable: true; value?: number; href?: string; danger?: boolean }
+  | { unavailable?: false; value: number; href?: string; danger?: boolean };
 
 function QueueCountLink({
   value,
