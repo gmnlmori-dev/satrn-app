@@ -44,7 +44,13 @@ function defaultsFromInbox(item: InboxItem) {
   };
 }
 
-export function ConvertInboxForm({ item }: { item: InboxItem }) {
+export function ConvertInboxForm({
+  item,
+  embedded = false,
+}: {
+  item: InboxItem;
+  embedded?: boolean;
+}) {
   const uid = useId();
   const p = (name: string) => `${uid}-${name}`;
   const router = useRouter();
@@ -75,8 +81,8 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
     }
   }
 
-  return (
-    <Panel className="border-success/30">
+  const form = (
+    <>
       <p className="text-sm font-semibold text-fg-primary">
         Converti in richiesta
       </p>
@@ -269,6 +275,10 @@ export function ConvertInboxForm({ item }: { item: InboxItem }) {
           </button>
         </div>
       </form>
-    </Panel>
+    </>
   );
+
+  if (embedded) return form;
+
+  return <Panel className="border-success/30">{form}</Panel>;
 }
