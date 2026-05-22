@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
+  filterInboxMine,
   filterRequestsMine,
   type FollowUpAssigneeScope,
 } from "@/lib/request-assignee";
@@ -64,6 +65,10 @@ export function FollowUpAssigneeScope({
     () => (mineOnly ? filterRequestsMine(upcoming, currentUserId) : upcoming),
     [mineOnly, upcoming, currentUserId],
   );
+  const filteredInbox = useMemo(
+    () => (mineOnly ? filterInboxMine(inbox, currentUserId) : inbox),
+    [mineOnly, inbox, currentUserId],
+  );
 
   const queueTotal =
     filteredOverdue.length + filteredToday.length + filteredUpcoming.length;
@@ -73,11 +78,11 @@ export function FollowUpAssigneeScope({
       {showMine ? (
         <Panel padding className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-fg-primary">Mostra richieste</p>
+            <p className="text-sm font-medium text-fg-primary">Mostra coda</p>
             <p className="mt-0.5 text-xs text-fg-tertiary">
               {mineOnly
-                ? "Solo assegnate a te (inbox triage invariata)."
-                : "Tutta la coda team (inbox triage invariata)."}
+                ? "Solo richieste e inbox assegnate a te."
+                : "Tutta la coda del team."}
             </p>
           </div>
           <SegmentedControl
@@ -103,7 +108,7 @@ export function FollowUpAssigneeScope({
         overdue={filteredOverdue}
         today={filteredToday}
         upcoming={filteredUpcoming}
-        inbox={inbox}
+        inbox={filteredInbox}
       />
     </div>
   );

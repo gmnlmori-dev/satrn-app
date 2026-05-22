@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Request } from "@/types/request";
-import type { AssigneeOption } from "@/types/profile";
+import type { AppRole, AssigneeOption } from "@/types/profile";
+import { canViewAllTeamsRequestMeta } from "@/lib/permissions";
 import {
   RequestsDatabaseEmptyState,
   RequestsEmptyState,
 } from "@/components/requests/requests-empty-state";
-import { RequestsTable } from "@/components/requests/requests-table";
+import { RequestsCalendar } from "@/components/requests/requests-calendar";
 import { RequestsToolbar } from "@/components/requests/requests-toolbar";
 import { cn } from "@/lib/cn";
+import { monthParamFromDate } from "@/lib/date";
 import {
   countByStatus,
   countDueToday,
@@ -20,11 +23,11 @@ import {
   collectSources,
   defaultToolbarFilters,
   filterByToolbar,
-  sortRequests,
   type SortOption,
   type ToolbarFilters,
   type AssignScopeFilter,
 } from "@/lib/requests-query";
+import type { DefaultRequestsCalendarLayoutPreference } from "@/lib/user-preferences";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 
@@ -83,37 +86,26 @@ function QueueOverview({
   );
 }
 
-function PriorityLegend() {
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-tertiary">
-      <span className="font-medium text-fg-secondary">Priorità</span>
-      <span className="inline-flex items-center gap-1.5">
-        <span aria-hidden className="h-2.5 w-1 rounded-full bg-danger" />
-        Alta
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span aria-hidden className="h-2.5 w-1 rounded-full bg-warning" />
-        Media
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span aria-hidden className="h-2.5 w-1 rounded-full bg-fg-tertiary" />
-        Bassa
-      </span>
-    </div>
-  );
-}
-
-export function RequestsWorkspace({
+export function CalendarWorkspace({
   requests,
   currentUserId,
+  currentUserRole = "operator",
   assigneeOptions,
   defaultAssignScope = "all",
+  defaultCalendarLayout = "month",
 }: {
   requests: Request[];
   currentUserId: string;
+  currentUserRole?: AppRole;
   assigneeOptions: AssigneeOption[];
   defaultAssignScope?: AssignScopeFilter;
+  defaultCalendarLayout?: DefaultRequestsCalendarLayoutPreference;
 }) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const urlMonth = searchParams.get("month");
+
   const toolbarBaseline = useMemo(
     () => defaultToolbarFilters(defaultAssignScope),
     [defaultAssignScope],
@@ -140,9 +132,37 @@ export function RequestsWorkspace({
     [requests, toolbar, currentUserId],
   );
 
-  const forList = useMemo(
-    () => sortRequests(filtered, sort),
-    [filtered, sort],
+  const withoutDeadlineCount = useMemo(
+    () => filtered.filter((r) => r.nextActionAt == null).length,
+    [filtered],
+  );
+
+  const showTaskRequestMeta = canViewAllTeamsRequestMeta(currentUserRole);
+
+  const replaceSearch = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const q = params.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
+
+  useEffect(() => {
+    if (urlMonth) return;
+    replaceSearch((params) => {
+      params.set("month", monthParamFromDate(new Date()));
+    });
+  }, [urlMonth, replaceSearch]);
+
+  const onMonthParamChange = useCallback(
+    (month: string) => {
+      replaceSearch((params) => {
+        params.set("month", month);
+      });
+    },
+    [replaceSearch],
   );
 
   const resetAll = useCallback(() => {
@@ -160,19 +180,19 @@ export function RequestsWorkspace({
       <div className="space-y-6 md:space-y-7">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0 space-y-1">
-            <h1 className={uiPageTitle}>Scrivania richieste</h1>
+            <h1 className={uiPageTitle}>Calendario</h1>
             <p className={cn(uiPageLead, "max-w-xl")}>
-              Cerca e filtra l’elenco, poi apri una riga per il dettaglio.
+              Scadenze e task sulle richieste, in vista mensile o settimanale.
             </p>
           </div>
           <Link
-            href="/app/dashboard"
+            href="/app/requests"
             className={cn(
               uiBtnSecondary,
               "inline-flex shrink-0 self-start items-center justify-center rounded-lg px-4 py-2.5 text-sm",
             )}
           >
-            Dashboard
+            Elenco richieste
           </Link>
         </header>
         <RequestsDatabaseEmptyState />
@@ -184,19 +204,20 @@ export function RequestsWorkspace({
     <div className="space-y-6 md:space-y-7">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="min-w-0 space-y-1">
-          <h1 className={uiPageTitle}>Scrivania richieste</h1>
+          <h1 className={uiPageTitle}>Calendario</h1>
           <p className={cn(uiPageLead, "max-w-xl")}>
-            Cerca e filtra l’elenco, poi apri una riga per il dettaglio.
+            Scadenze e task sulle richieste filtrate. Clicca un giorno o un
+            evento per i dettagli.
           </p>
         </div>
         <Link
-          href="/app/calendar"
+          href="/app/requests"
           className={cn(
             uiBtnSecondary,
             "inline-flex shrink-0 self-start items-center justify-center rounded-lg px-4 py-2.5 text-sm",
           )}
         >
-          Calendario
+          Elenco richieste
         </Link>
       </header>
 
@@ -212,24 +233,22 @@ export function RequestsWorkspace({
         currentUserId={currentUserId}
         assigneeOptions={assigneeOptions}
         myAssignedCount={myAssignedCount}
+        variant="calendar"
         filterBaseline={toolbarBaseline}
       />
 
       {filtered.length === 0 ? (
         <RequestsEmptyState onReset={resetAll} />
       ) : (
-        <section className="space-y-3" aria-label="Risultati richieste">
-          <p className="text-sm text-fg-tertiary">
-            <span className="tabular-nums font-semibold text-fg-primary">
-              {forList.length}
-            </span>
-            {forList.length === total
-              ? " richieste"
-              : ` su ${total} richieste`}
-          </p>
-          <PriorityLegend />
-          <RequestsTable requests={forList} />
-        </section>
+        <RequestsCalendar
+          requests={filtered}
+          filteredCount={filtered.length}
+          withoutDeadlineCount={withoutDeadlineCount}
+          showTaskRequestMeta={showTaskRequestMeta}
+          monthParam={urlMonth}
+          onMonthParamChange={onMonthParamChange}
+          defaultLayout={defaultCalendarLayout}
+        />
       )}
     </div>
   );

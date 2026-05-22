@@ -3,13 +3,10 @@ import { defaultFollowUpAssigneeScope } from "@/lib/request-assignee";
 import type { AssignScopeFilter } from "@/lib/requests-query";
 import type { AppRole } from "@/types/profile";
 
-/** Vista predefinita «Le mie» / «Tutte» su Richieste e Da seguire. */
+/** Vista predefinita «Le mie» / «Tutte» su Richieste, Inbox e Da seguire. */
 export type DefaultAssignScopePreference = FollowUpAssigneeScope;
 
-/** Vista predefinita su Richieste: elenco tabellare o calendario scadenze. */
-export type DefaultRequestsViewPreference = "list" | "calendar";
-
-/** Layout predefinito del calendario richieste. */
+/** Layout predefinito della pagina Calendario. */
 export type DefaultRequestsCalendarLayoutPreference = "month" | "week";
 
 /** Pagina predefinita dopo login / apertura app. */
@@ -34,7 +31,6 @@ export const DEFAULT_HOME_PAGE_LABELS: Record<DefaultHomePagePreference, string>
 
 export type UserPreferences = {
   defaultAssignScope?: DefaultAssignScopePreference;
-  defaultRequestsView?: DefaultRequestsViewPreference;
   defaultRequestsCalendarLayout?: DefaultRequestsCalendarLayoutPreference;
   defaultHomePage?: DefaultHomePagePreference;
 };
@@ -45,9 +41,6 @@ export function parseUserPreferences(raw: unknown): UserPreferences {
   const prefs: UserPreferences = {};
   if (o.defaultAssignScope === "all" || o.defaultAssignScope === "mine") {
     prefs.defaultAssignScope = o.defaultAssignScope;
-  }
-  if (o.defaultRequestsView === "list" || o.defaultRequestsView === "calendar") {
-    prefs.defaultRequestsView = o.defaultRequestsView;
   }
   if (
     o.defaultRequestsCalendarLayout === "month" ||
@@ -73,12 +66,6 @@ export function resolveDefaultAssignScope(
     return preferences.defaultAssignScope;
   }
   return defaultFollowUpAssigneeScope(role);
-}
-
-export function resolveDefaultRequestsView(
-  preferences: UserPreferences,
-): DefaultRequestsViewPreference {
-  return preferences.defaultRequestsView ?? "list";
 }
 
 export function resolveDefaultRequestsCalendarLayout(

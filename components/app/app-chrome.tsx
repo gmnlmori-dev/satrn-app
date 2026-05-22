@@ -39,6 +39,7 @@ const nav = [
   { href: "/app/dashboard", label: "Dashboard", glyph: "home" as const },
   { href: "/app/follow-up", label: "Da seguire", glyph: "followup" as const },
   { href: "/app/requests", label: "Richieste", glyph: "queue" as const },
+  { href: "/app/calendar", label: "Calendario", glyph: "calendar" as const },
   { href: "/app/inbox", label: "Inbox", glyph: "inbox" as const },
 ] as const;
 
@@ -89,6 +90,28 @@ function SidebarNavGlyph({
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+        />
+      </svg>
+    );
+  }
+  if (kind === "calendar") {
+    const cls = cn(
+      "h-4 w-4 shrink-0",
+      active ? "text-accent" : "text-fg-tertiary",
+    );
+    return (
+      <svg
+        className={cls}
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.75}
+        stroke="currentColor"
+        aria-hidden
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5m-13.5-3h3v3.75m-4.5-6.75h.008v.008H9v-.008z"
         />
       </svg>
     );
@@ -183,6 +206,7 @@ function breadcrumbsForPath(
   if (normalized === "/app/dashboard") return [{ label: "Dashboard" }];
   if (normalized === "/app/follow-up") return [{ label: "Da seguire" }];
   if (normalized === "/app/requests") return [{ label: "Richieste" }];
+  if (normalized === "/app/calendar") return [{ label: "Calendario" }];
   if (normalized === "/app/inbox") return [{ label: "Inbox" }];
   if (normalized === "/app/inbox/new") {
     return [
@@ -539,7 +563,9 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
                     ? isInboxSection
                     : item.href === "/app/follow-up"
                       ? pathname === "/app/follow-up"
-                      : pathname === item.href;
+                      : item.href === "/app/calendar"
+                        ? pathname === "/app/calendar"
+                        : pathname === item.href;
               return (
                 <Link
                   key={item.href}

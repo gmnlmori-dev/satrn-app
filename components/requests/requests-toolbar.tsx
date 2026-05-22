@@ -11,8 +11,6 @@ import { uiControl, uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
 import { uiFilterLabel } from "@/lib/typography";
 import { uiPanel } from "@/lib/surfaces";
 
-export type RequestsViewMode = "list" | "calendar";
-
 type Props = {
   toolbar: ToolbarFilters;
   onToolbarChange: (t: ToolbarFilters) => void;
@@ -23,8 +21,8 @@ type Props = {
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
   myAssignedCount: number;
-  viewMode: RequestsViewMode;
   filterBaseline: ToolbarFilters;
+  variant?: "list" | "calendar";
 };
 
 const assignSegments: { value: AssignScopeFilter; label: string }[] = [
@@ -43,14 +41,15 @@ export function RequestsToolbar({
   currentUserId,
   assigneeOptions,
   myAssignedCount,
-  viewMode,
   filterBaseline,
+  variant = "list",
 }: Props) {
   const filtersPanelId = useId();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const isCalendar = variant === "calendar";
   const showResetHint =
     filtersActive(toolbar, filterBaseline) ||
-    (viewMode === "list" && sort !== "updated_desc");
+    (!isCalendar && sort !== "updated_desc");
 
   const assignValue =
     toolbar.assignScope === "user" ? "all" : toolbar.assignScope;
@@ -132,7 +131,7 @@ export function RequestsToolbar({
           )}
         >
           <span>
-            {viewMode === "calendar" ? "Filtri" : "Filtri e ordinamento"}
+            {isCalendar ? "Filtri" : "Filtri e ordinamento"}
           </span>
           <span className="flex min-w-0 items-center gap-2">
             {showResetHint ? (
@@ -175,7 +174,7 @@ export function RequestsToolbar({
               onSortChange={onSortChange}
               onReset={onReset}
               assigneeOptions={assigneeOptions}
-              hideSort={viewMode === "calendar"}
+              hideSort={isCalendar}
               filterBaseline={filterBaseline}
             />
           </div>

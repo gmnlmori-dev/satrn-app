@@ -85,6 +85,15 @@ ALTER TABLE public.inbox_items
   ADD COLUMN IF NOT EXISTS team_id uuid
     REFERENCES public.teams (id) ON DELETE RESTRICT;
 
+ALTER TABLE public.inbox_items
+  ADD COLUMN IF NOT EXISTS assigned_user_id uuid
+    REFERENCES public.profiles (user_id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS assigned_at timestamptz NULL;
+
+CREATE INDEX IF NOT EXISTS inbox_items_assigned_user_id_idx
+  ON public.inbox_items (assigned_user_id)
+  WHERE assigned_user_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS profiles_team_id_idx ON public.profiles (team_id);
 CREATE INDEX IF NOT EXISTS requests_team_id_idx ON public.requests (team_id);
 CREATE INDEX IF NOT EXISTS inbox_items_team_id_idx ON public.inbox_items (team_id);

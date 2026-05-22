@@ -14,6 +14,9 @@ export interface InboxItem {
   status: InboxItemStatus;
   linkedRequestId: string | null;
   teamId: string;
+  assignedUserId: string | null;
+  assignedAt: string | null;
+  assignedToLabel: string | null;
   createdAt: string;
   updatedAt: string;
 }

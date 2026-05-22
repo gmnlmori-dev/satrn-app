@@ -1,5 +1,5 @@
 import type {
-  InboxItemRow,
+  InboxItemRowWithAssignee,
   RequestActivityRow,
   RequestNoteRow,
   RequestRowWithAssignee,
@@ -74,7 +74,7 @@ export function requestNoteRowToNote(row: RequestNoteRow): RequestNote {
   };
 }
 
-export function inboxItemRowToInboxItem(row: InboxItemRow): InboxItem {
+export function inboxItemRowToInboxItem(row: InboxItemRowWithAssignee): InboxItem {
   return {
     id: row.id,
     source: row.source,
@@ -85,6 +85,9 @@ export function inboxItemRowToInboxItem(row: InboxItemRow): InboxItem {
     status: row.status,
     linkedRequestId: row.linked_request_id,
     teamId: row.team_id,
+    assignedUserId: row.assigned_user_id,
+    assignedAt: row.assigned_at,
+    assignedToLabel: assigneeDisplayName(row.assignee),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

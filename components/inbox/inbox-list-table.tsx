@@ -15,7 +15,15 @@ import {
 } from "@/lib/table-ui";
 import { uiTransition } from "@/lib/ui-classes";
 
-function Row({ r, index }: { r: InboxItem; index: number }) {
+function Row({
+  r,
+  index,
+  showAssignee,
+}: {
+  r: InboxItem;
+  index: number;
+  showAssignee: boolean;
+}) {
   const router = useRouter();
 
   function go() {
@@ -56,6 +64,17 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
       <td className={cn("hidden px-4 py-3 align-middle sm:table-cell sm:px-5", dataTableColSepClass)}>
         <InboxStatusBadge status={r.status} />
       </td>
+      {showAssignee ? (
+        <td
+          className={cn(
+            dataTableTdClass,
+            "hidden text-fg-secondary lg:table-cell",
+            dataTableColSepClass,
+          )}
+        >
+          {r.assignedToLabel ?? "—"}
+        </td>
+      ) : null}
       <td
         className={cn(
           dataTableTdClass,
@@ -69,10 +88,16 @@ function Row({ r, index }: { r: InboxItem; index: number }) {
   );
 }
 
-export function InboxListTable({ items }: { items: InboxItem[] }) {
+export function InboxListTable({
+  items,
+  showAssignee = false,
+}: {
+  items: InboxItem[];
+  showAssignee?: boolean;
+}) {
   return (
     <div className={dataTableShellClass}>
-      <div className="w-full min-w-[520px]">
+      <div className={cn("w-full", showAssignee ? "min-w-[640px]" : "min-w-[520px]")}>
       <table className="w-full table-fixed border-collapse text-left text-sm">
         <thead>
           <tr className={dataTableHeadRowClass}>
@@ -85,6 +110,18 @@ export function InboxListTable({ items }: { items: InboxItem[] }) {
             >
               Stato
             </th>
+            {showAssignee ? (
+              <th
+                scope="col"
+                className={cn(
+                  dataTableThClass,
+                  "hidden w-[10rem] lg:table-cell",
+                  dataTableColSepClass,
+                )}
+              >
+                Assegnata a
+              </th>
+            ) : null}
             <th
               scope="col"
               className={cn(
@@ -99,7 +136,7 @@ export function InboxListTable({ items }: { items: InboxItem[] }) {
         </thead>
         <tbody>
           {items.map((r, index) => (
-            <Row key={r.id} r={r} index={index} />
+            <Row key={r.id} r={r} index={index} showAssignee={showAssignee} />
           ))}
         </tbody>
       </table>

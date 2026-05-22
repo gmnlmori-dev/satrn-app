@@ -1,8 +1,9 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import { inboxItemRowToInboxItem, requestRowToRequest } from "@/lib/supabase/mappers";
+import { INBOX_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/inbox-queries";
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { InboxItemRow, RequestRowWithAssignee } from "@/types/database";
+import type { InboxItemRowWithAssignee, RequestRowWithAssignee } from "@/types/database";
 import type { InboxItem } from "@/types/inbox";
 import type { Request } from "@/types/request";
 
@@ -64,11 +65,11 @@ export async function getInboxTriageItems(): Promise<InboxItem[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("inbox_items")
-    .select("*")
+    .select(INBOX_SELECT_WITH_ASSIGNEE)
     .in("status", ["new", "reviewed"])
     .is("linked_request_id", null)
     .order("created_at", { ascending: false });
 
   assertNoError("getInboxTriageItems", error);
-  return ((data ?? []) as InboxItemRow[]).map(inboxItemRowToInboxItem);
+  return ((data ?? []) as InboxItemRowWithAssignee[]).map(inboxItemRowToInboxItem);
 }

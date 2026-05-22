@@ -99,6 +99,16 @@ export type InboxItemRow = {
   status: InboxItemStatus;
   linked_request_id: string | null;
   team_id: string;
+  assigned_user_id: string | null;
+  assigned_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type InboxItemRowWithAssignee = InboxItemRow & {
+  assignee?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
 };

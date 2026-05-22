@@ -33,6 +33,7 @@ export async function createInboxItem(
   }
 
   const supabase = await createSupabaseServerClient();
+  const assignedAt = new Date().toISOString();
   const { data, error } = await supabase
     .from("inbox_items")
     .insert({
@@ -43,6 +44,8 @@ export async function createInboxItem(
       raw_content,
       status: "new",
       team_id,
+      assigned_user_id: me.userId,
+      assigned_at: assignedAt,
     })
     .select("id")
     .single();

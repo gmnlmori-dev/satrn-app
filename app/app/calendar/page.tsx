@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { RequestsWorkspace } from "@/components/requests/requests-workspace";
+import { CalendarWorkspace } from "@/components/requests/calendar-workspace";
 import {
   getActiveAssigneeOptions,
   getCurrentProfileSummary,
@@ -8,13 +8,14 @@ import { getRequests } from "@/lib/supabase/queries";
 import {
   defaultAssignScopeToFilter,
   resolveDefaultAssignScope,
+  resolveDefaultRequestsCalendarLayout,
 } from "@/lib/user-preferences";
 
 export const metadata = {
-  title: "Richieste",
+  title: "Calendario",
 };
 
-export default async function RequestsPage() {
+export default async function CalendarPage() {
   const [requests, profile] = await Promise.all([
     getRequests(),
     getCurrentProfileSummary(),
@@ -25,14 +26,19 @@ export default async function RequestsPage() {
         resolveDefaultAssignScope(profile.preferences, profile.role),
       )
     : "all";
+  const defaultCalendarLayout = profile
+    ? resolveDefaultRequestsCalendarLayout(profile.preferences)
+    : "month";
 
   return (
     <Suspense fallback={null}>
-      <RequestsWorkspace
+      <CalendarWorkspace
         requests={requests}
         currentUserId={profile?.userId ?? ""}
+        currentUserRole={profile?.role ?? "operator"}
         assigneeOptions={assignees}
         defaultAssignScope={defaultAssignScope}
+        defaultCalendarLayout={defaultCalendarLayout}
       />
     </Suspense>
   );

@@ -7,7 +7,6 @@ import {
   type DefaultAssignScopePreference,
   type DefaultHomePagePreference,
   type DefaultRequestsCalendarLayoutPreference,
-  type DefaultRequestsViewPreference,
   type UserPreferences,
 } from "@/lib/user-preferences";
 
@@ -19,13 +18,6 @@ function normalizeDefaultAssignScope(
   value: unknown,
 ): DefaultAssignScopePreference | undefined {
   if (value === "all" || value === "mine") return value;
-  return undefined;
-}
-
-function normalizeDefaultRequestsView(
-  value: unknown,
-): DefaultRequestsViewPreference | undefined {
-  if (value === "list" || value === "calendar") return value;
   return undefined;
 }
 
@@ -65,14 +57,6 @@ export async function updateMyPreferences(
       return { ok: false, message: "Ambito predefinito non valido." };
     }
     next.defaultAssignScope = scope;
-  }
-
-  if ("defaultRequestsView" in patch) {
-    const view = normalizeDefaultRequestsView(patch.defaultRequestsView);
-    if (!view) {
-      return { ok: false, message: "Vista predefinita non valida." };
-    }
-    next.defaultRequestsView = view;
   }
 
   if ("defaultRequestsCalendarLayout" in patch) {
@@ -125,6 +109,7 @@ export async function updateMyPreferences(
   revalidatePath("/app/settings");
   revalidatePath("/app/follow-up");
   revalidatePath("/app/requests");
+  revalidatePath("/app/calendar");
   revalidatePath("/app/dashboard");
   revalidatePath("/app/inbox");
   revalidatePath("/");
