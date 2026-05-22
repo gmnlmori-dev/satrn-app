@@ -32,7 +32,7 @@ export function NotesGrid({
   return (
     <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4">
       {draftOpen ? (
-        <div className="mb-3 break-inside-avoid">
+        <div className="mb-3 inline-block w-full max-w-full break-inside-avoid">
           <NoteCard
             draft
             currentUserId={currentUserId}
@@ -46,7 +46,7 @@ export function NotesGrid({
         </div>
       ) : null}
       {notes.map((note) => (
-        <div key={note.id} className="mb-3 break-inside-avoid">
+        <div key={note.id} className="mb-3 inline-block w-full max-w-full break-inside-avoid">
           <NoteCard
             note={note}
             currentUserId={currentUserId}

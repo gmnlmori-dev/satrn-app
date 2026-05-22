@@ -97,6 +97,8 @@ function NoteToolbarDivider() {
   return <span className="mx-0.5 h-4 w-px shrink-0 bg-line-default/80" aria-hidden />;
 }
 
+const noteTextWrap = "min-w-0 break-words [overflow-wrap:anywhere]";
+
 function adjustTextareaHeight(el: HTMLTextAreaElement | null) {
   if (!el) return;
   el.style.height = "auto";
@@ -195,6 +197,7 @@ export function NoteCard({
   const [pinPending, setPinPending] = useState(false);
   const [colorPending, setColorPending] = useState<NoteColor | null>(null);
   const [colorOpen, setColorOpen] = useState(false);
+  const [draftColor, setDraftColor] = useState<NoteColor | null>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -209,6 +212,7 @@ export function NoteCard({
     initialBody: (note ?? localNote)?.body ?? "",
     visibility,
     sharedUserIds,
+    color: localNote?.color ?? draftColor,
     enabled: editable && expanded,
     onCreated: (id, payload) => {
       const created: TeamNote = {
@@ -221,7 +225,7 @@ export function NoteCard({
         visibility: payload.visibility,
         isPinned: false,
         isArchived: false,
-        color: null,
+        color: payload.color,
         sharedUserIds: payload.sharedUserIds,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -229,6 +233,7 @@ export function NoteCard({
       setLocalNote(created);
       setVisibility(payload.visibility);
       setSharedUserIds(payload.sharedUserIds);
+      setDraftColor(payload.color);
       onDraftCreated?.(created);
     },
   });
@@ -300,8 +305,15 @@ export function NoteCard({
   }
 
   async function handleColorChange(color: NoteColor) {
-    if (!localNote || colorPending) return;
+    if (colorPending) return;
     const dbColor = color === "default" ? null : color;
+
+    if (!localNote) {
+      setDraftColor(dbColor);
+      setColorOpen(false);
+      return;
+    }
+
     const previous = localNote.color;
     setLocalNote({ ...localNote, color: dbColor });
     setColorPending(color);
@@ -409,8 +421,8 @@ export function NoteCard({
     });
   }
 
-  const cardColor = noteColorCardClass(localNote?.color);
-  const activeColor = localNote?.color ?? "default";
+  const cardColor = noteColorCardClass(localNote?.color ?? draftColor);
+  const activeColor = localNote?.color ?? draftColor ?? "default";
   const activeColorOption =
     NOTE_COLOR_OPTIONS.find((c) => c.value === activeColor) ?? NOTE_COLOR_OPTIONS[0];
   const isPinned = localNote?.isPinned ?? false;
@@ -463,7 +475,7 @@ export function NoteCard({
     <article
       ref={cardRef}
       className={cn(
-        "group relative flex w-full flex-col rounded-xl border border-line-default shadow-sm transition-shadow",
+        "group relative flex w-full max-w-full min-w-0 flex-col overflow-hidden rounded-xl border border-line-default shadow-sm transition-shadow",
         cardColor,
         !expanded && !draft && "cursor-pointer hover:shadow-md",
         draft && "ring-1 ring-accent/30",
@@ -474,7 +486,7 @@ export function NoteCard({
     >
       <div
         className={cn(
-          "flex flex-col p-3.5 sm:p-4",
+          "flex min-w-0 flex-col p-3.5 sm:p-4",
           !expanded && !draft && "min-h-[120px]",
         )}
       >
@@ -521,11 +533,11 @@ export function NoteCard({
                 </svg>
               </span>
             ) : null}
-            <h3 className="line-clamp-2 text-sm font-medium text-fg-primary">
+            <h3 className={cn("line-clamp-2 text-sm font-medium text-fg-primary", noteTextWrap)}>
               {displayTitle}
             </h3>
             {previewBody ? (
-              <p className="mt-1.5 whitespace-pre-wrap text-sm text-fg-secondary">
+              <p className={cn("mt-1.5 whitespace-pre-wrap text-sm text-fg-secondary", noteTextWrap)}>
                 {previewBody}
               </p>
             ) : null}
@@ -554,7 +566,8 @@ export function NoteCard({
                 placeholder="Titolo"
                 className={cn(
                   uiControl,
-                  "mb-2 min-h-[1.5rem] resize-none overflow-hidden border-transparent bg-transparent px-0 py-0 text-sm font-medium shadow-none focus:border-line-default",
+                  "mb-2 min-h-[1.5rem] w-full max-w-full resize-none overflow-hidden border-transparent bg-transparent px-0 py-0 text-sm font-medium shadow-none focus:border-line-default",
+                  noteTextWrap,
                 )}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -574,12 +587,15 @@ export function NoteCard({
                 placeholder="Prendi una nota…"
                 className={cn(
                   uiControl,
-                  "min-h-[5rem] resize-none overflow-hidden border-transparent bg-transparent px-0 py-0 text-sm shadow-none focus:border-line-default",
+                  "min-h-[5rem] w-full max-w-full resize-none overflow-hidden border-transparent bg-transparent px-0 py-0 text-sm shadow-none focus:border-line-default",
+                  noteTextWrap,
                 )}
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
-              <p className="whitespace-pre-wrap text-sm text-fg-secondary">{previewBody}</p>
+              <p className={cn("whitespace-pre-wrap text-sm text-fg-secondary", noteTextWrap)}>
+                {previewBody}
+              </p>
             )}
 
             <div className="mt-3 border-t border-line-default/40 pt-2.5">
@@ -608,88 +624,88 @@ export function NoteCard({
                             <PinIcon pinned={isPinned} />
                           </button>
                           <NoteToolbarDivider />
-                          <div className="relative" ref={colorPickerRef}>
-                            <button
-                              type="button"
-                              aria-expanded={colorOpen}
-                              aria-label={`Colore nota: ${activeColorOption.label}`}
-                              title={activeColorOption.label}
-                              className={cn(
-                                noteToolbarBtn,
-                                colorOpen && "bg-elevated text-fg-primary",
-                                Boolean(colorPending) && "animate-pulse opacity-70",
-                              )}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setColorOpen((v) => !v);
-                                setMenuOpen(false);
-                                setSharingOpen(false);
-                              }}
-                              disabled={Boolean(colorPending)}
-                            >
-                              <span
-                                className={cn(
-                                  "flex h-4 w-4 items-center justify-center rounded-full",
-                                  activeColorOption.swatchClass,
-                                )}
-                              >
-                                {activeColor === activeColorOption.value ? (
-                                  <ColorCheckIcon />
-                                ) : null}
-                              </span>
-                            </button>
-                            {colorOpen ? (
-                              <div
-                                className="absolute bottom-full left-0 z-20 mb-1.5 rounded-lg border border-line-default bg-surface p-2 shadow-lg"
-                                role="listbox"
-                                aria-label="Colore nota"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="grid grid-cols-3 gap-1.5">
-                                  {NOTE_COLOR_OPTIONS.map((c) => {
-                                    const selected = activeColor === c.value;
-                                    const saving = colorPending === c.value;
-                                    return (
-                                      <button
-                                        key={c.value}
-                                        type="button"
-                                        role="option"
-                                        aria-selected={selected}
-                                        aria-label={c.label}
-                                        title={c.label}
-                                        className={cn(
-                                          uiFocusRingInset,
-                                          "relative flex h-7 w-7 items-center justify-center rounded-full transition-all",
-                                          c.swatchClass,
-                                          selected &&
-                                            "ring-2 ring-fg-primary/35 ring-offset-1 ring-offset-surface",
-                                          saving && "animate-pulse opacity-60",
-                                          Boolean(colorPending) &&
-                                            !saving &&
-                                            !selected &&
-                                            "opacity-35",
-                                        )}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (selected) {
-                                            setColorOpen(false);
-                                            return;
-                                          }
-                                          void handleColorChange(c.value);
-                                        }}
-                                        disabled={Boolean(colorPending)}
-                                      >
-                                        {selected ? <ColorCheckIcon /> : null}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            ) : null}
-                          </div>
-                          <NoteToolbarDivider />
                         </>
                       ) : null}
+                      <div className="relative shrink-0" ref={colorPickerRef}>
+                        <button
+                          type="button"
+                          aria-expanded={colorOpen}
+                          aria-label={`Colore nota: ${activeColorOption.label}`}
+                          title={activeColorOption.label}
+                          className={cn(
+                            noteToolbarBtn,
+                            colorOpen && "bg-elevated text-fg-primary",
+                            Boolean(colorPending) && "animate-pulse opacity-70",
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setColorOpen((v) => !v);
+                            setMenuOpen(false);
+                            setSharingOpen(false);
+                          }}
+                          disabled={Boolean(colorPending)}
+                        >
+                          <span
+                            className={cn(
+                              "flex h-4 w-4 items-center justify-center rounded-full",
+                              activeColorOption.swatchClass,
+                            )}
+                          >
+                            {activeColor === activeColorOption.value ? (
+                              <ColorCheckIcon />
+                            ) : null}
+                          </span>
+                        </button>
+                        {colorOpen ? (
+                          <div
+                            className="absolute bottom-full left-0 z-20 mb-1.5 w-max rounded-lg border border-line-default bg-surface p-2 shadow-lg"
+                            role="listbox"
+                            aria-label="Colore nota"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="grid w-max grid-cols-3 gap-1.5">
+                              {NOTE_COLOR_OPTIONS.map((c) => {
+                                const selected = activeColor === c.value;
+                                const saving = colorPending === c.value;
+                                return (
+                                  <button
+                                    key={c.value}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={selected}
+                                    aria-label={c.label}
+                                    title={c.label}
+                                    className={cn(
+                                      uiFocusRingInset,
+                                      "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all",
+                                      c.swatchClass,
+                                      selected &&
+                                        "ring-2 ring-fg-primary/35 ring-offset-1 ring-offset-surface",
+                                      saving && "animate-pulse opacity-60",
+                                      Boolean(colorPending) &&
+                                        !saving &&
+                                        !selected &&
+                                        "opacity-35",
+                                    )}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (selected) {
+                                        setColorOpen(false);
+                                        return;
+                                      }
+                                      void handleColorChange(c.value);
+                                    }}
+                                    disabled={Boolean(colorPending)}
+                                  >
+                                    {selected ? <ColorCheckIcon /> : null}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                      <NoteToolbarDivider />
                       <button
                         type="button"
                         aria-expanded={sharingOpen}

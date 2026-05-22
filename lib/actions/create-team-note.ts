@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { titleFromBody } from "@/lib/team-note-access";
+import { parseNoteColor, titleFromBody } from "@/lib/team-note-access";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { NoteVisibility } from "@/types/note";
@@ -49,6 +49,8 @@ export async function createTeamNote(
   }
 
   const title = titleFromBody(body, titleRaw);
+  const colorRaw = String(fd.get("color") ?? "").trim();
+  const color = colorRaw ? parseNoteColor(colorRaw) : null;
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("team_notes")
@@ -58,6 +60,7 @@ export async function createTeamNote(
       title,
       body,
       visibility,
+      color,
     })
     .select("id")
     .single();

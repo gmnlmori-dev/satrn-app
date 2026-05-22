@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createTeamNote } from "@/lib/actions/create-team-note";
 import { updateTeamNote } from "@/lib/actions/update-team-note";
 import { titleFromBody } from "@/lib/team-note-access";
-import type { NoteVisibility } from "@/types/note";
+import type { NoteColor, NoteVisibility } from "@/types/note";
 
 export type TeamNoteAutosaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -17,6 +17,7 @@ export function useTeamNoteAutosave({
   initialBody = "",
   visibility = "private",
   sharedUserIds = [],
+  color = null,
   enabled = true,
   onCreated,
 }: {
@@ -25,10 +26,17 @@ export function useTeamNoteAutosave({
   initialBody?: string;
   visibility?: NoteVisibility;
   sharedUserIds?: string[];
+  color?: NoteColor | null;
   enabled?: boolean;
   onCreated?: (
     id: string,
-    payload: { title: string; body: string; visibility: NoteVisibility; sharedUserIds: string[] },
+    payload: {
+      title: string;
+      body: string;
+      visibility: NoteVisibility;
+      sharedUserIds: string[];
+      color: NoteColor | null;
+    },
   ) => void;
 }) {
   const [title, setTitle] = useState(initialTitle);
@@ -43,6 +51,7 @@ export function useTeamNoteAutosave({
   const pendingSaveRef = useRef(false);
   const visibilityRef = useRef(visibility);
   const sharedUserIdsRef = useRef(sharedUserIds);
+  const colorRef = useRef(color);
 
   useEffect(() => {
     visibilityRef.current = visibility;
@@ -51,6 +60,10 @@ export function useTeamNoteAutosave({
   useEffect(() => {
     sharedUserIdsRef.current = sharedUserIds;
   }, [sharedUserIds]);
+
+  useEffect(() => {
+    colorRef.current = color;
+  }, [color]);
 
   useEffect(() => {
     if (initialNoteId === syncedNoteIdRef.current) {
@@ -114,6 +127,7 @@ export function useTeamNoteAutosave({
       if (!noteIdRef.current) {
         const currentVisibility = visibilityRef.current;
         const currentShared = sharedUserIdsRef.current;
+        const currentColor = colorRef.current;
         if (currentVisibility === "shared" && currentShared.length === 0) {
           setStatus("idle");
           return;
@@ -123,6 +137,9 @@ export function useTeamNoteAutosave({
         fd.set("body", body);
         fd.set("visibility", currentVisibility);
         fd.set("sharedUserIds", JSON.stringify(currentShared));
+        if (currentColor && currentColor !== "default") {
+          fd.set("color", currentColor);
+        }
         const result = await createTeamNote(fd);
         if (!result.ok) {
           setStatus("error");
@@ -136,6 +153,8 @@ export function useTeamNoteAutosave({
           body,
           visibility: currentVisibility,
           sharedUserIds: currentShared,
+          color:
+            currentColor && currentColor !== "default" ? currentColor : null,
         });
       } else {
         const result = await updateTeamNote(noteIdRef.current, {
