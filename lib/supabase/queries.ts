@@ -12,6 +12,16 @@ function assertNoError(message: string, error: { message: string } | null) {
 
 export const REQUEST_SELECT_WITH_ASSIGNEE = `
   *,
+  request_assignees (
+    user_id,
+    assigned_at,
+    assigned_by_user_id,
+    assignee:profiles!request_assignees_user_id_fkey (
+      user_id,
+      full_name,
+      email
+    )
+  ),
   assignee:profiles!requests_assigned_user_id_fkey (
     user_id,
     full_name,

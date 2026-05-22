@@ -1,16 +1,20 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { formatAssigneeList } from "@/lib/request-assignees";
 import { canAssignRequests } from "@/lib/permissions";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { RequestAssignee } from "@/types/request";
 
 export type UpdateRequestAssignmentResult =
   | {
       ok: true;
+      assignees: RequestAssignee[];
       assignedUserId: string | null;
       assignedAt: string | null;
+      assignedToLabel: string | null;
     }
   | { ok: false; message: string };
 
@@ -20,17 +24,83 @@ function assigneeCaption(
     email: string | null;
   } | null,
 ): string {
-  if (!p) return "Nessuno";
+  if (!p) return "Utente sconosciuto";
   const n = (p.full_name ?? "").trim();
   const e = (p.email ?? "").trim();
   if (n && e) return `${n} (${e})`;
   return n || e || "Utente sconosciuto";
 }
 
-/** Imposta / rimuove assegnazione (solo admin e manager). Registra timeline. */
+function normalizeAssigneeIds(raw: string[]): string[] {
+  return [...new Set(raw.map((id) => id.trim()).filter(Boolean))].sort();
+}
+
+function sameAssigneeSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((id, i) => id === b[i]);
+}
+
+async function loadAssigneeProfiles(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userIds: string[],
+  requestTeamId: string,
+): Promise<
+  | { ok: true; profiles: Map<string, { full_name: string | null; email: string | null }> }
+  | { ok: false; message: string }
+> {
+  if (userIds.length === 0) {
+    return { ok: true, profiles: new Map() };
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_id, full_name, email, is_active, team_id")
+    .in("user_id", userIds);
+
+  if (error) return { ok: false, message: error.message };
+
+  const rows = (data ?? []) as {
+    user_id: string;
+    full_name: string | null;
+    email: string | null;
+    is_active: boolean;
+    team_id: string;
+  }[];
+
+  if (rows.length !== userIds.length) {
+    return { ok: false, message: "Uno o più destinatari non sono validi." };
+  }
+
+  for (const row of rows) {
+    if (!row.is_active) {
+      return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
+    }
+    if (row.team_id !== requestTeamId) {
+      return {
+        ok: false,
+        message: "Uno o più utenti non appartengono al team della richiesta.",
+      };
+    }
+  }
+
+  const profiles = new Map<
+    string,
+    { full_name: string | null; email: string | null }
+  >();
+  for (const row of rows) {
+    profiles.set(row.user_id, {
+      full_name: row.full_name,
+      email: row.email,
+    });
+  }
+
+  return { ok: true, profiles };
+}
+
+/** Imposta gli assegnatari (solo admin e manager). Registra timeline. */
 export async function updateRequestAssignment(
   requestId: string,
-  nextAssignedUserId: string | null,
+  nextAssignedUserIds: string[],
 ): Promise<UpdateRequestAssignmentResult> {
   const me = await getCurrentProfileSummary();
   if (!me?.userId || !me.isActive) {
@@ -43,108 +113,173 @@ export async function updateRequestAssignment(
     };
   }
 
+  const normNext = normalizeAssigneeIds(nextAssignedUserIds);
   const supabase = await createSupabaseServerClient();
 
   const { data: current, error: loadErr } = await supabase
     .from("requests")
-    .select("assigned_user_id, team_id")
+    .select("team_id")
     .eq("id", requestId)
     .maybeSingle();
 
   if (loadErr) return { ok: false, message: loadErr.message };
   if (!current) return { ok: false, message: "Richiesta non trovata." };
 
-  const beforeId = current.assigned_user_id as string | null;
   const requestTeamId = current.team_id as string;
-  const normNext = nextAssignedUserId === "" ? null : nextAssignedUserId;
-  if (beforeId === normNext) {
-    const { data: unchanged } = await supabase
-      .from("requests")
-      .select("assigned_user_id, assigned_at")
-      .eq("id", requestId)
-      .single();
+
+  const { data: currentRows, error: currentRowsErr } = await supabase
+    .from("request_assignees")
+    .select("user_id, assigned_at")
+    .eq("request_id", requestId);
+
+  if (currentRowsErr) return { ok: false, message: currentRowsErr.message };
+
+  const beforeIds = normalizeAssigneeIds(
+    ((currentRows ?? []) as { user_id: string }[]).map((row) => row.user_id),
+  );
+
+  if (sameAssigneeSet(beforeIds, normNext)) {
+    const { data: unchangedRows } = await supabase
+      .from("request_assignees")
+      .select(
+        `
+        user_id,
+        assigned_at,
+        assignee:profiles!request_assignees_user_id_fkey (
+          full_name,
+          email
+        )
+      `,
+      )
+      .eq("request_id", requestId);
+
+    const assignees = ((unchangedRows ?? []) as {
+      user_id: string;
+      assigned_at: string;
+      assignee: { full_name: string | null; email: string | null } | null;
+    }[])
+      .map((row) => ({
+        userId: row.user_id,
+        label: assigneeCaption(row.assignee),
+        assignedAt: row.assigned_at,
+      }))
+      .sort(
+        (a, b) =>
+          new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
+      );
+
+    const labels = assignees.map((a) => a.label).filter(Boolean);
     return {
       ok: true,
-      assignedUserId:
-        (unchanged?.assigned_user_id as string | null | undefined) ?? null,
-      assignedAt: (unchanged?.assigned_at as string | null | undefined) ?? null,
+      assignees,
+      assignedUserId: assignees[0]?.userId ?? null,
+      assignedAt: assignees[0]?.assignedAt ?? null,
+      assignedToLabel: labels.length > 0 ? labels.join(", ") : null,
     };
   }
 
-  let targetProfile:
-    | { full_name: string | null; email: string | null }
-    | null = null;
+  const profilesResult = await loadAssigneeProfiles(
+    supabase,
+    normNext,
+    requestTeamId,
+  );
+  if (!profilesResult.ok) return profilesResult;
 
-  if (normNext) {
-    const { data: tgt, error: tgtErr } = await supabase
-      .from("profiles")
-      .select("full_name, email, is_active, team_id")
-      .eq("user_id", normNext)
-      .maybeSingle();
+  const beforeProfilesResult = await loadAssigneeProfiles(
+    supabase,
+    beforeIds,
+    requestTeamId,
+  );
+  if (!beforeProfilesResult.ok) return beforeProfilesResult;
 
-    if (tgtErr || !tgt) {
-      return { ok: false, message: "Destinatario assegnazione non trovato." };
-    }
-    if (!(tgt as { is_active: boolean }).is_active) {
-      return { ok: false, message: "L’utente selezionato non è attivo." };
-    }
-    if ((tgt as { team_id: string }).team_id !== requestTeamId) {
-      return {
-        ok: false,
-        message: "L’utente selezionato non appartiene al team della richiesta.",
-      };
-    }
-    targetProfile = {
-      full_name: (tgt as { full_name: string }).full_name ?? null,
-      email: (tgt as { email: string }).email ?? null,
-    };
-  }
-
-  let beforeProfile:
-    | { full_name: string | null; email: string | null }
-    | null = null;
-
-  if (beforeId) {
-    const { data: b } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("user_id", beforeId)
-      .maybeSingle();
-    if (b) {
-      beforeProfile = {
-        full_name: (b as { full_name: string }).full_name ?? null,
-        email: (b as { email: string }).email ?? null,
-      };
-    }
-  }
-
+  const toRemove = beforeIds.filter((id) => !normNext.includes(id));
+  const toAdd = normNext.filter((id) => !beforeIds.includes(id));
   const nowIso = new Date().toISOString();
-  const payload = {
-    assigned_user_id: normNext,
-    assigned_at: normNext ? nowIso : null,
-    last_interaction_at: nowIso,
-  };
 
-  const { data: saved, error: upErr } = await supabase
+  if (toRemove.length > 0) {
+    const { error: delErr } = await supabase
+      .from("request_assignees")
+      .delete()
+      .eq("request_id", requestId)
+      .in("user_id", toRemove);
+    if (delErr) return { ok: false, message: delErr.message };
+  }
+
+  if (toAdd.length > 0) {
+    const { error: insErr } = await supabase.from("request_assignees").insert(
+      toAdd.map((userId) => ({
+        request_id: requestId,
+        user_id: userId,
+        assigned_at: nowIso,
+        assigned_by_user_id: me.userId,
+      })),
+    );
+    if (insErr) return { ok: false, message: insErr.message };
+  }
+
+  const primaryAssigneeId = normNext[0] ?? null;
+  const { error: upErr } = await supabase
     .from("requests")
-    .update(payload)
-    .eq("id", requestId)
-    .select("assigned_user_id, assigned_at")
-    .single();
+    .update({
+      assigned_user_id: primaryAssigneeId,
+      assigned_at: primaryAssigneeId ? nowIso : null,
+      last_interaction_at: nowIso,
+    })
+    .eq("id", requestId);
 
   if (upErr) return { ok: false, message: upErr.message };
 
-  const fromLabel = assigneeCaption(beforeProfile);
-  const toLabel = assigneeCaption(targetProfile);
-  const body = `Assegnazione: ${fromLabel} → ${toLabel}`;
+  const { data: savedRows, error: savedErr } = await supabase
+    .from("request_assignees")
+    .select(
+      `
+      user_id,
+      assigned_at,
+      assignee:profiles!request_assignees_user_id_fkey (
+        full_name,
+        email
+      )
+    `,
+    )
+    .eq("request_id", requestId);
+
+  if (savedErr) return { ok: false, message: savedErr.message };
+
+  const assignees = ((savedRows ?? []) as {
+    user_id: string;
+    assigned_at: string;
+    assignee: { full_name: string | null; email: string | null } | null;
+  }[])
+    .map((row) => ({
+      userId: row.user_id,
+      label: assigneeCaption(row.assignee),
+      assignedAt: row.assigned_at,
+    }))
+    .sort(
+      (a, b) =>
+        new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
+    );
+
+  const fromLabels = beforeIds.map((id) =>
+    assigneeCaption(beforeProfilesResult.profiles.get(id) ?? null),
+  );
+  const toLabels = normNext.map((id) =>
+    assigneeCaption(profilesResult.profiles.get(id) ?? null),
+  );
+
+  const body = `Assegnazione: ${formatAssigneeList(
+    fromLabels.map((label) => ({ label })),
+  )} → ${formatAssigneeList(toLabels.map((label) => ({ label })))}`;
 
   await insertRequestActivity(supabase, {
     requestId,
     type: "assigned_user_changed",
     body,
     meta: {
-      from_assigned_user_id: beforeId,
-      to_assigned_user_id: normNext,
+      from_assigned_user_id: beforeIds[0] ?? null,
+      to_assigned_user_id: normNext[0] ?? null,
+      from_assigned_user_ids: beforeIds,
+      to_assigned_user_ids: normNext,
       changed_by_user_id: me.userId,
     },
   });
@@ -153,10 +288,14 @@ export async function updateRequestAssignment(
   revalidatePath(`/app/requests/${requestId}`);
   revalidatePath("/app/dashboard");
   revalidatePath("/app/follow-up");
+  revalidatePath("/app/calendar");
 
+  const labels = assignees.map((a) => a.label).filter(Boolean);
   return {
     ok: true,
-    assignedUserId: (saved?.assigned_user_id as string | null) ?? null,
-    assignedAt: (saved?.assigned_at as string | null) ?? null,
+    assignees,
+    assignedUserId: assignees[0]?.userId ?? null,
+    assignedAt: assignees[0]?.assignedAt ?? null,
+    assignedToLabel: labels.length > 0 ? labels.join(", ") : null,
   };
 }

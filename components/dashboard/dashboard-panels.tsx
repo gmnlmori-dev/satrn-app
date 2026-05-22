@@ -9,6 +9,7 @@ import {
   resolveDashboardFeedScope,
   type DashboardViewerContext,
 } from "@/lib/dashboard-feed-scope";
+import { requestAssignedUserIds } from "@/lib/request-assignees";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import {
   DashboardFeedCard,
@@ -93,6 +94,7 @@ export function DashboardRecentPanel({
         viewer,
         requestTeamId: r.teamId,
         requestTeamName: r.teamName,
+        assignedUserIds: requestAssignedUserIds(r),
         assignedUserId: r.assignedUserId,
       }),
     };

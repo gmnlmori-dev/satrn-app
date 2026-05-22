@@ -1,6 +1,10 @@
 import type { InboxItem } from "@/types/inbox";
 import type { Request } from "@/types/request";
 import type { AppRole } from "@/types/profile";
+import {
+  requestHasAssignees,
+  requestIsAssignedTo,
+} from "@/lib/request-assignees";
 
 export type FollowUpAssigneeScope = "all" | "mine";
 
@@ -9,7 +13,7 @@ export function filterRequestsMine(
   userId: string,
 ): Request[] {
   if (!userId) return [];
-  return requests.filter((r) => r.assignedUserId === userId);
+  return requests.filter((r) => requestIsAssignedTo(r, userId));
 }
 
 export function filterInboxMine(items: InboxItem[], userId: string): InboxItem[] {
@@ -21,3 +25,5 @@ export function filterInboxMine(items: InboxItem[], userId: string): InboxItem[]
 export function defaultFollowUpAssigneeScope(role: AppRole): FollowUpAssigneeScope {
   return role === "operator" ? "mine" : "all";
 }
+
+export { requestHasAssignees, requestIsAssignedTo };

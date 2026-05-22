@@ -25,6 +25,7 @@ import {
   type ToolbarFilters,
   type AssignScopeFilter,
 } from "@/lib/requests-query";
+import { requestIsAssignedTo } from "@/lib/request-assignees";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 import { uiOverline, uiPageLead, uiPageTitle } from "@/lib/typography";
 
@@ -127,7 +128,7 @@ export function RequestsWorkspace({
   const myAssignedCount = useMemo(
     () =>
       currentUserId
-        ? requests.filter((r) => r.assignedUserId === currentUserId).length
+        ? requests.filter((r) => requestIsAssignedTo(r, currentUserId)).length
         : 0,
     [requests, currentUserId],
   );

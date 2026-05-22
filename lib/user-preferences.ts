@@ -13,13 +13,15 @@ export type DefaultRequestsCalendarLayoutPreference = "month" | "week";
 export type DefaultHomePagePreference =
   | "dashboard"
   | "follow-up"
-  | "requests";
+  | "requests"
+  | "calendar";
 
 export const DEFAULT_HOME_PAGE_PATHS: Record<DefaultHomePagePreference, string> =
   {
     dashboard: "/app/dashboard",
     "follow-up": "/app/follow-up",
     requests: "/app/requests",
+    calendar: "/app/calendar",
   };
 
 export const DEFAULT_HOME_PAGE_LABELS: Record<DefaultHomePagePreference, string> =
@@ -27,6 +29,7 @@ export const DEFAULT_HOME_PAGE_LABELS: Record<DefaultHomePagePreference, string>
     dashboard: "Dashboard",
     "follow-up": "Da seguire",
     requests: "Richieste",
+    calendar: "Calendario",
   };
 
 export type UserPreferences = {
@@ -51,7 +54,8 @@ export function parseUserPreferences(raw: unknown): UserPreferences {
   if (
     o.defaultHomePage === "dashboard" ||
     o.defaultHomePage === "follow-up" ||
-    o.defaultHomePage === "requests"
+    o.defaultHomePage === "requests" ||
+    o.defaultHomePage === "calendar"
   ) {
     prefs.defaultHomePage = o.defaultHomePage;
   }

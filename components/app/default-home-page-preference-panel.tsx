@@ -16,6 +16,7 @@ const HOME_PAGE_OPTIONS: DefaultHomePagePreference[] = [
   "dashboard",
   "follow-up",
   "requests",
+  "calendar",
 ];
 
 type Props = {

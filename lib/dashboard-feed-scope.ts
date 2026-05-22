@@ -27,6 +27,7 @@ export function resolveDashboardFeedScope(input: {
   viewer: DashboardViewerContext;
   requestTeamId: string;
   requestTeamName?: string | null;
+  assignedUserIds?: string[];
   assignedUserId?: string | null;
   activityMeta?: Record<string, unknown> | null;
 }): DashboardFeedScopeTag {
@@ -34,7 +35,8 @@ export function resolveDashboardFeedScope(input: {
   const actorId = metaActorUserId(input.activityMeta);
   const isMyAction = Boolean(actorId && actorId === viewer.userId);
   const isAssignedToMe =
-    Boolean(input.assignedUserId) && input.assignedUserId === viewer.userId;
+    (input.assignedUserIds?.includes(viewer.userId) ?? false) ||
+    (Boolean(input.assignedUserId) && input.assignedUserId === viewer.userId);
   const isSameTeam =
     Boolean(viewer.teamId) &&
     Boolean(input.requestTeamId) &&

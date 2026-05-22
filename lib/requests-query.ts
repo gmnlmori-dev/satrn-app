@@ -4,6 +4,11 @@ import type {
   RequestStatus,
 } from "@/types/request";
 import { nextActionSearchText } from "@/lib/next-action-tasks";
+import {
+  requestAssigneesLabel,
+  requestHasAssignees,
+  requestIsAssignedTo,
+} from "@/lib/request-assignees";
 
 export type AssignScopeFilter = "all" | "mine" | "unassigned" | "user";
 
@@ -46,18 +51,15 @@ export function filterByToolbar(
 
     switch (f.assignScope) {
       case "mine":
-        if (
-          !ctx.currentUserId ||
-          r.assignedUserId !== ctx.currentUserId
-        ) {
+        if (!ctx.currentUserId || !requestIsAssignedTo(r, ctx.currentUserId)) {
           return false;
         }
         break;
       case "unassigned":
-        if (r.assignedUserId !== null) return false;
+        if (requestHasAssignees(r)) return false;
         break;
       case "user":
-        if (!f.assignUserId || r.assignedUserId !== f.assignUserId) {
+        if (!f.assignUserId || !requestIsAssignedTo(r, f.assignUserId)) {
           return false;
         }
         break;
@@ -75,6 +77,7 @@ export function filterByToolbar(
       r.source,
       r.id,
       r.assignedToLabel ?? "",
+      requestAssigneesLabel(r) ?? "",
     ]
       .join(" ")
       .toLowerCase();

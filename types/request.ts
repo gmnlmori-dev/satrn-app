@@ -7,6 +7,12 @@ export type RequestStatus =
 
 export type RequestPriority = "high" | "medium" | "low";
 
+export type RequestAssignee = {
+  userId: string;
+  label: string;
+  assignedAt: string;
+};
+
 export interface Request {
   id: string;
   title: string;
@@ -22,10 +28,12 @@ export interface Request {
   lastInteractionAt: string;
   createdAt: string;
   updatedAt: string;
-  /** Utente assegnato (`profiles.user_id`), se presente */
+  /** Tutti gli assegnatari della richiesta */
+  assignees: RequestAssignee[];
+  /** Primo assegnatario (legacy / retrocompatibilità) */
   assignedUserId: string | null;
   assignedAt: string | null;
-  /** Nome mostrato in UI (priorità `full_name`, altrimenti email) */
+  /** Etichette assegnatari unite per tabelle e riepiloghi */
   assignedToLabel: string | null;
   teamId: string;
   teamName: string | null;

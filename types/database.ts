@@ -52,8 +52,20 @@ export type RequestRow = {
   team_id: string;
 };
 
+export type RequestAssigneeRowWithProfile = {
+  user_id: string;
+  assigned_at: string;
+  assigned_by_user_id: string | null;
+  assignee?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
+};
+
 /** Risultato select con FK verso profiles (alias `assignee`, `creator`) e team. */
 export type RequestRowWithAssignee = RequestRow & {
+  request_assignees?: RequestAssigneeRowWithProfile[] | null;
   assignee?: {
     user_id: string;
     full_name: string;

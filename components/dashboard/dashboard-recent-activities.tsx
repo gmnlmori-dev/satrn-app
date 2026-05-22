@@ -24,7 +24,7 @@ function toFeedItem(
       viewer,
       requestTeamId: a.requestTeamId,
       requestTeamName: a.requestTeamName,
-      assignedUserId: a.assignedUserId,
+      assignedUserIds: a.assignedUserIds,
       activityMeta: a.meta,
     }),
   };

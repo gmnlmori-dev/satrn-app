@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { formatAssigneeList } from "@/lib/request-assignees";
 import { canAssignRequests } from "@/lib/permissions";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
@@ -40,11 +41,20 @@ function assigneeCaption(
     email: string | null;
   } | null,
 ): string {
-  if (!p) return "Nessuno";
+  if (!p) return "Utente sconosciuto";
   const n = (p.full_name ?? "").trim();
   const e = (p.email ?? "").trim();
   if (n && e) return `${n} (${e})`;
   return n || e || "Utente sconosciuto";
+}
+
+function parseAssigneeIds(fd: FormData, fallbackUserId: string): string[] {
+  const raw = fd
+    .getAll("assignedUserIds")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+  const unique = [...new Set(raw.length > 0 ? raw : [fallbackUserId])];
+  return unique;
 }
 
 /**
@@ -83,43 +93,51 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     if (teamIdFromForm) team_id = teamIdFromForm;
   }
 
+  const assigneeUserIds = canAssignRequests(me.role)
+    ? parseAssigneeIds(fd, me.userId)
+    : [me.userId];
+
   const supabase = await createSupabaseServerClient();
   const last_interaction_at = new Date().toISOString();
 
-  let assigneeUserId = me.userId;
-  if (canAssignRequests(me.role)) {
-    const rawAssignee = String(fd.get("assignedUserId") ?? "").trim();
-    if (rawAssignee) assigneeUserId = rawAssignee;
-  }
-
-  const { data: assigneeProfileRow, error: assigneeErr } = await supabase
+  const { data: assigneeRows, error: assigneeErr } = await supabase
     .from("profiles")
-    .select("full_name, email, is_active, team_id")
-    .eq("user_id", assigneeUserId)
-    .maybeSingle();
+    .select("user_id, full_name, email, is_active, team_id")
+    .in("user_id", assigneeUserIds);
 
-  if (assigneeErr || !assigneeProfileRow) {
-    return {
-      ok: false,
-      message: "Destinatario assegnazione non trovato.",
-    };
-  }
-  if (!(assigneeProfileRow as { is_active: boolean }).is_active) {
-    return { ok: false, message: "L’utente selezionato non è attivo." };
-  }
-  if ((assigneeProfileRow as { team_id: string }).team_id !== team_id) {
-    return {
-      ok: false,
-      message: "L’utente selezionato non appartiene al team della richiesta.",
-    };
+  if (assigneeErr) {
+    return { ok: false, message: assigneeErr.message };
   }
 
-  const assigneeProfile = {
-    full_name: (assigneeProfileRow as { full_name: string | null }).full_name ?? null,
-    email: (assigneeProfileRow as { email: string | null }).email ?? null,
-  };
-  const assigned_user_id = assigneeUserId;
-  const assigned_at = last_interaction_at;
+  const profiles = (assigneeRows ?? []) as {
+    user_id: string;
+    full_name: string | null;
+    email: string | null;
+    is_active: boolean;
+    team_id: string;
+  }[];
+
+  if (profiles.length !== assigneeUserIds.length) {
+    return {
+      ok: false,
+      message: "Uno o più destinatari assegnazione non trovati.",
+    };
+  }
+
+  for (const profile of profiles) {
+    if (!profile.is_active) {
+      return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
+    }
+    if (profile.team_id !== team_id) {
+      return {
+        ok: false,
+        message: "Uno o più utenti non appartengono al team della richiesta.",
+      };
+    }
+  }
+
+  const assigned_user_id = assigneeUserIds[0] ?? null;
+  const assigned_at = assigned_user_id ? last_interaction_at : null;
 
   const { data, error } = await supabase
     .from("requests")
@@ -151,19 +169,47 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     return { ok: false, message: "Nessun identificativo restituito dal database." };
   }
 
+  if (assigneeUserIds.length > 0) {
+    const { error: assigneeInsertErr } = await supabase
+      .from("request_assignees")
+      .insert(
+        assigneeUserIds.map((userId) => ({
+          request_id: id,
+          user_id: userId,
+          assigned_at: last_interaction_at,
+          assigned_by_user_id: me.userId,
+        })),
+      );
+
+    if (assigneeInsertErr) {
+      return { ok: false, message: assigneeInsertErr.message };
+    }
+  }
+
   await insertRequestActivity(supabase, {
     requestId: id,
     type: "request_created",
     body: `Richiesta creata: ${title}`,
   });
 
+  const assigneeLabels = profiles.map((profile) =>
+    assigneeCaption({
+      full_name: profile.full_name,
+      email: profile.email,
+    }),
+  );
+
   await insertRequestActivity(supabase, {
     requestId: id,
     type: "assigned_user_changed",
-    body: `Assegnazione: Nessuno → ${assigneeCaption(assigneeProfile)}`,
+    body: `Assegnazione: Nessuno → ${formatAssigneeList(
+      assigneeLabels.map((label) => ({ label })),
+    )}`,
     meta: {
       from_assigned_user_id: null,
       to_assigned_user_id: assigned_user_id,
+      from_assigned_user_ids: [],
+      to_assigned_user_ids: assigneeUserIds,
       changed_by_user_id: me.userId,
     },
   });
@@ -171,6 +217,7 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");
   revalidatePath("/app/follow-up");
+  revalidatePath("/app/calendar");
   revalidatePath(`/app/requests/${id}`);
 
   return { ok: true, id };

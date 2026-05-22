@@ -38,17 +38,22 @@ function requestCountQuery(
   const { startTodayIso, startTomorrowIso, endWeekIso } = bounds;
   const teamId = teamIdForScope(scope);
 
-  let q = supabase
-    .from("requests")
-    .select("*", { count: "exact", head: true })
-    .neq("status", "closed");
+  let q = assignedUserId
+    ? supabase
+        .from("requests")
+        .select("id, request_assignees!inner(user_id)", {
+          count: "exact",
+          head: true,
+        })
+        .neq("status", "closed")
+        .eq("request_assignees.user_id", assignedUserId)
+    : supabase
+        .from("requests")
+        .select("*", { count: "exact", head: true })
+        .neq("status", "closed");
 
   if (teamId) {
     q = q.eq("team_id", teamId);
-  }
-
-  if (assignedUserId) {
-    q = q.eq("assigned_user_id", assignedUserId);
   }
 
   if (window === "overdue") {
@@ -136,7 +141,7 @@ export type DashboardActivityItem = RequestActivity & {
   requestTitle: string | null;
   requestTeamId: string;
   requestTeamName: string | null;
-  assignedUserId: string | null;
+  assignedUserIds: string[];
 };
 
 /** Ultime attività (timeline), con titolo richiesta se disponibile. */
@@ -150,6 +155,7 @@ export async function getRecentActivitiesGlobal(
     title,
     team_id,
     assigned_user_id,
+    request_assignees ( user_id ),
     team:teams!requests_team_id_fkey ( name )
   `;
   const select = teamId
@@ -185,17 +191,26 @@ export async function getRecentActivitiesGlobal(
       title: string;
       team_id: string;
       assigned_user_id: string | null;
+      request_assignees: { user_id: string }[] | null;
       team: { name: string } | null;
     } | null;
   })[]).map((row) => {
     const base = requestActivityRowToActivity(row);
     const req = row.requests;
+    const junctionIds =
+      req?.request_assignees?.map((entry) => entry.user_id) ?? [];
+    const assignedUserIds =
+      junctionIds.length > 0
+        ? junctionIds
+        : req?.assigned_user_id
+          ? [req.assigned_user_id]
+          : [];
     return {
       ...base,
       requestTitle: req?.title ?? null,
       requestTeamId: req?.team_id ?? "",
       requestTeamName: req?.team?.name ?? null,
-      assignedUserId: req?.assigned_user_id ?? null,
+      assignedUserIds,
     };
   });
 }

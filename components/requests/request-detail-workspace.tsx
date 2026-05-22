@@ -24,7 +24,9 @@ import {
   nextActionDeadlineDraftFromIso,
 } from "@/components/requests/next-action-deadline-fields";
 import { NextActionField } from "@/components/requests/next-action-field";
+import { RequestAssigneesField } from "@/components/requests/request-assignees-field";
 import { cn } from "@/lib/cn";
+import { requestAssignedUserIds } from "@/lib/request-assignees";
 import {
   uiBtnGhost,
   uiBtnIcon,
@@ -220,27 +222,29 @@ export function RequestDetailWorkspace({
   );
 
   const onAssignmentChange = useCallback(
-    async (raw: string) => {
+    async (nextIds: string[]) => {
       if (!canAssignRequests || assignmentBusy) return;
-      const nextId = raw === "" ? null : raw;
+      const currentIds = requestAssignedUserIds(request).sort();
+      const normalizedNext = [...new Set(nextIds)].sort();
+      if (
+        currentIds.length === normalizedNext.length &&
+        currentIds.every((id, index) => id === normalizedNext[index])
+      ) {
+        return;
+      }
       setAssignmentBusy(true);
       setAssignmentErr(null);
-      const res = await updateRequestAssignment(request.id, nextId);
+      const res = await updateRequestAssignment(request.id, normalizedNext);
       setAssignmentBusy(false);
       if (!res.ok) {
         setAssignmentErr(res.message);
         return;
       }
-      const label =
-        res.assignedUserId === null
-          ? null
-          : assigneeOptions.find((x) => x.userId === res.assignedUserId)?.label ??
-            request.assignedToLabel ??
-            null;
       patchRequest({
+        assignees: res.assignees,
         assignedUserId: res.assignedUserId,
         assignedAt: res.assignedAt,
-        assignedToLabel: label,
+        assignedToLabel: res.assignedToLabel,
       });
       showFeedback();
       router.refresh();
@@ -248,9 +252,7 @@ export function RequestDetailWorkspace({
     [
       canAssignRequests,
       assignmentBusy,
-      request.id,
-      request.assignedToLabel,
-      assigneeOptions,
+      request,
       patchRequest,
       showFeedback,
       router,
@@ -466,9 +468,7 @@ export function RequestDetailWorkspace({
         </div>
 
         <div className="mt-7 border-t border-line-default pt-6">
-          <label htmlFor="detail-assignee" className={uiFilterLabel}>
-            Assegnato a
-          </label>
+          <p className={uiFilterLabel}>Assegnato a</p>
           {assignmentErr ? (
             <p
               role="alert"
@@ -478,20 +478,13 @@ export function RequestDetailWorkspace({
             </p>
           ) : null}
           {canAssignRequests ? (
-            <select
-              id="detail-assignee"
-              className={cn(controlClass, "mt-1.5 w-full min-w-[12rem] sm:max-w-md")}
+            <RequestAssigneesField
+              idPrefix="detail"
+              options={assigneeOptions}
+              selectedIds={requestAssignedUserIds(request)}
               disabled={assignmentBusy || opBusy || nextSaveUi === "saving"}
-              value={request.assignedUserId ?? ""}
-              onChange={(e) => void onAssignmentChange(e.target.value)}
-            >
-              <option value="">Non assegnata</option>
-              {assigneeOptions.map((o) => (
-                <option key={o.userId} value={o.userId}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(ids) => void onAssignmentChange(ids)}
+            />
           ) : (
             <div className="mt-1.5">
               <p className={cn(controlClass, "flex min-h-[2.75rem] items-center bg-field")}>
@@ -504,9 +497,13 @@ export function RequestDetailWorkspace({
               </p>
             </div>
           )}
-          {request.assignedAt ? (
+          {request.assignees.length === 1 && request.assignedAt ? (
             <p className="mt-2 text-xs tabular-nums text-fg-tertiary">
               Assegnata il {formatDateTime(request.assignedAt)}
+            </p>
+          ) : request.assignees.length > 1 ? (
+            <p className="mt-2 text-xs text-fg-tertiary">
+              {request.assignees.length} persone assegnate
             </p>
           ) : null}
         </div>

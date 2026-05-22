@@ -1,3 +1,4 @@
+import { legacyAssigneeFieldsFromAssignees } from "@/lib/request-assignees";
 import type {
   InboxItemRowWithAssignee,
   RequestActivityRow,
@@ -6,7 +7,7 @@ import type {
 } from "@/types/database";
 import type { RequestActivity } from "@/types/activity";
 import type { InboxItem } from "@/types/inbox";
-import type { Request, RequestNote } from "@/types/request";
+import type { Request, RequestAssignee, RequestNote } from "@/types/request";
 
 export function requestActivityRowToActivity(row: RequestActivityRow): RequestActivity {
   return {
@@ -20,7 +21,7 @@ export function requestActivityRowToActivity(row: RequestActivityRow): RequestAc
 }
 
 function assigneeDisplayName(
-  a: RequestRowWithAssignee["assignee"],
+  a: { full_name?: string | null; email?: string | null } | null | undefined,
 ): string | null {
   if (!a) return null;
   const name = (a.full_name ?? "").trim();
@@ -39,7 +40,42 @@ function profileDisplayName(
   return mail || null;
 }
 
+function mapRequestAssignees(row: RequestRowWithAssignee): RequestAssignee[] {
+  const junction = row.request_assignees ?? [];
+  if (junction.length > 0) {
+    return junction
+      .map((entry) => ({
+        userId: entry.user_id,
+        label:
+          assigneeDisplayName(entry.assignee) ??
+          entry.user_id,
+        assignedAt: entry.assigned_at,
+      }))
+      .sort(
+        (a, b) =>
+          new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
+      );
+  }
+
+  if (row.assigned_user_id) {
+    return [
+      {
+        userId: row.assigned_user_id,
+        label:
+          assigneeDisplayName(row.assignee) ??
+          row.assigned_user_id,
+        assignedAt: row.assigned_at ?? row.updated_at,
+      },
+    ];
+  }
+
+  return [];
+}
+
 export function requestRowToRequest(row: RequestRowWithAssignee): Request {
+  const assignees = mapRequestAssignees(row);
+  const legacy = legacyAssigneeFieldsFromAssignees(assignees);
+
   return {
     id: row.id,
     title: row.title,
@@ -55,9 +91,10 @@ export function requestRowToRequest(row: RequestRowWithAssignee): Request {
     lastInteractionAt: row.last_interaction_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    assignedUserId: row.assigned_user_id ?? null,
-    assignedAt: row.assigned_at ?? null,
-    assignedToLabel: assigneeDisplayName(row.assignee),
+    assignees,
+    assignedUserId: legacy.assignedUserId,
+    assignedAt: legacy.assignedAt,
+    assignedToLabel: legacy.assignedToLabel,
     teamId: row.team_id,
     teamName: row.team?.name?.trim() || null,
     createdByUserId: row.created_by_user_id ?? null,

@@ -34,7 +34,8 @@ function normalizeDefaultHomePage(
   if (
     value === "dashboard" ||
     value === "follow-up" ||
-    value === "requests"
+    value === "requests" ||
+    value === "calendar"
   ) {
     return value;
   }
