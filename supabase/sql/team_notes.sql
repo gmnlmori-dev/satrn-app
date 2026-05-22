@@ -61,6 +61,41 @@ CREATE TRIGGER team_notes_set_updated_at
 ALTER TABLE public.team_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.team_note_shared_users ENABLE ROW LEVEL SECURITY;
 
+-- Helper RLS (SECURITY DEFINER) — evita ricorsione team_notes ↔ team_note_shared_users
+CREATE OR REPLACE FUNCTION public.user_is_team_note_shared_user(p_note_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.team_note_shared_users s
+    WHERE s.note_id = p_note_id
+      AND s.user_id = auth.uid()
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.team_note_is_creator(p_note_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.team_notes n
+    WHERE n.id = p_note_id
+      AND n.created_by_user_id = auth.uid()
+      AND public.is_same_team(n.team_id)
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.user_is_team_note_shared_user(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.team_note_is_creator(uuid) TO authenticated;
+
 DROP POLICY IF EXISTS "team_notes_select" ON public.team_notes;
 DROP POLICY IF EXISTS "team_notes_insert" ON public.team_notes;
 DROP POLICY IF EXISTS "team_notes_update" ON public.team_notes;
@@ -80,12 +115,7 @@ CREATE POLICY "team_notes_select"
         visibility = 'shared'::public.team_note_visibility
         AND (
           created_by_user_id = auth.uid()
-          OR EXISTS (
-            SELECT 1
-            FROM public.team_note_shared_users s
-            WHERE s.note_id = id
-              AND s.user_id = auth.uid()
-          )
+          OR public.user_is_team_note_shared_user(id)
         )
       )
     )
@@ -131,50 +161,18 @@ CREATE POLICY "team_note_shared_users_select"
   FOR SELECT
   TO authenticated
   USING (
-    EXISTS (
-      SELECT 1
-      FROM public.team_notes n
-      WHERE n.id = note_id
-        AND public.is_same_team(n.team_id)
-        AND n.created_by_user_id = auth.uid()
-    )
-    OR EXISTS (
-      SELECT 1
-      FROM public.team_notes n
-      WHERE n.id = note_id
-        AND public.is_same_team(n.team_id)
-        AND n.visibility = 'shared'::public.team_note_visibility
-        AND (
-          n.created_by_user_id = auth.uid()
-          OR user_id = auth.uid()
-        )
-    )
+    user_id = auth.uid()
+    OR public.team_note_is_creator(note_id)
   );
 
 CREATE POLICY "team_note_shared_users_insert"
   ON public.team_note_shared_users
   FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1
-      FROM public.team_notes n
-      WHERE n.id = note_id
-        AND public.is_same_team(n.team_id)
-        AND n.created_by_user_id = auth.uid()
-    )
-  );
+  WITH CHECK (public.team_note_is_creator(note_id));
 
 CREATE POLICY "team_note_shared_users_delete"
   ON public.team_note_shared_users
   FOR DELETE
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.team_notes n
-      WHERE n.id = note_id
-        AND public.is_same_team(n.team_id)
-        AND n.created_by_user_id = auth.uid()
-    )
-  );
+  USING (public.team_note_is_creator(note_id));
