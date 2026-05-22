@@ -7,6 +7,20 @@ import { uiFormLabel } from "@/lib/typography";
 import type { NoteVisibility } from "@/types/note";
 import type { AssigneeOption } from "@/types/profile";
 
+const VISIBILITY_OPTIONS: {
+  value: NoteVisibility;
+  label: string;
+  hint: string;
+}[] = [
+  { value: "private", label: "Privata", hint: "Visibile solo a te." },
+  { value: "team", label: "Team", hint: "Visibile a tutti i membri del team." },
+  {
+    value: "shared",
+    label: "Condivisa",
+    hint: "Visibile agli utenti selezionati (sola lettura per loro).",
+  },
+];
+
 type NoteSharingFieldsProps = {
   visibility: NoteVisibility;
   sharedUserIds: string[];
@@ -30,30 +44,60 @@ export function NoteSharingFields({
   idPrefix = "note-sharing",
   className,
 }: NoteSharingFieldsProps) {
+  const activeHint =
+    VISIBILITY_OPTIONS.find((opt) => opt.value === visibility)?.hint ?? "";
+
   return (
-    <div className={cn(compact ? "space-y-2" : "space-y-3", className)}>
+    <div className={cn(compact ? "space-y-2.5" : "space-y-3", className)}>
       <div>
-        <label htmlFor={`${idPrefix}-visibility`} className={uiFormLabel}>
-          Visibilità
-        </label>
-        <select
-          id={`${idPrefix}-visibility`}
-          value={visibility}
-          onChange={(e) => onVisibilityChange(e.target.value as NoteVisibility)}
-          className={cn(uiControl, "mt-1.5 w-full py-2 text-sm")}
-          disabled={disabled}
-        >
-          <option value="private">Privata — solo tu</option>
-          <option value="team">Team — tutti nel team</option>
-          <option value="shared">Condivisa — utenti specifici</option>
-        </select>
-        <p className="mt-1 text-xs text-fg-tertiary">
-          {visibility === "private"
-            ? "Visibile solo a te."
-            : visibility === "team"
-              ? "Visibile a tutti i membri del team."
-              : "Visibile agli utenti selezionati (sola lettura per loro)."}
-        </p>
+        {!compact ? (
+          <label htmlFor={`${idPrefix}-visibility`} className={uiFormLabel}>
+            Visibilità
+          </label>
+        ) : null}
+        {compact ? (
+          <div
+            role="radiogroup"
+            aria-label="Visibilità nota"
+            className="flex rounded-lg border border-line-default bg-canvas/50 p-0.5"
+          >
+            {VISIBILITY_OPTIONS.map((opt) => {
+              const selected = visibility === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  disabled={disabled}
+                  onClick={() => onVisibilityChange(opt.value)}
+                  className={cn(
+                    "flex-1 rounded-md px-2 py-1.5 text-center text-xs font-medium transition-colors",
+                    selected
+                      ? "bg-surface text-fg-primary shadow-sm"
+                      : "text-fg-tertiary hover:text-fg-secondary",
+                    disabled && "cursor-not-allowed opacity-50",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <select
+            id={`${idPrefix}-visibility`}
+            value={visibility}
+            onChange={(e) => onVisibilityChange(e.target.value as NoteVisibility)}
+            className={cn(uiControl, "mt-1.5 w-full py-2 text-sm")}
+            disabled={disabled}
+          >
+            <option value="private">Privata — solo tu</option>
+            <option value="team">Team — tutti nel team</option>
+            <option value="shared">Condivisa — utenti specifici</option>
+          </select>
+        )}
+        <p className="mt-1.5 text-xs text-fg-tertiary">{activeHint}</p>
       </div>
 
       {visibility === "shared" ? (
