@@ -155,7 +155,7 @@ export function NotesGrid({
             className={cn(
               "relative mb-3 inline-block w-full max-w-full break-inside-avoid",
               isDragging && "opacity-50",
-              pinMismatch && draggingId && "opacity-40",
+              pinMismatch && Boolean(draggingId) && "opacity-40",
             )}
             onDragOver={handleDragOver(note)}
             onDrop={handleDrop(note)}
