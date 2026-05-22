@@ -17,6 +17,7 @@ export interface InboxItem {
   assignedUserId: string | null;
   assignedAt: string | null;
   assignedToLabel: string | null;
+  createdByUserId: string | null;
   createdAt: string;
   updatedAt: string;
 }

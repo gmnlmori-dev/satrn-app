@@ -125,6 +125,7 @@ export function inboxItemRowToInboxItem(row: InboxItemRowWithAssignee): InboxIte
     assignedUserId: row.assigned_user_id,
     assignedAt: row.assigned_at,
     assignedToLabel: assigneeDisplayName(row.assignee),
+    createdByUserId: row.created_by_user_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

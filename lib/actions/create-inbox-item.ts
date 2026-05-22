@@ -46,6 +46,7 @@ export async function createInboxItem(
       team_id,
       assigned_user_id: me.userId,
       assigned_at: assignedAt,
+      created_by_user_id: me.userId,
     })
     .select("id")
     .single();

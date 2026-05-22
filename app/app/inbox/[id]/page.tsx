@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConvertInboxForm } from "@/components/inbox/convert-inbox-form";
+import { InboxDeleteControls } from "@/components/inbox/inbox-delete-controls";
 import { InboxStatusControls } from "@/components/inbox/inbox-status-controls";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { Panel } from "@/components/ui/panel";
 import { formatDateTime } from "@/lib/date";
+import { canDeleteInboxItem } from "@/lib/inbox-delete";
 import { inboxStatusLabel } from "@/lib/labels";
 import { getInboxItemById } from "@/lib/supabase/inbox-queries";
+import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { cn } from "@/lib/cn";
 import { uiFocusRingOffset, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiPageLead, uiPageTitle } from "@/lib/typography";
@@ -28,7 +31,10 @@ export default async function InboxDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const item = await getInboxItemById(id);
+  const [item, profile] = await Promise.all([
+    getInboxItemById(id),
+    getCurrentProfileSummary(),
+  ]);
   if (!item) notFound();
 
   return (
@@ -121,6 +127,15 @@ export default async function InboxDetailPage({
       </Panel>
 
       {!item.linkedRequestId ? <ConvertInboxForm item={item} /> : null}
+
+      {profile?.userId && canDeleteInboxItem(item, profile.userId) ? (
+        <Panel>
+          <InboxDeleteControls
+            item={item}
+            currentUserId={profile.userId}
+          />
+        </Panel>
+      ) : null}
     </div>
   );
 }

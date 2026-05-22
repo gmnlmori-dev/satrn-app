@@ -90,6 +90,10 @@ ALTER TABLE public.inbox_items
     REFERENCES public.profiles (user_id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS assigned_at timestamptz NULL;
 
+ALTER TABLE public.inbox_items
+  ADD COLUMN IF NOT EXISTS created_by_user_id uuid
+    REFERENCES public.profiles (user_id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS inbox_items_assigned_user_id_idx
   ON public.inbox_items (assigned_user_id)
   WHERE assigned_user_id IS NOT NULL;
@@ -346,7 +350,12 @@ CREATE POLICY "inbox_items_team_delete"
   ON public.inbox_items
   FOR DELETE
   TO authenticated
-  USING (public.is_active_admin(auth.uid()) AND public.is_same_team(team_id));
+  USING (
+    public.is_same_team(team_id)
+    AND created_by_user_id = auth.uid()
+    AND linked_request_id IS NULL
+    AND status <> 'converted'::public.inbox_item_status
+  );
 
 -- ---------------------------------------------------------------------------
 -- RLS: request_notes

@@ -113,6 +113,7 @@ export type InboxItemRow = {
   team_id: string;
   assigned_user_id: string | null;
   assigned_at: string | null;
+  created_by_user_id: string | null;
   created_at: string;
   updated_at: string;
 };
