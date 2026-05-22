@@ -526,7 +526,7 @@ export function NoteCard({
                                   c.swatchClass,
                                   selected && "ring-2 ring-accent ring-offset-1 scale-110",
                                   saving && "animate-pulse opacity-60",
-                                  colorPending && !saving && !selected && "opacity-40",
+                                  Boolean(colorPending) && !saving && !selected && "opacity-40",
                                 )}
                                 onClick={(e) => {
                                   e.stopPropagation();
