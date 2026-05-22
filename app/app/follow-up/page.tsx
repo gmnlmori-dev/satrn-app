@@ -32,7 +32,7 @@ export default async function FollowUpPage() {
   const totalQueue = overdue.length + today.length + upcoming.length;
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-6 pb-12 md:space-y-8 md:pb-16">
       <FollowUpHashScroll />
       <header className="min-w-0">
         <h1 className={uiPageTitle}>

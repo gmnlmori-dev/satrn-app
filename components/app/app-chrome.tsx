@@ -29,6 +29,7 @@ import { NewRequestQuerySync } from "@/components/app/new-request-query-sync";
 import { InboxNewQuerySync } from "@/components/app/inbox-new-query-sync";
 import { NewRequestSlideOver } from "@/components/requests/new-request-slide-over";
 import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
+import { resetAppMainScroll } from "@/lib/main-scroll";
 import { SidebarUserPanel } from "@/components/app/sidebar-user-panel";
 
 /** Altezza unica barra superiore (sidebar + header) per allineare i border orizzontali */
@@ -374,6 +375,10 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    resetAppMainScroll();
+  }, [pathname]);
+
   return (
     <CreateRequestProvider open={openNewRequest}>
       <DetailSaveFeedbackProvider>
@@ -582,7 +587,10 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
             <AppChromeTitleRow pathname={pathname ?? null} />
           </header>
 
-          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+          <main
+            data-app-main
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scroll-pt-24"
+          >
             <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
               {children}
             </div>

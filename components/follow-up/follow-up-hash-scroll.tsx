@@ -2,11 +2,11 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { scrollAppMainToElement } from "@/lib/main-scroll";
 
 /**
- * Dopo navigazione con hash (es. da dashboard), scroll alla sezione corretta.
- * Ripete al paint perché il contenuto SSR può non essere ancora nel DOM.
- * `hashchange` copre anche il passaggio tra ancore sulla stessa pagina.
+ * Dopo navigazione con hash (es. da dashboard), scroll alla sezione corretta
+ * dentro `<main>`, non sulla window (layout app a scroll interno).
  */
 export function FollowUpHashScroll() {
   const pathname = usePathname();
@@ -17,10 +17,7 @@ export function FollowUpHashScroll() {
     function scrollToHash() {
       const id = window.location.hash.slice(1);
       if (!id) return;
-      document.getElementById(id)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      scrollAppMainToElement(id, { behavior: "instant" });
     }
 
     scrollToHash();
