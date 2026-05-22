@@ -20,6 +20,12 @@ export const metadata: Metadata = {
   },
   description:
     "Software operativo per centralizzare richieste, follow-up e processi.",
+  icons: {
+    icon: {
+      url: "/favicon-dark.svg",
+      type: "image/svg+xml",
+    },
+  },
 };
 
 export default function RootLayout({
