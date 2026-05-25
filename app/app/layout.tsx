@@ -1,5 +1,9 @@
 import { AppChrome } from "@/components/app/app-chrome";
 import { CurrentUserProvider } from "@/components/app/current-user-context";
+import {
+  getOldestUnreadActiveAnnouncementForUser,
+  getUnreadAnnouncementCountForUser,
+} from "@/lib/supabase/announcement-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { getTeamsForSelect } from "@/lib/supabase/team-queries";
 
@@ -15,9 +19,23 @@ export default async function AppSectionLayout({
   const teamsForCreate =
     profile?.role === "admin" ? await getTeamsForSelect() : [];
 
+  const [welcomeAnnouncement, unreadAnnouncementCount] = profile?.userId
+    ? await Promise.all([
+        getOldestUnreadActiveAnnouncementForUser(profile.userId).catch(
+          () => null,
+        ),
+        getUnreadAnnouncementCountForUser(profile.userId).catch(() => 0),
+      ])
+    : [null, 0];
+
   return (
     <CurrentUserProvider profile={profile} teamsForCreate={teamsForCreate}>
-      <AppChrome>{children}</AppChrome>
+      <AppChrome
+        welcomeAnnouncement={welcomeAnnouncement}
+        unreadAnnouncementCount={unreadAnnouncementCount}
+      >
+        {children}
+      </AppChrome>
     </CurrentUserProvider>
   );
 }

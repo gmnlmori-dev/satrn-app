@@ -34,6 +34,8 @@ import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
 import { NewNoteSlideOver } from "@/components/notes/new-note-slide-over";
 import { resetAppMainScroll } from "@/lib/main-scroll";
 import { SidebarUserPanel } from "@/components/app/sidebar-user-panel";
+import { AnnouncementWelcomeModal } from "@/components/announcements/announcement-welcome-modal";
+import type { AppAnnouncement } from "@/types/announcement";
 
 /** Altezza unica barra superiore (sidebar + header) per allineare i border orizzontali */
 const TOP_BAR_H = "h-12";
@@ -235,6 +237,7 @@ function breadcrumbsForPath(
   if (normalized === "/app/calendar") return [{ label: "Calendario" }];
   if (normalized === "/app/inbox") return [{ label: "Inbox" }];
   if (normalized === "/app/notes") return [{ label: "Note" }];
+  if (normalized === "/app/novita") return [{ label: "Novità" }];
   if (normalized === "/app/notes/new") {
     return [
       { label: "Note", href: "/app/notes" },
@@ -267,6 +270,12 @@ function breadcrumbsForPath(
       return [
         { label: "Impostazioni", href: "/app/settings" },
         { label: "Team" },
+      ];
+    }
+    if (normalized === "/app/settings/announcements") {
+      return [
+        { label: "Impostazioni", href: "/app/settings" },
+        { label: "Novità" },
       ];
     }
     return [{ label: "Impostazioni" }];
@@ -405,15 +414,36 @@ function AppChromeTitleRow({ pathname }: { pathname: string | null }) {
   );
 }
 
-export function AppChrome({ children }: { children: React.ReactNode }) {
+export function AppChrome({
+  children,
+  welcomeAnnouncement = null,
+  unreadAnnouncementCount = 0,
+}: {
+  children: React.ReactNode;
+  welcomeAnnouncement?: AppAnnouncement | null;
+  unreadAnnouncementCount?: number;
+}) {
   return (
     <AppSlideCoordinatorProvider>
-      <AppChromeInner>{children}</AppChromeInner>
+      <AppChromeInner
+        welcomeAnnouncement={welcomeAnnouncement}
+        unreadAnnouncementCount={unreadAnnouncementCount}
+      >
+        {children}
+      </AppChromeInner>
     </AppSlideCoordinatorProvider>
   );
 }
 
-function AppChromeInner({ children }: { children: React.ReactNode }) {
+function AppChromeInner({
+  children,
+  welcomeAnnouncement,
+  unreadAnnouncementCount,
+}: {
+  children: React.ReactNode;
+  welcomeAnnouncement: AppAnnouncement | null;
+  unreadAnnouncementCount: number;
+}) {
   const pathname = usePathname();
   const me = useOptionalCurrentProfile();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -642,8 +672,15 @@ function AppChromeInner({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <SidebarUserPanel onNavigate={() => setMenuOpen(false)} />
+          <SidebarUserPanel
+            onNavigate={() => setMenuOpen(false)}
+            unreadAnnouncementCount={unreadAnnouncementCount}
+          />
         </aside>
+
+        {welcomeAnnouncement ? (
+          <AnnouncementWelcomeModal announcement={welcomeAnnouncement} />
+        ) : null}
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <header

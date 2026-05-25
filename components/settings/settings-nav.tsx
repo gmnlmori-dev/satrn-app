@@ -36,6 +36,11 @@ export function SettingsNav() {
       label: "Utenti",
       match: (path) => path === "/app/settings/users",
     });
+    items.push({
+      href: "/app/settings/announcements",
+      label: "Novità",
+      match: (path) => path === "/app/settings/announcements",
+    });
   }
 
   if (canManageTeams(role)) {

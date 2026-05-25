@@ -39,3 +39,9 @@ export const appRoleLabel: Record<AppRole, string> = {
   manager: "Manager",
   operator: "Operatore",
 };
+
+export const announcementAudienceLabel = {
+  all: "Tutti",
+  team: "Team",
+  user: "Utente",
+} as const;

@@ -157,3 +157,40 @@ export type TeamNoteRowWithRelations = TeamNoteRow & {
   } | null;
   team_note_shared_users?: { user_id: string }[];
 };
+
+export type AppAnnouncementAudience = "all" | "team" | "user";
+
+/** Riga tabella `public.app_announcements`. */
+export type AppAnnouncementRow = {
+  id: string;
+  title: string;
+  body: string;
+  audience: AppAnnouncementAudience;
+  target_team_id: string | null;
+  target_user_id: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_by_user_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AppAnnouncementRowWithRelations = AppAnnouncementRow & {
+  target_team?: { id: string; name: string } | null;
+  target_user?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
+  creator?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
+};
+
+export type AppAnnouncementReadRow = {
+  user_id: string;
+  announcement_id: string;
+  read_at: string;
+};
