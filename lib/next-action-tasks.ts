@@ -1,4 +1,5 @@
 import type { Request, RequestPriority } from "@/types/request";
+import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 
 export type NextActionTask = {
   id: string;
@@ -253,4 +254,33 @@ export function countOpenTasksByWindow(
   }
 
   return { overdue, today, upcomingWeek, openTotal };
+}
+
+export type NextActionTaskSummary = {
+  open: number;
+  total: number;
+  overdue: number;
+};
+
+/** Conteggi task checklist su una singola richiesta (solo voci con testo). */
+export function summarizeNextActionTasks(
+  raw: string,
+  bounds = getFollowUpWindowBounds(),
+): NextActionTaskSummary {
+  const content = parseNextAction(raw);
+  const tasks = content.tasks.filter((task) => task.text.trim());
+  const openTasks = tasks.filter((task) => !task.done);
+  const startToday = new Date(bounds.startTodayIso).getTime();
+
+  let overdue = 0;
+  for (const task of openTasks) {
+    const dueMs = taskDueMs(task);
+    if (dueMs !== null && dueMs < startToday) overdue += 1;
+  }
+
+  return {
+    open: openTasks.length,
+    total: tasks.length,
+    overdue,
+  };
 }
