@@ -5,8 +5,8 @@ import { uiBtnSecondary } from "@/lib/ui-classes";
 export function DashboardHeader() {
   return (
     <PageHeader
-      title="Operazioni"
-      lead="Ritardi, scadenze, inbox e attività recenti — punto di partenza della giornata."
+      title="Dashboard"
+      lead="Il tuo punto di partenza: carico personale, coda del team e accesso rapido alle scrivanie."
       actions={
         <>
           <Link href="/app/follow-up" className={uiBtnSecondary}>

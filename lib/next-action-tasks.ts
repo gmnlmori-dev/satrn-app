@@ -207,3 +207,50 @@ export function nextActionSearchText(raw: string): string {
     .join(" ")
     .trim();
 }
+
+export type OpenTaskWindowCounts = {
+  overdue: number;
+  today: number;
+  upcomingWeek: number;
+  openTotal: number;
+};
+
+function taskDueMs(task: NextActionTask): number | null {
+  if (task.done || !task.dueAt) return null;
+  const t = new Date(task.dueAt).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+/** Conteggi task checklist aperti per finestra temporale (richieste assegnate). */
+export function countOpenTasksByWindow(
+  nextActionRaws: string[],
+  bounds: {
+    startTodayIso: string;
+    startTomorrowIso: string;
+    endWeekIso: string;
+  },
+): OpenTaskWindowCounts {
+  const startToday = new Date(bounds.startTodayIso).getTime();
+  const startTomorrow = new Date(bounds.startTomorrowIso).getTime();
+  const endWeek = new Date(bounds.endWeekIso).getTime();
+
+  let overdue = 0;
+  let today = 0;
+  let upcomingWeek = 0;
+  let openTotal = 0;
+
+  for (const raw of nextActionRaws) {
+    const content = parseNextAction(raw);
+    for (const task of content.tasks) {
+      if (task.done) continue;
+      openTotal += 1;
+      const dueMs = taskDueMs(task);
+      if (dueMs === null) continue;
+      if (dueMs < startToday) overdue += 1;
+      else if (dueMs < startTomorrow) today += 1;
+      else if (dueMs <= endWeek) upcomingWeek += 1;
+    }
+  }
+
+  return { overdue, today, upcomingWeek, openTotal };
+}

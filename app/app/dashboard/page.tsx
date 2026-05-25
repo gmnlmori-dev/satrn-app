@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { DashboardIdentity } from "@/components/dashboard/dashboard-identity";
 import { DashboardQueueOverview } from "@/components/dashboard/dashboard-queue-overview";
 import { DashboardRecentActivities } from "@/components/dashboard/dashboard-recent-activities";
 import { DashboardRecentPanel } from "@/components/dashboard/dashboard-panels";
+import { DashboardSecondaryFeed } from "@/components/dashboard/dashboard-secondary-feed";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
 import {
   getDashboardMineCounts,
+  getDashboardMineTaskCounts,
   getDashboardOperationalCounts,
   getRecentActivitiesGlobal,
   getRecentlyUpdatedRequests,
@@ -35,18 +38,20 @@ export default async function DashboardPage() {
       }
     : { userId: "", teamId: "", role: "operator" as const };
 
-  const [counts, mineCounts, activities, recentRequests, totalRequests] =
+  const [counts, mineCounts, mineTaskCounts, activities, recentRequests, totalRequests] =
     await Promise.all([
       getDashboardOperationalCounts(teamScope),
       getDashboardMineCounts(userId, teamScope),
+      getDashboardMineTaskCounts(userId, teamScope),
       getRecentActivitiesGlobal(teamScope, DASHBOARD_FEED_LIMIT),
       getRecentlyUpdatedRequests(teamScope, DASHBOARD_FEED_LIMIT),
       getRequestsTotalCount(teamScope),
     ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <DashboardHeader />
+      <DashboardIdentity profile={profile} />
 
       {totalRequests === 0 ? (
         <AppEmptyState
@@ -62,13 +67,14 @@ export default async function DashboardPage() {
         <>
           <DashboardQueueOverview
             mineCounts={mineCounts}
+            mineTaskCounts={mineTaskCounts}
             queueCounts={counts}
             teamScoped={teamScope.role !== "admin"}
           />
-          <div className="grid gap-5 lg:grid-cols-2">
+          <DashboardSecondaryFeed>
             <DashboardRecentActivities items={activities} viewer={viewer} />
             <DashboardRecentPanel items={recentRequests} viewer={viewer} />
-          </div>
+          </DashboardSecondaryFeed>
         </>
       )}
     </div>

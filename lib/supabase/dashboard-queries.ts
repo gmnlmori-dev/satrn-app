@@ -1,4 +1,5 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
+import { countOpenTasksByWindow, type OpenTaskWindowCounts } from "@/lib/next-action-tasks";
 import { requestActivityRowToActivity, requestRowToRequest } from "@/lib/supabase/mappers";
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -27,6 +28,8 @@ export type DashboardMineCounts = {
   today: number;
   upcomingWeek: number;
 };
+
+export type { OpenTaskWindowCounts as DashboardMineTaskCounts };
 
 function requestCountQuery(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
@@ -135,6 +138,37 @@ export async function getDashboardMineCounts(
     today: today.count ?? 0,
     upcomingWeek: upcoming.count ?? 0,
   };
+}
+
+/** Task checklist aperti sulle richieste assegnate all'utente. */
+export async function getDashboardMineTaskCounts(
+  userId: string,
+  scope: TeamQueryScope,
+): Promise<OpenTaskWindowCounts | null> {
+  if (!userId) return null;
+
+  const supabase = await createSupabaseServerClient();
+  const teamId = teamIdForScope(scope);
+
+  let q = supabase
+    .from("requests")
+    .select("next_action, request_assignees!inner(user_id)")
+    .neq("status", "closed")
+    .eq("request_assignees.user_id", userId);
+
+  if (teamId) {
+    q = q.eq("team_id", teamId);
+  }
+
+  const { data, error } = await q;
+
+  assertNoError("dashboard mine task counts", error);
+
+  const raws = ((data ?? []) as { next_action: string }[]).map(
+    (row) => row.next_action ?? "",
+  );
+
+  return countOpenTasksByWindow(raws, getFollowUpWindowBounds());
 }
 
 export type DashboardActivityItem = RequestActivity & {
