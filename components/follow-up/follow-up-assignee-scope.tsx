@@ -13,6 +13,7 @@ import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
 import type { Request } from "@/types/request";
 import { FollowUpView } from "@/components/follow-up/follow-up-view";
+import { uiOverline } from "@/lib/typography";
 
 type Props = {
   overdue: Request[];
@@ -75,6 +76,32 @@ export function FollowUpAssigneeScope({
 
   return (
     <div className="space-y-6 md:space-y-8">
+      <dl className="flex flex-wrap gap-x-6 gap-y-2 border-t border-line-default pt-4">
+        <div>
+          <dt className={uiOverline}>In coda richieste</dt>
+          <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
+            {queueTotal}
+          </dd>
+        </div>
+        <div>
+          <dt className={uiOverline}>In ritardo</dt>
+          <dd
+            className={cn(
+              "mt-0.5 text-lg font-semibold tabular-nums",
+              filteredOverdue.length > 0 ? "text-danger" : "text-fg-primary",
+            )}
+          >
+            {filteredOverdue.length}
+          </dd>
+        </div>
+        <div>
+          <dt className={uiOverline}>Inbox triage</dt>
+          <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
+            {filteredInbox.length}
+          </dd>
+        </div>
+      </dl>
+
       {showMine ? (
         <Panel padding className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
@@ -95,13 +122,6 @@ export function FollowUpAssigneeScope({
             onChange={setScope}
           />
         </Panel>
-      ) : null}
-
-      {mineOnly ? (
-        <p className="text-sm text-fg-secondary">
-          <span className="font-semibold tabular-nums text-fg-primary">{queueTotal}</span>{" "}
-          richieste assegnate a te in coda.
-        </p>
       ) : null}
 
       <FollowUpView

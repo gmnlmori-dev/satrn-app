@@ -41,6 +41,26 @@ export function collectSources(requests: Request[]): string[] {
   );
 }
 
+export function filterByAssignScope(
+  requests: Request[],
+  assignScope: AssignScopeFilter,
+  assignUserId: string,
+  ctx: { currentUserId: string },
+): Request[] {
+  return filterByToolbar(
+    requests,
+    {
+      search: "",
+      status: "all",
+      priority: "all",
+      source: "all",
+      assignScope,
+      assignUserId,
+    },
+    ctx,
+  );
+}
+
 export function filterByToolbar(
   requests: Request[],
   f: ToolbarFilters,

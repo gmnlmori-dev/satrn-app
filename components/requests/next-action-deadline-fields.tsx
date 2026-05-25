@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import {
+  fromDateAndTimeInputs,
+  isEndOfLocalDayIso,
   todayDateInputValue,
   toDateInputValue,
   toTimeInputValue,
@@ -60,6 +62,9 @@ export function NextActionDeadlineFields({
     else setInternalTime(value);
   };
 
+  const computedIso =
+    !controlled && date ? fromDateAndTimeInputs(date, time) : null;
+
   return (
     <div>
       {!hideHeading ? (
@@ -113,6 +118,9 @@ export function NextActionDeadlineFields({
           </button>
         ) : null}
       </div>
+      {!controlled && computedIso ? (
+        <input type="hidden" name="nextActionAtIso" value={computedIso} readOnly />
+      ) : null}
       {!hideHint ? (
         <p className="mt-1.5 text-xs text-fg-tertiary">
           Solo data: scadenza a fine giornata. L&apos;ora è facoltativa.
@@ -129,7 +137,7 @@ export function nextActionDeadlineDraftFromIso(
   if (!iso) return { date: "", time: "" };
   return {
     date: toDateInputValue(iso),
-    time: toTimeInputValue(iso),
+    time: isEndOfLocalDayIso(iso) ? "" : toTimeInputValue(iso),
   };
 }
 

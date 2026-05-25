@@ -73,8 +73,17 @@ export function todayDateInputValue(ref: Date = new Date()): string {
 }
 
 /**
- * Combina data e ora opzionale (locale). Solo data → fine giornata (23:59:59).
+ * Combina data e ora opzionale (locale). Solo data → fine giornata (23:59).
  */
+export function endOfLocalDayFromDateInput(date: string): string | null {
+  const d = date.trim();
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+  const [y, m, day] = d.split("-").map(Number);
+  const end = new Date(y, m - 1, day, 23, 59, 0, 0);
+  if (Number.isNaN(end.getTime())) return null;
+  return end.toISOString();
+}
+
 export function fromDateAndTimeInputs(
   date: string,
   time: string,
@@ -91,19 +100,35 @@ export function fromDateAndTimeInputs(
     return local.toISOString();
   }
 
-  const [y, m, day] = d.split("-").map(Number);
-  const end = new Date(y, m - 1, day, 23, 59, 59, 999);
-  return end.toISOString();
+  return endOfLocalDayFromDateInput(d);
 }
 
-/** Legge scadenza da FormData (date+time o legacy datetime-local). */
+/** True se l'ISO cade alle 23:59 locali (scadenza solo-data). */
+export function isEndOfLocalDayIso(iso: string): boolean {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return false;
+  return d.getHours() === 23 && d.getMinutes() === 59;
+}
+
+/** Legge scadenza da FormData (ISO pre-calcolato, date+time o legacy datetime-local). */
 export function nextActionAtFromFormData(fd: FormData): string | null {
+  const precomputed = String(fd.get("nextActionAtIso") ?? "").trim();
+  if (precomputed) {
+    const t = new Date(precomputed).getTime();
+    if (!Number.isNaN(t)) return new Date(t).toISOString();
+  }
+
   const date = String(fd.get("nextActionAtDate") ?? "").trim();
   const time = String(fd.get("nextActionAtTime") ?? "").trim();
   if (date) {
     return fromDateAndTimeInputs(date, time);
   }
-  return fromDatetimeLocalValue(String(fd.get("nextActionAt") ?? ""));
+
+  const legacy = String(fd.get("nextActionAt") ?? "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(legacy)) {
+    return endOfLocalDayFromDateInput(legacy);
+  }
+  return fromDatetimeLocalValue(legacy);
 }
 
 export function nowIso(): string {

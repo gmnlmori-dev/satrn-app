@@ -22,6 +22,7 @@ import {
 import {
   collectSources,
   defaultToolbarFilters,
+  filterByAssignScope,
   filterByToolbar,
   type SortOption,
   type ToolbarFilters,
@@ -124,6 +125,17 @@ export function CalendarWorkspace({
     [requests, currentUserId],
   );
 
+  const scopedRequests = useMemo(
+    () =>
+      filterByAssignScope(
+        requests,
+        toolbar.assignScope,
+        toolbar.assignUserId,
+        { currentUserId },
+      ),
+    [requests, toolbar.assignScope, toolbar.assignUserId, currentUserId],
+  );
+
   const filtered = useMemo(
     () =>
       filterByToolbar(requests, toolbar, {
@@ -170,12 +182,12 @@ export function CalendarWorkspace({
     setSort("updated_desc");
   }, [toolbarBaseline]);
 
-  const total = requests.length;
-  const aperte = countOpenRequests(requests);
-  const nuove = countByStatus(requests, "new");
-  const oggi = countDueToday(requests);
+  const total = scopedRequests.length;
+  const aperte = countOpenRequests(scopedRequests);
+  const nuove = countByStatus(scopedRequests, "new");
+  const oggi = countDueToday(scopedRequests);
 
-  if (total === 0) {
+  if (requests.length === 0) {
     return (
       <div className="space-y-6 md:space-y-7">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
