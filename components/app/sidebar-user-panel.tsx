@@ -70,18 +70,11 @@ const footerActionClass = cn(
   "hover:bg-surface hover:text-fg-primary",
 );
 
-export function SidebarUserPanel({
-  onNavigate,
-  unreadAnnouncementCount = 0,
-}: {
-  onNavigate?: () => void;
-  unreadAnnouncementCount?: number;
-}) {
+export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const me = useOptionalCurrentProfile();
   const settingsActive = pathname?.startsWith("/app/settings") ?? false;
-  const novitaActive = pathname === "/app/novita";
 
   if (!me) {
     return (
@@ -119,27 +112,6 @@ export function SidebarUserPanel({
             ) : null}
           </div>
         </div>
-
-        <Link
-          href="/app/novita"
-          onClick={onNavigate}
-          aria-current={novitaActive ? "page" : undefined}
-          className={cn(
-            uiTransition,
-            uiFocusRingInset,
-            "mx-1 mb-1 flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm font-medium",
-            novitaActive
-              ? "bg-surface text-fg-primary"
-              : "text-fg-secondary hover:bg-surface hover:text-fg-primary",
-          )}
-        >
-          <span>Novità</span>
-          {unreadAnnouncementCount > 0 ? (
-            <span className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold tabular-nums text-white">
-              {unreadAnnouncementCount > 9 ? "9+" : unreadAnnouncementCount}
-            </span>
-          ) : null}
-        </Link>
 
         <div className="grid grid-cols-3 gap-0.5 border-t border-line-default bg-sidebar/60 p-1">
           <Link

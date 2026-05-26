@@ -34,6 +34,7 @@ import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
 import { NewNoteSlideOver } from "@/components/notes/new-note-slide-over";
 import { resetAppMainScroll } from "@/lib/main-scroll";
 import { SidebarUserPanel } from "@/components/app/sidebar-user-panel";
+import { TopBarActions } from "@/components/app/top-bar-actions";
 import { AnnouncementWelcomeModal } from "@/components/announcements/announcement-welcome-modal";
 import type { AppAnnouncement } from "@/types/announcement";
 
@@ -672,10 +673,7 @@ function AppChromeInner({
               );
             })}
           </nav>
-          <SidebarUserPanel
-            onNavigate={() => setMenuOpen(false)}
-            unreadAnnouncementCount={unreadAnnouncementCount}
-          />
+          <SidebarUserPanel onNavigate={() => setMenuOpen(false)} />
         </aside>
 
         {welcomeAnnouncement ? (
@@ -711,6 +709,7 @@ function AppChromeInner({
               </svg>
             </button>
             <AppChromeTitleRow pathname={pathname ?? null} />
+            <TopBarActions unreadAnnouncementCount={unreadAnnouncementCount} />
           </header>
 
           <main
