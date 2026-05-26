@@ -23,16 +23,17 @@ function MegaphoneGlyph({ active }: { active: boolean }) {
       viewBox="0 0 24 24"
       strokeWidth={1.75}
       stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M6.75 16.25 4.25 18.75 6.25 20.75 8.75 18.25 16.75 10.25 14.25 7.75 6.75 16.25Z"
-      />
-      <path strokeLinecap="round" d="M17.75 9.25 20.75 6.25" />
-      <path strokeLinecap="round" d="M18.75 11.25 21.75 11.25" />
-      <path strokeLinecap="round" d="M17.75 13.25 20.75 16.25" />
+      <path d="M7 13 18 6" />
+      <path d="M6 16 16 11" />
+      <path d="M18 6 16 11" />
+      <path d="M6 16 4 18.5 6.5 20" />
+      <path d="M18.5 6.5 21.5 4.5" />
+      <path d="M18.5 8.5 21.5 8.5" />
+      <path d="M18.5 10.5 21.5 12.5" />
     </svg>
   );
 }
