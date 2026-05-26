@@ -12,7 +12,7 @@ const topBarActionClass = cn(
   "hover:bg-surface hover:text-fg-primary",
 );
 
-function MegaphoneGlyph({ active }: { active: boolean }) {
+function NovitaGlyph({ active }: { active: boolean }) {
   return (
     <svg
       className={cn(
@@ -27,13 +27,11 @@ function MegaphoneGlyph({ active }: { active: boolean }) {
       strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M7 13 18 6" />
-      <path d="M6 16 16 11" />
-      <path d="M18 6 16 11" />
-      <path d="M6 16 4 18.5 6.5 20" />
-      <path d="M18.5 6.5 21.5 4.5" />
-      <path d="M18.5 8.5 21.5 8.5" />
-      <path d="M18.5 10.5 21.5 12.5" />
+      <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
+      <path d="M20 2v4" />
+      <path d="M22 4h-4" />
+      <path d="M4 18v2" />
+      <path d="M5 19H3" />
     </svg>
   );
 }
@@ -62,7 +60,7 @@ export function TopBarActions({
           aria-current={novitaActive ? "page" : undefined}
           title="Novità"
         >
-          <MegaphoneGlyph active={novitaActive} />
+          <NovitaGlyph active={novitaActive} />
           {unreadAnnouncementCount > 0 ? (
             <span className="absolute -right-1 -top-1 inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none tabular-nums text-white">
               {unreadAnnouncementCount > 9 ? "9+" : unreadAnnouncementCount}
