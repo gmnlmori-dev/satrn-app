@@ -7,6 +7,7 @@ import type {
   DashboardMineCounts,
   DashboardMineTaskCounts,
   DashboardOperationalCounts,
+  DashboardStandaloneTaskCounts,
 } from "@/lib/supabase/dashboard-queries";
 
 type MetricProps = {
@@ -51,42 +52,95 @@ function Metric({ label, value, href, danger = false, prominent = false }: Metri
   return <div className="px-3 py-3">{content}</div>;
 }
 
-function TaskHint({ taskCounts }: { taskCounts: DashboardMineTaskCounts }) {
+function windowCountDetail(taskCounts: DashboardMineTaskCounts): string {
+  const parts: string[] = [];
+  if (taskCounts.overdue > 0) parts.push(`${taskCounts.overdue} in ritardo`);
+  if (taskCounts.today > 0) parts.push(`${taskCounts.today} oggi`);
+  if (taskCounts.upcomingWeek > 0) {
+    parts.push(`${taskCounts.upcomingWeek} nei prossimi 7 giorni`);
+  }
+  if (parts.length > 0) return parts.join(" · ");
+  return `${taskCounts.openTotal} aperte senza scadenza`;
+}
+
+function ChecklistHint({ taskCounts }: { taskCounts: DashboardMineTaskCounts }) {
   if (taskCounts.openTotal === 0) {
     return (
-      <p className="mt-4 border-t border-line-default pt-3 text-xs text-fg-tertiary">
-        Nessuna task checklist aperta sulle richieste assegnate.
+      <p className="text-xs text-fg-tertiary">
+        Nessuna checklist aperta sulle richieste assegnate.
       </p>
     );
   }
 
-  const parts: string[] = [];
-  if (taskCounts.overdue > 0) {
-    parts.push(`${taskCounts.overdue} in ritardo`);
-  }
-  if (taskCounts.today > 0) {
-    parts.push(`${taskCounts.today} oggi`);
-  }
-  if (taskCounts.upcomingWeek > 0) {
-    parts.push(`${taskCounts.upcomingWeek} nei prossimi 7 giorni`);
-  }
+  return (
+    <p className="text-xs text-fg-tertiary">
+      <span className="font-medium text-fg-secondary">Checklist su richieste:</span>{" "}
+      {windowCountDetail(taskCounts)}
+    </p>
+  );
+}
 
-  const detail =
-    parts.length > 0
-      ? parts.join(" · ")
-      : `${taskCounts.openTotal} aperte senza scadenza`;
+function StandaloneTasksPanel({
+  taskCounts,
+  scope = "mine",
+}: {
+  taskCounts: DashboardStandaloneTaskCounts;
+  scope?: "mine" | "team";
+}) {
+  const prefix = scope === "mine" ? "/app/follow-up?scope=mine" : "/app/follow-up";
+
+  if (taskCounts.openTotal === 0) {
+    return (
+      <div className="mt-4 border-t border-line-default pt-4">
+        <p className="text-xs font-medium text-fg-secondary">Task libere</p>
+        <p className="mt-1 text-xs text-fg-tertiary">
+          Nessuna task libera aperta{scope === "mine" ? " assegnata a te" : ""}.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <p className="mt-4 border-t border-line-default pt-3 text-xs text-fg-tertiary">
-      <span className="font-medium text-fg-secondary">Task sulle richieste:</span>{" "}
-      {detail}
-    </p>
+    <div className="mt-4 border-t border-line-default pt-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-xs font-medium text-fg-secondary">Task libere</p>
+        <Link
+          href="/app/tasks"
+          className="text-xs text-accent underline-offset-2 hover:underline"
+        >
+          Apri Task
+        </Link>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+        <Metric
+          label="In ritardo"
+          value={taskCounts.overdue}
+          href={`${prefix}#follow-up-tasks-overdue`}
+          danger
+        />
+        <Metric
+          label="Oggi"
+          value={taskCounts.today}
+          href={`${prefix}#follow-up-tasks-today`}
+        />
+        <Metric
+          label="Prossimi 7 giorni"
+          value={taskCounts.upcomingWeek}
+          href={`${prefix}#follow-up-tasks-upcoming`}
+        />
+      </div>
+      <p className="mt-2 text-xs text-fg-tertiary">
+        {windowCountDetail(taskCounts)}
+      </p>
+    </div>
   );
 }
 
 type Props = {
   mineCounts: DashboardMineCounts | null;
   mineTaskCounts: DashboardMineTaskCounts | null;
+  mineStandaloneTaskCounts: DashboardStandaloneTaskCounts | null;
+  teamStandaloneTaskCounts?: DashboardStandaloneTaskCounts | null;
   queueCounts: DashboardOperationalCounts;
   teamScoped?: boolean;
 };
@@ -94,6 +148,8 @@ type Props = {
 export function DashboardQueueOverview({
   mineCounts,
   mineTaskCounts,
+  mineStandaloneTaskCounts,
+  teamStandaloneTaskCounts = null,
   queueCounts,
   teamScoped = false,
 }: Props) {
@@ -165,7 +221,17 @@ export function DashboardQueueOverview({
               />
             </div>
 
-            {mineTaskCounts ? <TaskHint taskCounts={mineTaskCounts} /> : null}
+            {mineTaskCounts ? (
+              <div className="mt-4 border-t border-line-default pt-4">
+                <ChecklistHint taskCounts={mineTaskCounts} />
+              </div>
+            ) : null}
+            {mineStandaloneTaskCounts ? (
+              <StandaloneTasksPanel
+                taskCounts={mineStandaloneTaskCounts}
+                scope="mine"
+              />
+            ) : null}
           </article>
         ) : null}
 
@@ -219,6 +285,17 @@ export function DashboardQueueOverview({
               href="/app/follow-up#follow-up-inbox"
             />
           </div>
+          {teamStandaloneTaskCounts &&
+          teamStandaloneTaskCounts.openTotal > 0 ? (
+            <div className="mt-4 border-t border-line-default pt-4">
+              <p className="text-xs font-medium text-fg-secondary">
+                Task libere aperte (team)
+              </p>
+              <p className="mt-1 text-sm tabular-nums font-semibold text-fg-primary">
+                {teamStandaloneTaskCounts.openTotal}
+              </p>
+            </div>
+          ) : null}
         </article>
       </div>
     </section>

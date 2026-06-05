@@ -194,3 +194,40 @@ export type AppAnnouncementReadRow = {
   announcement_id: string;
   read_at: string;
 };
+
+/** Riga tabella `public.tasks`. */
+export type TaskRow = {
+  id: string;
+  team_id: string;
+  created_by_user_id: string;
+  title: string;
+  done: boolean;
+  due_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TaskAssigneeRowWithProfile = {
+  user_id: string;
+  assigned_at: string;
+  assigned_by_user_id: string | null;
+  assignee?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
+};
+
+export type TaskRowWithAssignee = TaskRow & {
+  task_assignees?: TaskAssigneeRowWithProfile[] | null;
+  creator?: {
+    user_id: string;
+    full_name: string;
+    email: string;
+  } | null;
+  team?: {
+    id: string;
+    name: string;
+  } | null;
+};

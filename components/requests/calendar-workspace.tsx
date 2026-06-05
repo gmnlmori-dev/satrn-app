@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Request } from "@/types/request";
+import type { Task } from "@/types/task";
+import { filterTasksByAssignScope } from "@/lib/tasks-query";
 import type { AppRole, AssigneeOption } from "@/types/profile";
 import { canViewAllTeamsRequestMeta } from "@/lib/permissions";
 import {
@@ -89,6 +91,7 @@ function QueueOverview({
 
 export function CalendarWorkspace({
   requests,
+  tasks = [],
   currentUserId,
   currentUserRole = "operator",
   assigneeOptions,
@@ -96,6 +99,7 @@ export function CalendarWorkspace({
   defaultCalendarLayout = "month",
 }: {
   requests: Request[];
+  tasks?: Task[];
   currentUserId: string;
   currentUserRole?: AppRole;
   assigneeOptions: AssigneeOption[];
@@ -123,6 +127,17 @@ export function CalendarWorkspace({
         ? requests.filter((r) => r.assignedUserId === currentUserId).length
         : 0,
     [requests, currentUserId],
+  );
+
+  const filteredTasks = useMemo(
+    () =>
+      filterTasksByAssignScope(
+        tasks,
+        toolbar.assignScope,
+        toolbar.assignUserId,
+        { currentUserId },
+      ),
+    [tasks, toolbar.assignScope, toolbar.assignUserId, currentUserId],
   );
 
   const scopedRequests = useMemo(
@@ -187,14 +202,15 @@ export function CalendarWorkspace({
   const nuove = countByStatus(scopedRequests, "new");
   const oggi = countDueToday(scopedRequests);
 
-  if (requests.length === 0) {
+  if (requests.length === 0 && tasks.length === 0) {
     return (
       <div className="space-y-6 md:space-y-7">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0 space-y-1">
             <h1 className={uiPageTitle}>Calendario</h1>
             <p className={cn(uiPageLead, "max-w-xl")}>
-              Scadenze e task sulle richieste, in vista mensile o settimanale.
+              Scadenze richieste, checklist e task libere, in vista mensile o
+              settimanale.
             </p>
           </div>
           <Link
@@ -218,8 +234,8 @@ export function CalendarWorkspace({
         <div className="min-w-0 space-y-1">
           <h1 className={uiPageTitle}>Calendario</h1>
           <p className={cn(uiPageLead, "max-w-xl")}>
-            Scadenze e task sulle richieste filtrate. Clicca un giorno o un
-            evento per i dettagli.
+            Scadenze richieste, checklist e task libere filtrate. I badge
+            tratteggiati indicano task libere; quelli pieni le checklist.
           </p>
         </div>
         <Link
@@ -249,11 +265,12 @@ export function CalendarWorkspace({
         filterBaseline={toolbarBaseline}
       />
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && filteredTasks.length === 0 ? (
         <RequestsEmptyState onReset={resetAll} />
       ) : (
         <RequestsCalendar
           requests={filtered}
+          standaloneTasks={filteredTasks}
           filteredCount={filtered.length}
           withoutDeadlineCount={withoutDeadlineCount}
           showTaskRequestMeta={showTaskRequestMeta}

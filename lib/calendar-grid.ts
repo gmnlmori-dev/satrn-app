@@ -1,5 +1,6 @@
 import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import type { Request, RequestPriority } from "@/types/request";
+import type { Task } from "@/types/task";
 import { toDateKey, toDateKeyFromIso } from "@/lib/date";
 
 export type CalendarCell = {
@@ -132,6 +133,31 @@ export function groupCalendarTasksByDay(
   }
   for (const [key, list] of map) {
     map.set(key, sortDayTasks(list));
+  }
+  return map;
+}
+
+export function sortStandaloneDayTasks(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => {
+    const ta = a.dueAt ? new Date(a.dueAt).getTime() : 0;
+    const tb = b.dueAt ? new Date(b.dueAt).getTime() : 0;
+    if (ta !== tb) return ta - tb;
+    return a.title.localeCompare(b.title, "it");
+  });
+}
+
+export function groupStandaloneTasksByDay(tasks: Task[]): Map<string, Task[]> {
+  const map = new Map<string, Task[]>();
+  for (const task of tasks) {
+    if (task.done || !task.dueAt) continue;
+    const key = toDateKeyFromIso(task.dueAt);
+    if (!key) continue;
+    const list = map.get(key) ?? [];
+    list.push(task);
+    map.set(key, list);
+  }
+  for (const [key, list] of map) {
+    map.set(key, sortStandaloneDayTasks(list));
   }
   return map;
 }

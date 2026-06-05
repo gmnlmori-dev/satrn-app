@@ -7,8 +7,14 @@ import {
   getOverdueRequests,
   getUpcomingRequests,
 } from "@/lib/supabase/follow-up-queries";
+import {
+  getOverdueStandaloneTasks,
+  getStandaloneTasksToday,
+  getUpcomingStandaloneTasks,
+} from "@/lib/supabase/task-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { resolveDefaultAssignScope } from "@/lib/user-preferences";
+import { WorkflowHelpTip } from "@/components/ui/workflow-guide";
 import { cn } from "@/lib/cn";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 
@@ -18,12 +24,16 @@ export const metadata = {
 
 export default async function FollowUpPage() {
   const profile = await getCurrentProfileSummary();
-  const [overdue, today, upcoming, inbox] = await Promise.all([
-    getOverdueRequests(),
-    getFollowUpTodayRequests(),
-    getUpcomingRequests(),
-    getInboxTriageItems(),
-  ]);
+  const [overdue, today, upcoming, inbox, overdueTasks, todayTasks, upcomingTasks] =
+    await Promise.all([
+      getOverdueRequests(),
+      getFollowUpTodayRequests(),
+      getUpcomingRequests(),
+      getInboxTriageItems(),
+      getOverdueStandaloneTasks(),
+      getStandaloneTasksToday(),
+      getUpcomingStandaloneTasks(),
+    ]);
 
   const defaultScope = profile
     ? resolveDefaultAssignScope(profile.preferences, profile.role)
@@ -33,9 +43,10 @@ export default async function FollowUpPage() {
     <div className="space-y-6 pb-12 md:space-y-8 md:pb-16">
       <FollowUpHashScroll />
       <header className="min-w-0">
-        <h1 className={uiPageTitle}>
-          Da seguire
-        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className={uiPageTitle}>Da seguire</h1>
+          <WorkflowHelpTip />
+        </div>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
           Ritardi, scadenze oggi e nei prossimi sette giorni, più inbox da triage
           — tutto in un unico elenco.
@@ -47,6 +58,9 @@ export default async function FollowUpPage() {
           today={today}
           upcoming={upcoming}
           inbox={inbox}
+          overdueTasks={overdueTasks}
+          todayTasks={todayTasks}
+          upcomingTasks={upcomingTasks}
           currentUserId={profile?.userId ?? ""}
           defaultScope={defaultScope}
         />

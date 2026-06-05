@@ -5,8 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   filterInboxMine,
   filterRequestsMine,
+  filterTasksMine,
   type FollowUpAssigneeScope,
 } from "@/lib/request-assignee";
+import type { Task } from "@/types/task";
 import { cn } from "@/lib/cn";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Panel } from "@/components/ui/panel";
@@ -20,6 +22,9 @@ type Props = {
   today: Request[];
   upcoming: Request[];
   inbox: InboxItem[];
+  overdueTasks: Task[];
+  todayTasks: Task[];
+  upcomingTasks: Task[];
   currentUserId: string;
   defaultScope: FollowUpAssigneeScope;
 };
@@ -38,6 +43,9 @@ export function FollowUpAssigneeScope({
   today,
   upcoming,
   inbox,
+  overdueTasks,
+  todayTasks,
+  upcomingTasks,
   currentUserId,
   defaultScope,
 }: Props) {
@@ -70,9 +78,28 @@ export function FollowUpAssigneeScope({
     () => (mineOnly ? filterInboxMine(inbox, currentUserId) : inbox),
     [mineOnly, inbox, currentUserId],
   );
+  const filteredOverdueTasks = useMemo(
+    () => (mineOnly ? filterTasksMine(overdueTasks, currentUserId) : overdueTasks),
+    [mineOnly, overdueTasks, currentUserId],
+  );
+  const filteredTodayTasks = useMemo(
+    () => (mineOnly ? filterTasksMine(todayTasks, currentUserId) : todayTasks),
+    [mineOnly, todayTasks, currentUserId],
+  );
+  const filteredUpcomingTasks = useMemo(
+    () =>
+      mineOnly ? filterTasksMine(upcomingTasks, currentUserId) : upcomingTasks,
+    [mineOnly, upcomingTasks, currentUserId],
+  );
 
   const queueTotal =
-    filteredOverdue.length + filteredToday.length + filteredUpcoming.length;
+    filteredOverdue.length +
+    filteredToday.length +
+    filteredUpcoming.length;
+  const tasksTotal =
+    filteredOverdueTasks.length +
+    filteredTodayTasks.length +
+    filteredUpcomingTasks.length;
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -95,6 +122,12 @@ export function FollowUpAssigneeScope({
           </dd>
         </div>
         <div>
+          <dt className={uiOverline}>Task libere</dt>
+          <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
+            {tasksTotal}
+          </dd>
+        </div>
+        <div>
           <dt className={uiOverline}>Inbox triage</dt>
           <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
             {filteredInbox.length}
@@ -108,7 +141,7 @@ export function FollowUpAssigneeScope({
             <p className="text-sm font-medium text-fg-primary">Mostra coda</p>
             <p className="mt-0.5 text-xs text-fg-tertiary">
               {mineOnly
-                ? "Solo richieste e inbox assegnate a te."
+                ? "Solo richieste, task e inbox assegnate a te."
                 : "Tutta la coda del team."}
             </p>
           </div>
@@ -129,6 +162,9 @@ export function FollowUpAssigneeScope({
         today={filteredToday}
         upcoming={filteredUpcoming}
         inbox={filteredInbox}
+        overdueTasks={filteredOverdueTasks}
+        todayTasks={filteredTodayTasks}
+        upcomingTasks={filteredUpcomingTasks}
       />
     </div>
   );

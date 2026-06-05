@@ -5,6 +5,7 @@ import {
   getCurrentProfileSummary,
 } from "@/lib/supabase/profile-queries";
 import { getRequests } from "@/lib/supabase/queries";
+import { getTasks } from "@/lib/supabase/task-queries";
 import {
   defaultAssignScopeToFilter,
   resolveDefaultAssignScope,
@@ -16,8 +17,9 @@ export const metadata = {
 };
 
 export default async function CalendarPage() {
-  const [requests, profile] = await Promise.all([
+  const [requests, tasks, profile] = await Promise.all([
     getRequests(),
+    getTasks(),
     getCurrentProfileSummary(),
   ]);
   const assignees = await getActiveAssigneeOptions(profile?.teamId ?? "");
@@ -34,6 +36,7 @@ export default async function CalendarPage() {
     <Suspense fallback={null}>
       <CalendarWorkspace
         requests={requests}
+        tasks={tasks}
         currentUserId={profile?.userId ?? ""}
         currentUserRole={profile?.role ?? "operator"}
         assigneeOptions={assignees}

@@ -46,7 +46,22 @@ function IconCalendar() {
   );
 }
 
-export type AppEmptyStateIcon = "inbox" | "queue" | "search" | "activity" | "calendar" | "none";
+function IconTask() {
+  return (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+  );
+}
+
+export type AppEmptyStateIcon =
+  | "inbox"
+  | "queue"
+  | "search"
+  | "activity"
+  | "calendar"
+  | "task"
+  | "none";
 
 function renderIcon(kind: AppEmptyStateIcon) {
   switch (kind) {
@@ -60,6 +75,8 @@ function renderIcon(kind: AppEmptyStateIcon) {
       return <IconActivity />;
     case "calendar":
       return <IconCalendar />;
+    case "task":
+      return <IconTask />;
     default:
       return <IconInbox />;
   }
