@@ -18,6 +18,7 @@ import { fetchInboxSubjectForBreadcrumb } from "@/lib/actions/inbox-breadcrumb";
 import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb";
 import { CreateRequestProvider } from "@/components/app/create-request-context";
 import { CreateNoteProvider } from "@/components/app/create-note-context";
+import { CreateTaskProvider } from "@/components/app/create-task-context";
 import {
   AppSlideCoordinatorProvider,
   useExclusiveAppSlide,
@@ -32,6 +33,7 @@ import { NoteNewQuerySync } from "@/components/app/note-new-query-sync";
 import { NewRequestSlideOver } from "@/components/requests/new-request-slide-over";
 import { InboxNewSlideOver } from "@/components/inbox/inbox-new-slide-over";
 import { NewNoteSlideOver } from "@/components/notes/new-note-slide-over";
+import { NewTaskSlideOver } from "@/components/tasks/new-task-slide-over";
 import { resetAppMainScroll } from "@/lib/main-scroll";
 import { SidebarUserPanel } from "@/components/app/sidebar-user-panel";
 import { TopBarActions } from "@/components/app/top-bar-actions";
@@ -46,6 +48,7 @@ const nav = [
   { href: "/app/follow-up", label: "Da seguire", glyph: "followup" as const },
   { href: "/app/requests", label: "Richieste", glyph: "queue" as const },
   { href: "/app/calendar", label: "Calendario", glyph: "calendar" as const },
+  { href: "/app/tasks", label: "Task", glyph: "task" as const },
   { href: "/app/inbox", label: "Inbox", glyph: "inbox" as const },
   { href: "/app/notes", label: "Note", glyph: "note" as const },
 ] as const;
@@ -119,6 +122,28 @@ function SidebarNavGlyph({
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+        />
+      </svg>
+    );
+  }
+  if (kind === "task") {
+    const cls = cn(
+      "h-4 w-4 shrink-0",
+      active ? "text-accent" : "text-fg-tertiary",
+    );
+    return (
+      <svg
+        className={cls}
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.75}
+        stroke="currentColor"
+        aria-hidden
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
         />
       </svg>
     );
@@ -237,6 +262,7 @@ function breadcrumbsForPath(
   if (normalized === "/app/requests") return [{ label: "Richieste" }];
   if (normalized === "/app/calendar") return [{ label: "Calendario" }];
   if (normalized === "/app/inbox") return [{ label: "Inbox" }];
+  if (normalized === "/app/tasks") return [{ label: "Task" }];
   if (normalized === "/app/notes") return [{ label: "Note" }];
   if (normalized === "/app/novita") return [{ label: "Novità" }];
   if (normalized === "/app/notes/new") {
@@ -451,10 +477,12 @@ function AppChromeInner({
   const newRequestSlide = useExclusiveAppSlide("new-request");
   const newInboxSlide = useExclusiveAppSlide("new-inbox");
   const newNoteSlide = useExclusiveAppSlide("new-note");
+  const newTaskSlide = useExclusiveAppSlide("new-task");
   const [createOpen, setCreateOpen] = useState(false);
   const openNewRequest = newRequestSlide.openSlide;
   const openNewInbox = newInboxSlide.openSlide;
   const openNewNote = newNoteSlide.openSlide;
+  const openNewTask = newTaskSlide.openSlide;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -472,6 +500,7 @@ function AppChromeInner({
   return (
     <CreateRequestProvider open={openNewRequest}>
       <CreateNoteProvider open={openNewNote}>
+      <CreateTaskProvider open={openNewTask}>
       <DetailSaveFeedbackProvider>
       <div className="flex h-screen h-dvh min-h-0 flex-row overflow-hidden bg-canvas">
         <Suspense fallback={null}>
@@ -495,6 +524,10 @@ function AppChromeInner({
         <NewNoteSlideOver
           open={newNoteSlide.open}
           onClose={newNoteSlide.closeSlide}
+        />
+        <NewTaskSlideOver
+          open={newTaskSlide.open}
+          onClose={newTaskSlide.closeSlide}
         />
 
         {menuOpen ? (
@@ -634,6 +667,21 @@ function AppChromeInner({
                   >
                     Nuova nota
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openNewTask();
+                    }}
+                    className={cn(
+                      uiTransition,
+                      uiFocusRingInset,
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                      "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+                    )}
+                  >
+                    Nuova task
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -648,6 +696,7 @@ function AppChromeInner({
               const isNotesSection =
                 pathname === "/app/notes" ||
                 Boolean(pathname?.startsWith("/app/notes/"));
+              const isTasksSection = pathname === "/app/tasks";
               const active =
                 item.href === "/app/requests"
                   ? isRequestsSection
@@ -655,11 +704,13 @@ function AppChromeInner({
                     ? isInboxSection
                     : item.href === "/app/notes"
                       ? isNotesSection
-                      : item.href === "/app/follow-up"
-                        ? pathname === "/app/follow-up"
-                        : item.href === "/app/calendar"
-                          ? pathname === "/app/calendar"
-                          : pathname === item.href;
+                      : item.href === "/app/tasks"
+                        ? isTasksSection
+                        : item.href === "/app/follow-up"
+                          ? pathname === "/app/follow-up"
+                          : item.href === "/app/calendar"
+                            ? pathname === "/app/calendar"
+                            : pathname === item.href;
               return (
                 <Link
                   key={item.href}
@@ -723,6 +774,7 @@ function AppChromeInner({
         </div>
       </div>
       </DetailSaveFeedbackProvider>
+      </CreateTaskProvider>
       </CreateNoteProvider>
     </CreateRequestProvider>
   );

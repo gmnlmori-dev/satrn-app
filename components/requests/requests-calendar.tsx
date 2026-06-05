@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Request } from "@/types/request";
+import type { Task } from "@/types/task";
 import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import {
   extractCalendarTasks,
@@ -15,6 +16,7 @@ import {
   buildWeekGrid,
   groupCalendarTasksByDay,
   groupRequestsByDay,
+  groupStandaloneTasksByDay,
   startOfMonth,
   startOfWeek,
   WEEKDAY_LABELS,
@@ -34,7 +36,8 @@ import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { RequestsCalendarEvent } from "@/components/requests/requests-calendar-event";
 import { RequestsCalendarDayPanel } from "@/components/requests/requests-calendar-day-panel";
 import { RequestsCalendarRequestPreviewPanel } from "@/components/requests/requests-calendar-request-preview-panel";
-import { RequestsCalendarTasksPanel } from "@/components/requests/requests-calendar-tasks-panel";
+import { CalendarDayTasksPanel } from "@/components/calendar/calendar-day-tasks-panel";
+import { isStandaloneTaskOverdue } from "@/lib/task-windows";
 import type { DefaultRequestsCalendarLayoutPreference } from "@/lib/user-preferences";
 
 const MAX_EVENTS_PER_CELL = 3;
@@ -48,11 +51,13 @@ type DayOverflow = {
 
 type DayTasksOverflow = {
   date: Date;
-  entries: CalendarTaskEntry[];
+  checklistEntries: CalendarTaskEntry[];
+  standaloneTasks: Task[];
 };
 
 type Props = {
   requests: Request[];
+  standaloneTasks?: Task[];
   filteredCount: number;
   withoutDeadlineCount: number;
   showTaskRequestMeta?: boolean;
@@ -99,16 +104,22 @@ function ChecklistIcon({ className }: { className?: string }) {
   );
 }
 
-function CalendarTasksBadge({
+function CalendarCountBadge({
   count,
   overdue,
   onClick,
   className,
+  icon,
+  variant,
+  ariaLabel,
 }: {
   count: number;
   overdue: boolean;
   onClick: () => void;
   className?: string;
+  icon: React.ReactNode;
+  variant: "checklist" | "standalone";
+  ariaLabel: string;
 }) {
   if (count <= 0) return null;
 
@@ -122,16 +133,39 @@ function CalendarTasksBadge({
       className={cn(
         uiTransition,
         "inline-flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center gap-0.5 rounded-[5px] border px-1.5 text-[11px] font-semibold tabular-nums shadow-sm",
-        overdue
-          ? "border-danger/60 bg-danger-muted/55 text-danger hover:bg-danger-muted/75"
-          : "border-accent/40 bg-accent-muted/70 text-accent hover:bg-accent-muted",
+        variant === "standalone"
+          ? overdue
+            ? "border-danger/50 border-dashed bg-danger-muted/40 text-danger hover:bg-danger-muted/60"
+            : "border-line-default border-dashed bg-canvas text-fg-secondary hover:bg-elevated"
+          : overdue
+            ? "border-danger/60 bg-danger-muted/55 text-danger hover:bg-danger-muted/75"
+            : "border-accent/40 bg-accent-muted/70 text-accent hover:bg-accent-muted",
         className,
       )}
-      aria-label={`${count} task in scadenza`}
+      aria-label={ariaLabel}
     >
-      <ChecklistIcon />
+      {icon}
       {count}
     </button>
+  );
+}
+
+function StandaloneTaskIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={cn("h-3.5 w-3.5 shrink-0", className)}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+      />
+    </svg>
   );
 }
 
@@ -141,21 +175,34 @@ const MONTH_CELL_MIN_H = "min-h-[11rem]";
 function MonthCell({
   cell,
   events,
-  tasks,
+  checklistTasks,
+  standaloneTasks,
   onMore,
   onTasks,
   onRequestSelect,
 }: {
   cell: CalendarCell;
   events: Request[];
-  tasks: CalendarTaskEntry[];
+  checklistTasks: CalendarTaskEntry[];
+  standaloneTasks: Task[];
   onMore: (payload: DayOverflow) => void;
   onTasks: (payload: DayTasksOverflow) => void;
   onRequestSelect: (request: Request) => void;
 }) {
   const visible = events.slice(0, MAX_EVENTS_PER_CELL);
   const hidden = events.length - visible.length;
-  const taskOverdue = tasks.some((entry) => isCalendarTaskOverdue(entry.task));
+  const checklistOverdue = checklistTasks.some((entry) =>
+    isCalendarTaskOverdue(entry.task),
+  );
+  const standaloneOverdue = standaloneTasks.some((task) =>
+    isStandaloneTaskOverdue(task),
+  );
+  const openDayTasks = () =>
+    onTasks({
+      date: cell.date,
+      checklistEntries: checklistTasks,
+      standaloneTasks,
+    });
 
   return (
     <div
@@ -178,10 +225,21 @@ function MonthCell({
       >
         <span>{cell.date.getDate()}</span>
         <div className="flex items-center gap-1">
-          <CalendarTasksBadge
-            count={tasks.length}
-            overdue={taskOverdue}
-            onClick={() => onTasks({ date: cell.date, entries: tasks })}
+          <CalendarCountBadge
+            count={standaloneTasks.length}
+            overdue={standaloneOverdue}
+            onClick={openDayTasks}
+            icon={<StandaloneTaskIcon />}
+            variant="standalone"
+            ariaLabel={`${standaloneTasks.length} task libere in scadenza`}
+          />
+          <CalendarCountBadge
+            count={checklistTasks.length}
+            overdue={checklistOverdue}
+            onClick={openDayTasks}
+            icon={<ChecklistIcon />}
+            variant="checklist"
+            ariaLabel={`${checklistTasks.length} checklist in scadenza`}
           />
           {events.length > 0 ? (
             <span className="rounded-[4px] bg-canvas px-1 text-[10px] font-medium text-fg-tertiary">
@@ -221,17 +279,30 @@ function MonthCell({
 function WeekColumn({
   cell,
   events,
-  tasks,
+  checklistTasks,
+  standaloneTasks,
   onTasks,
   onRequestSelect,
 }: {
   cell: CalendarCell;
   events: Request[];
-  tasks: CalendarTaskEntry[];
+  checklistTasks: CalendarTaskEntry[];
+  standaloneTasks: Task[];
   onTasks: (payload: DayTasksOverflow) => void;
   onRequestSelect: (request: Request) => void;
 }) {
-  const taskOverdue = tasks.some((entry) => isCalendarTaskOverdue(entry.task));
+  const checklistOverdue = checklistTasks.some((entry) =>
+    isCalendarTaskOverdue(entry.task),
+  );
+  const standaloneOverdue = standaloneTasks.some((task) =>
+    isStandaloneTaskOverdue(task),
+  );
+  const openDayTasks = () =>
+    onTasks({
+      date: cell.date,
+      checklistEntries: checklistTasks,
+      standaloneTasks,
+    });
 
   return (
     <div
@@ -246,12 +317,24 @@ function WeekColumn({
           cell.isToday ? "font-semibold text-accent" : "text-fg-secondary",
         )}
       >
-        <CalendarTasksBadge
-          count={tasks.length}
-          overdue={taskOverdue}
-          onClick={() => onTasks({ date: cell.date, entries: tasks })}
-          className="absolute right-1 top-1"
-        />
+        <div className="absolute right-1 top-1 flex flex-col gap-0.5">
+          <CalendarCountBadge
+            count={standaloneTasks.length}
+            overdue={standaloneOverdue}
+            onClick={openDayTasks}
+            icon={<StandaloneTaskIcon />}
+            variant="standalone"
+            ariaLabel={`${standaloneTasks.length} task libere in scadenza`}
+          />
+          <CalendarCountBadge
+            count={checklistTasks.length}
+            overdue={checklistOverdue}
+            onClick={openDayTasks}
+            icon={<ChecklistIcon />}
+            variant="checklist"
+            ariaLabel={`${checklistTasks.length} checklist in scadenza`}
+          />
+        </div>
         <span className="block uppercase tracking-wide">
           {formatWeekdayShort(cell.date)}
         </span>
@@ -278,6 +361,7 @@ function WeekColumn({
 
 export function RequestsCalendar({
   requests,
+  standaloneTasks = [],
   filteredCount,
   withoutDeadlineCount,
   showTaskRequestMeta = false,
@@ -333,6 +417,14 @@ export function RequestsCalendar({
     () => groupCalendarTasksByDay(calendarTasks),
     [calendarTasks],
   );
+  const standaloneByDay = useMemo(
+    () => groupStandaloneTasksByDay(standaloneTasks),
+    [standaloneTasks],
+  );
+  const standaloneDueCount = useMemo(
+    () => standaloneTasks.filter((task) => !task.done && task.dueAt).length,
+    [standaloneTasks],
+  );
 
   const requestDeadlineCount = useMemo(
     () =>
@@ -344,8 +436,11 @@ export function RequestsCalendar({
   );
 
   const hasAnyDeadlines = useMemo(
-    () => requestDeadlineCount > 0 || calendarTasks.length > 0,
-    [requestDeadlineCount, calendarTasks.length],
+    () =>
+      requestDeadlineCount > 0 ||
+      calendarTasks.length > 0 ||
+      standaloneDueCount > 0,
+    [requestDeadlineCount, calendarTasks.length, standaloneDueCount],
   );
 
   const cells = useMemo(
@@ -371,9 +466,10 @@ export function RequestsCalendar({
     for (const key of keys) {
       n += byDay.get(key)?.length ?? 0;
       n += tasksByDay.get(key)?.length ?? 0;
+      n += standaloneByDay.get(key)?.length ?? 0;
     }
     return n;
-  }, [cells, byDay, tasksByDay]);
+  }, [cells, byDay, tasksByDay, standaloneByDay]);
 
   const navigate = useCallback(
     (delta: number) => {
@@ -441,7 +537,17 @@ export function RequestsCalendar({
             <span className="tabular-nums font-semibold text-fg-primary">
               {calendarTasks.length}
             </span>{" "}
-            task scadenti
+            checklist scadenti
+          </>
+        ) : null}
+        {standaloneDueCount > 0 ? (
+          <>
+            {" "}
+            ·{" "}
+            <span className="tabular-nums font-semibold text-fg-primary">
+              {standaloneDueCount}
+            </span>{" "}
+            task libere
           </>
         ) : null}
         {withoutDeadlineCount > 0 ? (
@@ -488,7 +594,8 @@ export function RequestsCalendar({
                   key={cell.dateKey}
                   cell={cell}
                   events={byDay.get(cell.dateKey) ?? []}
-                  tasks={tasksByDay.get(cell.dateKey) ?? []}
+                  checklistTasks={tasksByDay.get(cell.dateKey) ?? []}
+                  standaloneTasks={standaloneByDay.get(cell.dateKey) ?? []}
                   onMore={setDayPanel}
                   onTasks={setTasksPanel}
                   onRequestSelect={openRequestPreview}
@@ -507,7 +614,8 @@ export function RequestsCalendar({
                 key={cell.dateKey}
                 cell={cell}
                 events={byDay.get(cell.dateKey) ?? []}
-                tasks={tasksByDay.get(cell.dateKey) ?? []}
+                checklistTasks={tasksByDay.get(cell.dateKey) ?? []}
+                standaloneTasks={standaloneByDay.get(cell.dateKey) ?? []}
                 onTasks={setTasksPanel}
                 onRequestSelect={openRequestPreview}
               />
@@ -534,14 +642,20 @@ export function RequestsCalendar({
       ) : null}
 
       {tasksPanel ? (
-        <RequestsCalendarTasksPanel
+        <CalendarDayTasksPanel
           date={tasksPanel.date}
-          entries={tasksPanel.entries}
+          checklistEntries={tasksPanel.checklistEntries}
+          standaloneTasks={tasksPanel.standaloneTasks}
           showRequestMeta={showTaskRequestMeta}
           onClose={() => setTasksPanel(null)}
-          onEntriesChange={(entries) =>
+          onChecklistChange={(checklistEntries) =>
             setTasksPanel((prev) =>
-              prev ? { ...prev, entries } : null,
+              prev ? { ...prev, checklistEntries } : null,
+            )
+          }
+          onStandaloneChange={(standaloneTasks) =>
+            setTasksPanel((prev) =>
+              prev ? { ...prev, standaloneTasks } : null,
             )
           }
         />

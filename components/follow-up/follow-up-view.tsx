@@ -30,6 +30,9 @@ import {
 } from "@/components/requests/next-action-deadline-fields";
 import { inboxStatusLabel, statusLabel } from "@/lib/labels";
 import { summarizeNextActionTasks } from "@/lib/next-action-tasks";
+import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
+import { WorkflowGuide } from "@/components/ui/workflow-guide";
+import type { Task } from "@/types/task";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
 import {
@@ -863,69 +866,132 @@ function InboxBlock({ items }: { items: InboxItem[] }) {
   );
 }
 
+function InterleavedWindowSection({
+  anchorId,
+  tasksAnchorId,
+  variant,
+  title,
+  description,
+  requests,
+  tasks,
+  requestAccent,
+  emptyRequestTitle,
+  emptyRequestHint,
+  emptyTaskTitle,
+  emptyTaskHint,
+}: {
+  anchorId: string;
+  tasksAnchorId: string;
+  variant: "danger" | "default" | "muted";
+  title: string;
+  description: string;
+  requests: Request[];
+  tasks: Task[];
+  requestAccent: "danger" | "default";
+  emptyRequestTitle: string;
+  emptyRequestHint: string;
+  emptyTaskTitle: string;
+  emptyTaskHint: string;
+}) {
+  return (
+    <Section
+      anchorId={anchorId}
+      variant={variant}
+      title={title}
+      count={requests.length + tasks.length}
+      description={description}
+    >
+      <div className="grid lg:grid-cols-2 lg:divide-x lg:divide-line-default">
+        <div className="min-w-0">
+          <p className="border-b border-line-default bg-elevated/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-fg-tertiary">
+            Richieste
+          </p>
+          {requests.length === 0 ? (
+            <EmptyRow title={emptyRequestTitle} hint={emptyRequestHint} />
+          ) : (
+            <RequestBlock requests={requests} accent={requestAccent} />
+          )}
+        </div>
+        <div id={tasksAnchorId} className="min-w-0 scroll-mt-24">
+          <p className="border-b border-line-default bg-elevated/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-fg-tertiary">
+            Task libere
+          </p>
+          {tasks.length === 0 ? (
+            <EmptyRow title={emptyTaskTitle} hint={emptyTaskHint} />
+          ) : (
+            <StandaloneTaskBlock tasks={tasks} />
+          )}
+        </div>
+      </div>
+    </Section>
+  );
+}
+
 export function FollowUpView({
   overdue,
   today,
   upcoming,
   inbox,
+  overdueTasks = [],
+  todayTasks = [],
+  upcomingTasks = [],
 }: {
   overdue: Request[];
   today: Request[];
   upcoming: Request[];
   inbox: InboxItem[];
+  overdueTasks?: Task[];
+  todayTasks?: Task[];
+  upcomingTasks?: Task[];
 }) {
   return (
     <div className="space-y-10 md:space-y-12">
-      <Section
+      <WorkflowGuide className="mb-2" />
+
+      <InterleavedWindowSection
         anchorId="follow-up-overdue"
+        tasksAnchorId="follow-up-tasks-overdue"
         variant="danger"
         title="In ritardo"
-        count={overdue.length}
-        description="Prossima azione prima di oggi (calendario locale), escluse le richieste chiuse."
-      >
-        {overdue.length === 0 ? (
-          <EmptyRow
-            title="Nessun ritardo"
-            hint="Nessuna richiesta ha la prossima azione impostata prima di oggi (richieste chiuse escluse)."
-          />
-        ) : (
-          <RequestBlock requests={overdue} accent="danger" />
-        )}
-      </Section>
+        description="Richieste e task libere con scadenza prima di oggi."
+        requests={overdue}
+        tasks={overdueTasks}
+        requestAccent="danger"
+        emptyRequestTitle="Nessun ritardo"
+        emptyRequestHint="Nessuna richiesta ha la prossima azione impostata prima di oggi."
+        emptyTaskTitle="Nessuna task in ritardo"
+        emptyTaskHint="Le task libere scadute compariranno qui."
+      />
 
-      <Section
+      <InterleavedWindowSection
         anchorId="follow-up-today"
+        tasksAnchorId="follow-up-tasks-today"
         variant="default"
         title="Oggi"
-        count={today.length}
-        description="Prossima azione prevista per oggi."
-      >
-        {today.length === 0 ? (
-          <EmptyRow
-            title="Niente in scadenza oggi"
-            hint="Le richieste con prossima azione prevista per oggi compariranno in questo blocco."
-          />
-        ) : (
-          <RequestBlock requests={today} accent="default" />
-        )}
-      </Section>
+        description="Richieste e task libere in scadenza oggi."
+        requests={today}
+        tasks={todayTasks}
+        requestAccent="default"
+        emptyRequestTitle="Niente in scadenza oggi"
+        emptyRequestHint="Le richieste con prossima azione oggi compariranno qui."
+        emptyTaskTitle="Nessuna task oggi"
+        emptyTaskHint="Le task libere con scadenza oggi compariranno qui."
+      />
 
-      <Section
+      <InterleavedWindowSection
         anchorId="follow-up-upcoming"
+        tasksAnchorId="follow-up-tasks-upcoming"
         variant="muted"
         title="Prossimi 7 giorni"
-        count={upcoming.length}
-        description="Dalla prossima mezzanotte fino alla fine del settimo giorno."
-      >
-        {upcoming.length === 0 ? (
-          <EmptyRow
-            title="Nessuna scadenza nei prossimi 7 giorni"
-            hint="Domani fino al settimo giorno non risultano azioni programmate."
-          />
-        ) : (
-          <RequestBlock requests={upcoming} accent="default" />
-        )}
-      </Section>
+        description="Richieste e task libere da domani fino al settimo giorno."
+        requests={upcoming}
+        tasks={upcomingTasks}
+        requestAccent="default"
+        emptyRequestTitle="Nessuna scadenza nei prossimi 7 giorni"
+        emptyRequestHint="Le richieste programmate in questa finestra compariranno qui."
+        emptyTaskTitle="Nessuna task in arrivo"
+        emptyTaskHint="Le task libere con scadenza nei prossimi 7 giorni compariranno qui."
+      />
 
       <Section
         anchorId="follow-up-inbox"

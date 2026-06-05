@@ -1,5 +1,7 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import { countOpenTasksByWindow, type OpenTaskWindowCounts } from "@/lib/next-action-tasks";
+import { countTasksByWindow } from "@/lib/task-windows";
+import type { Task } from "@/types/task";
 import { requestActivityRowToActivity, requestRowToRequest } from "@/lib/supabase/mappers";
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -169,6 +171,58 @@ export async function getDashboardMineTaskCounts(
   );
 
   return countOpenTasksByWindow(raws, getFollowUpWindowBounds());
+}
+
+export type { OpenTaskWindowCounts as DashboardStandaloneTaskCounts };
+
+async function fetchOpenTasksForDashboard(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  scope: TeamQueryScope,
+  assignedUserId?: string,
+): Promise<Pick<Task, "done" | "dueAt">[]> {
+  const teamId = teamIdForScope(scope);
+
+  let q = assignedUserId
+    ? supabase
+        .from("tasks")
+        .select("done, due_at, task_assignees!inner(user_id)")
+        .eq("done", false)
+        .eq("task_assignees.user_id", assignedUserId)
+    : supabase.from("tasks").select("done, due_at").eq("done", false);
+
+  if (teamId) {
+    q = q.eq("team_id", teamId);
+  }
+
+  const { data, error } = await q;
+  assertNoError("dashboard standalone task counts", error);
+
+  return ((data ?? []) as { done: boolean; due_at: string | null }[]).map(
+    (row) => ({
+      done: row.done,
+      dueAt: row.due_at,
+    }),
+  );
+}
+
+/** Task libere aperte assegnate all'utente. */
+export async function getDashboardStandaloneTaskCounts(
+  userId: string,
+  scope: TeamQueryScope,
+): Promise<OpenTaskWindowCounts | null> {
+  if (!userId) return null;
+  const supabase = await createSupabaseServerClient();
+  const tasks = await fetchOpenTasksForDashboard(supabase, scope, userId);
+  return countTasksByWindow(tasks, getFollowUpWindowBounds());
+}
+
+/** Task libere aperte del team (panoramica coda). */
+export async function getDashboardTeamStandaloneTaskCounts(
+  scope: TeamQueryScope,
+): Promise<OpenTaskWindowCounts> {
+  const supabase = await createSupabaseServerClient();
+  const tasks = await fetchOpenTasksForDashboard(supabase, scope);
+  return countTasksByWindow(tasks, getFollowUpWindowBounds());
 }
 
 export type DashboardActivityItem = RequestActivity & {
