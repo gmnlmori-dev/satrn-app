@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useOpenCreateTask } from "@/components/app/create-task-context";
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { TasksToolbar } from "@/components/tasks/tasks-toolbar";
-import { WorkflowGuide } from "@/components/ui/workflow-guide";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
 import { taskIsAssignedTo } from "@/lib/task-assignees";
 import {
@@ -68,7 +67,6 @@ export function TasksWorkspace({
             Nuova task
           </button>
         </div>
-        <WorkflowGuide />
       </header>
 
       <TasksToolbar

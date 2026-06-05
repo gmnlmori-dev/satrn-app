@@ -9,13 +9,10 @@ import {
   type FollowUpAssigneeScope,
 } from "@/lib/request-assignee";
 import type { Task } from "@/types/task";
-import { cn } from "@/lib/cn";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
 import type { Request } from "@/types/request";
 import { FollowUpView } from "@/components/follow-up/follow-up-view";
-import { uiOverline } from "@/lib/typography";
 
 type Props = {
   overdue: Request[];
@@ -92,80 +89,28 @@ export function FollowUpAssigneeScope({
     [mineOnly, upcomingTasks, currentUserId],
   );
 
-  const queueTotal =
-    filteredOverdue.length +
-    filteredToday.length +
-    filteredUpcoming.length;
-  const tasksTotal =
-    filteredOverdueTasks.length +
-    filteredTodayTasks.length +
-    filteredUpcomingTasks.length;
+  const scopeControl = showMine ? (
+    <SegmentedControl
+      ariaLabel="Ambito assegnazione"
+      value={scope}
+      options={[
+        { value: "all", label: "Tutte" },
+        { value: "mine", label: "Le mie" },
+      ]}
+      onChange={setScope}
+    />
+  ) : null;
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      <dl className="flex flex-wrap gap-x-6 gap-y-2 border-t border-line-default pt-4">
-        <div>
-          <dt className={uiOverline}>In coda richieste</dt>
-          <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
-            {queueTotal}
-          </dd>
-        </div>
-        <div>
-          <dt className={uiOverline}>In ritardo</dt>
-          <dd
-            className={cn(
-              "mt-0.5 text-lg font-semibold tabular-nums",
-              filteredOverdue.length > 0 ? "text-danger" : "text-fg-primary",
-            )}
-          >
-            {filteredOverdue.length}
-          </dd>
-        </div>
-        <div>
-          <dt className={uiOverline}>Task libere</dt>
-          <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
-            {tasksTotal}
-          </dd>
-        </div>
-        <div>
-          <dt className={uiOverline}>Inbox triage</dt>
-          <dd className="mt-0.5 text-lg font-semibold tabular-nums text-fg-primary">
-            {filteredInbox.length}
-          </dd>
-        </div>
-      </dl>
-
-      {showMine ? (
-        <Panel padding className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-fg-primary">Mostra coda</p>
-            <p className="mt-0.5 text-xs text-fg-tertiary">
-              {mineOnly
-                ? "Solo richieste, task e inbox assegnate a te."
-                : "Tutta la coda del team."}
-            </p>
-          </div>
-          <SegmentedControl
-            ariaLabel="Ambito assegnazione"
-            value={scope}
-            options={[
-              { value: "all", label: "Tutte" },
-              { value: "mine", label: "Le mie" },
-            ]}
-            onChange={setScope}
-          />
-        </Panel>
-      ) : null}
-
-      <FollowUpView
-        overdue={filteredOverdue}
-        today={filteredToday}
-        upcoming={filteredUpcoming}
-        inbox={filteredInbox}
-        overdueTasks={filteredOverdueTasks}
-        todayTasks={filteredTodayTasks}
-        upcomingTasks={filteredUpcomingTasks}
-      />
-    </div>
+    <FollowUpView
+      overdue={filteredOverdue}
+      today={filteredToday}
+      upcoming={filteredUpcoming}
+      inbox={filteredInbox}
+      overdueTasks={filteredOverdueTasks}
+      todayTasks={filteredTodayTasks}
+      upcomingTasks={filteredUpcomingTasks}
+      scopeControl={scopeControl}
+    />
   );
 }

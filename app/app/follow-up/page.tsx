@@ -14,7 +14,6 @@ import {
 } from "@/lib/supabase/task-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { resolveDefaultAssignScope } from "@/lib/user-preferences";
-import { WorkflowHelpTip } from "@/components/ui/workflow-guide";
 import { cn } from "@/lib/cn";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 
@@ -43,13 +42,10 @@ export default async function FollowUpPage() {
     <div className="space-y-6 pb-12 md:space-y-8 md:pb-16">
       <FollowUpHashScroll />
       <header className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className={uiPageTitle}>Da seguire</h1>
-          <WorkflowHelpTip />
-        </div>
+        <h1 className={uiPageTitle}>Da seguire</h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-          Ritardi, scadenze oggi e nei prossimi sette giorni, più inbox da triage
-          — tutto in un unico elenco.
+          La tua coda operativa: scegli la finestra temporale e lavora richieste,
+          task e inbox da un unico punto.
         </p>
       </header>
       <Suspense fallback={null}>

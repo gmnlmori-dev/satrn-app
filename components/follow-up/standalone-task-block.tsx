@@ -15,9 +15,11 @@ import type { Task } from "@/types/task";
 export function StandaloneTaskBlock({
   tasks,
   onTasksChange,
+  compact = false,
 }: {
   tasks: Task[];
   onTasksChange?: (tasks: Task[]) => void;
+  compact?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -38,6 +40,53 @@ export function StandaloneTaskBlock({
         ),
       );
     });
+  }
+
+  if (compact) {
+    return (
+      <ul className="divide-y divide-line-default">
+        {tasks.map((task) => {
+          const overdue = isStandaloneTaskOverdue(task);
+          return (
+            <li
+              key={task.id}
+              className="flex items-start gap-3 px-4 py-3 sm:px-5"
+            >
+              <input
+                type="checkbox"
+                checked={task.done}
+                disabled={pending}
+                onChange={() => handleToggle(task)}
+                aria-label={`Segna completata: ${task.title}`}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-line-default accent-accent"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium leading-snug text-fg-primary">
+                  {task.title}
+                </p>
+                <p className="mt-1 text-xs text-fg-tertiary">
+                  {task.dueAt ? (
+                    <span
+                      className={cn(
+                        "tabular-nums",
+                        overdue && "font-medium text-danger",
+                      )}
+                    >
+                      {formatDateTime(task.dueAt)}
+                    </span>
+                  ) : (
+                    <span>Senza scadenza</span>
+                  )}
+                  {taskAssigneesLabel(task) ? (
+                    <span>{` · ${taskAssigneesLabel(task)}`}</span>
+                  ) : null}
+                </p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    );
   }
 
   return (

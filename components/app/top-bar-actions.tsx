@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { WorkflowHelpButton } from "@/components/ui/workflow-guide";
 import { cn } from "@/lib/cn";
 import { uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
 
@@ -50,6 +51,7 @@ export function TopBarActions({
       aria-label="Azioni barra superiore"
     >
       <div className="flex items-center gap-1">
+        <WorkflowHelpButton buttonClassName={topBarActionClass} />
         <Link
           href="/app/novita"
           className={cn(

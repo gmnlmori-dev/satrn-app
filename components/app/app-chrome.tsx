@@ -46,10 +46,10 @@ const TOP_BAR_H = "h-12";
 const nav = [
   { href: "/app/dashboard", label: "Dashboard", glyph: "home" as const },
   { href: "/app/follow-up", label: "Da seguire", glyph: "followup" as const },
-  { href: "/app/requests", label: "Richieste", glyph: "queue" as const },
   { href: "/app/calendar", label: "Calendario", glyph: "calendar" as const },
   { href: "/app/tasks", label: "Task", glyph: "task" as const },
   { href: "/app/inbox", label: "Inbox", glyph: "inbox" as const },
+  { href: "/app/requests", label: "Richieste", glyph: "queue" as const },
   { href: "/app/notes", label: "Note", glyph: "note" as const },
 ] as const;
 
@@ -626,7 +626,7 @@ function AppChromeInner({
                     type="button"
                     onClick={() => {
                       setMenuOpen(false);
-                      openNewRequest();
+                      openNewTask();
                     }}
                     className={cn(
                       uiTransition,
@@ -635,7 +635,7 @@ function AppChromeInner({
                       "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
                     )}
                   >
-                    Nuova richiesta
+                    Task
                   </button>
                   <button
                     type="button"
@@ -650,7 +650,22 @@ function AppChromeInner({
                       "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
                     )}
                   >
-                    Nuovo inbox
+                    Inbox
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openNewRequest();
+                    }}
+                    className={cn(
+                      uiTransition,
+                      uiFocusRingInset,
+                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                      "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+                    )}
+                  >
+                    Richiesta
                   </button>
                   <button
                     type="button"
@@ -665,22 +680,7 @@ function AppChromeInner({
                       "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
                     )}
                   >
-                    Nuova nota
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openNewTask();
-                    }}
-                    className={cn(
-                      uiTransition,
-                      uiFocusRingInset,
-                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
-                      "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
-                    )}
-                  >
-                    Nuova task
+                    Nota
                   </button>
                 </div>
               ) : null}

@@ -1,8 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { uiBtnGhost, uiBtnIcon, uiTransition } from "@/lib/ui-classes";
 
 const ITEMS = [
   {
@@ -23,27 +22,54 @@ const ITEMS = [
   },
 ] as const;
 
-export function WorkflowHelpTip({ className }: { className?: string }) {
+export function WorkflowHelpButton({
+  className,
+  buttonClassName,
+}: {
+  className?: string;
+  buttonClassName: string;
+}) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   return (
-    <div className={cn("relative inline-flex", className)}>
+    <div ref={rootRef} className={cn("relative inline-flex", className)}>
       <button
         type="button"
-        className={cn(uiBtnIcon, "h-8 w-8 text-xs font-semibold text-fg-tertiary")}
+        className={buttonClassName}
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label="Guida: quando usare Inbox, Richiesta, Checklist e Task"
+        aria-label="Quando usare cosa"
+        title="Quando usare cosa"
         onClick={() => setOpen((v) => !v)}
       >
-        ?
+        <span className="text-sm font-semibold leading-none text-fg-tertiary">?</span>
       </button>
       {open ? (
         <div
           id={panelId}
-          role="tooltip"
-          className="absolute right-0 top-full z-20 mt-1 w-72 rounded-lg border border-line-default bg-surface p-3 shadow-lg sm:w-80"
+          role="dialog"
+          aria-label="Quando usare cosa"
+          className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg border border-line-default bg-surface p-3 shadow-lg sm:w-80"
         >
           <p className="text-xs font-semibold text-fg-primary">Quando usare cosa</p>
           <dl className="mt-2 space-y-2">
@@ -57,58 +83,6 @@ export function WorkflowHelpTip({ className }: { className?: string }) {
             ))}
           </dl>
         </div>
-      ) : null}
-    </div>
-  );
-}
-
-export function WorkflowGuide({
-  className,
-  defaultOpen = false,
-}: {
-  className?: string;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div className={cn("rounded-lg border border-line-default bg-elevated/40", className)}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          uiTransition,
-          uiBtnGhost,
-          "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-fg-secondary",
-        )}
-        aria-expanded={open}
-      >
-        <span>Quando usare cosa</span>
-        <svg
-          className={cn(
-            "h-4 w-4 shrink-0 text-fg-tertiary transition-transform",
-            open && "rotate-180",
-          )}
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          aria-hidden
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </svg>
-      </button>
-      {open ? (
-        <dl className="grid gap-2 border-t border-line-default px-3 py-3 sm:grid-cols-2">
-          {ITEMS.map((item) => (
-            <div key={item.title}>
-              <dt className="text-xs font-semibold text-fg-primary">{item.title}</dt>
-              <dd className="mt-0.5 text-xs leading-relaxed text-fg-tertiary">
-                {item.description}
-              </dd>
-            </div>
-          ))}
-        </dl>
       ) : null}
     </div>
   );

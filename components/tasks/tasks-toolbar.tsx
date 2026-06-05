@@ -8,7 +8,6 @@ import { cn } from "@/lib/cn";
 import { uiControl } from "@/lib/ui-classes";
 import { uiFilterLabel } from "@/lib/typography";
 import { uiPanel } from "@/lib/surfaces";
-import { WorkflowHelpTip } from "@/components/ui/workflow-guide";
 
 type Props = {
   toolbar: TaskToolbarFilters;
@@ -41,12 +40,9 @@ export function TasksToolbar({
   return (
     <div className={uiPanel}>
       <div className="p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-2">
-          <label htmlFor="task-search" className={uiFilterLabel}>
-            Cerca task
-          </label>
-          <WorkflowHelpTip />
-        </div>
+        <label htmlFor="task-search" className={uiFilterLabel}>
+          Cerca task
+        </label>
         <div className="relative mt-1">
           <span
             className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-tertiary"

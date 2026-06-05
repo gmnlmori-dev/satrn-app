@@ -6,7 +6,6 @@ import { DashboardRecentActivities } from "@/components/dashboard/dashboard-rece
 import { DashboardRecentPanel } from "@/components/dashboard/dashboard-panels";
 import { DashboardSecondaryFeed } from "@/components/dashboard/dashboard-secondary-feed";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
-import { WorkflowGuide } from "@/components/ui/workflow-guide";
 import {
   getDashboardMineCounts,
   getDashboardMineTaskCounts,
@@ -67,18 +66,15 @@ export default async function DashboardPage() {
       <DashboardIdentity profile={profile} />
 
       {totalRequests === 0 ? (
-        <div className="space-y-4">
-          <WorkflowGuide defaultOpen />
-          <AppEmptyState
-            icon="queue"
-            title="Nessuna richiesta"
-            description="Crea la prima richiesta o usa l'inbox per triage."
-          >
-            <Link href="/app/follow-up" className={uiLink}>
-              Da seguire
-            </Link>
-          </AppEmptyState>
-        </div>
+        <AppEmptyState
+          icon="queue"
+          title="Nessuna richiesta"
+          description="Crea la prima richiesta o usa l'inbox per triage."
+        >
+          <Link href="/app/follow-up" className={uiLink}>
+            Da seguire
+          </Link>
+        </AppEmptyState>
       ) : (
         <>
           <DashboardQueueOverview

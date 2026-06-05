@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
   useCallback,
@@ -31,7 +32,6 @@ import {
 import { inboxStatusLabel, statusLabel } from "@/lib/labels";
 import { summarizeNextActionTasks } from "@/lib/next-action-tasks";
 import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
-import { WorkflowGuide } from "@/components/ui/workflow-guide";
 import type { Task } from "@/types/task";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
@@ -46,7 +46,9 @@ import {
   dataTableThClass,
   dataTableRowClass,
 } from "@/lib/table-ui";
-import { uiFormLabel, uiPageLead } from "@/lib/typography";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { uiCard } from "@/lib/surfaces";
+import { uiFormLabel } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestStatus } from "@/types/request";
 
@@ -127,61 +129,45 @@ function IconEllipsisVertical({ className }: { className?: string }) {
   );
 }
 
-function Section({
-  anchorId,
-  title,
-  description,
-  count,
-  children,
-  variant,
-}: {
-  /** Ancora per link dalla dashboard (`/app/follow-up#...`). */
-  anchorId?: string;
-  title: string;
-  description?: string;
-  count?: number;
-  children: React.ReactNode;
-  variant: "danger" | "default" | "muted";
-}) {
-  const bar =
-    variant === "danger"
-      ? "border-line-default bg-surface border-l-4 border-l-danger"
-      : "border-line-default bg-surface";
+export type FollowUpTab = "overdue" | "today" | "upcoming" | "inbox";
 
-  const countStyles =
-    variant === "danger"
-      ? "bg-danger-muted text-danger"
-      : "bg-accent-muted text-accent";
+const TAB_HASH: Record<FollowUpTab, string> = {
+  overdue: "follow-up-overdue",
+  today: "follow-up-today",
+  upcoming: "follow-up-upcoming",
+  inbox: "follow-up-inbox",
+};
 
-  return (
-    <section id={anchorId} className="scroll-mt-24 space-y-4">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2 className="text-lg font-semibold tracking-tight text-fg-primary">
-            {title}
-          </h2>
-          {count !== undefined ? (
-            <span
-              className={cn(
-                "inline-flex min-h-[1.5rem] min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-semibold tabular-nums",
-                countStyles,
-              )}
-            >
-              {count}
-            </span>
-          ) : null}
-        </div>
-        {description ? (
-          <p className={cn(uiPageLead, "mt-1.5")}>
-            {description}
-          </p>
-        ) : null}
-      </div>
-      <div className={cn("overflow-hidden rounded-[12px] border", bar)}>
-        {children}
-      </div>
-    </section>
-  );
+const HASH_TO_TAB: Record<string, FollowUpTab> = {
+  "follow-up-overdue": "overdue",
+  "follow-up-tasks-overdue": "overdue",
+  "follow-up-today": "today",
+  "follow-up-tasks-today": "today",
+  "follow-up-upcoming": "upcoming",
+  "follow-up-tasks-upcoming": "upcoming",
+  "follow-up-inbox": "inbox",
+};
+
+function tabFromHash(hash: string): FollowUpTab | null {
+  const id = hash.replace(/^#/, "");
+  return HASH_TO_TAB[id] ?? null;
+}
+
+function defaultFollowUpTab(
+  overdue: number,
+  today: number,
+  upcoming: number,
+  inbox: number,
+): FollowUpTab {
+  if (overdue > 0) return "overdue";
+  if (today > 0) return "today";
+  if (upcoming > 0) return "upcoming";
+  if (inbox > 0) return "inbox";
+  return "overdue";
+}
+
+function tabLabel(label: string, count: number) {
+  return count > 0 ? `${label} (${count})` : label;
 }
 
 function EmptyRow({ title, hint }: { title: string; hint: string }) {
@@ -866,64 +852,40 @@ function InboxBlock({ items }: { items: InboxItem[] }) {
   );
 }
 
-function InterleavedWindowSection({
-  anchorId,
-  tasksAnchorId,
-  variant,
-  title,
-  description,
+function QueuePanel({
   requests,
   tasks,
   requestAccent,
-  emptyRequestTitle,
-  emptyRequestHint,
-  emptyTaskTitle,
-  emptyTaskHint,
+  emptyTitle,
+  emptyHint,
 }: {
-  anchorId: string;
-  tasksAnchorId: string;
-  variant: "danger" | "default" | "muted";
-  title: string;
-  description: string;
   requests: Request[];
   tasks: Task[];
   requestAccent: "danger" | "default";
-  emptyRequestTitle: string;
-  emptyRequestHint: string;
-  emptyTaskTitle: string;
-  emptyTaskHint: string;
+  emptyTitle: string;
+  emptyHint: string;
 }) {
+  const total = requests.length + tasks.length;
+  if (total === 0) {
+    return <EmptyRow title={emptyTitle} hint={emptyHint} />;
+  }
+
   return (
-    <Section
-      anchorId={anchorId}
-      variant={variant}
-      title={title}
-      count={requests.length + tasks.length}
-      description={description}
-    >
-      <div className="grid lg:grid-cols-2 lg:divide-x lg:divide-line-default">
-        <div className="min-w-0">
-          <p className="border-b border-line-default bg-elevated/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-fg-tertiary">
-            Richieste
-          </p>
-          {requests.length === 0 ? (
-            <EmptyRow title={emptyRequestTitle} hint={emptyRequestHint} />
-          ) : (
-            <RequestBlock requests={requests} accent={requestAccent} />
-          )}
+    <div>
+      {requests.length > 0 ? (
+        <RequestBlock requests={requests} accent={requestAccent} />
+      ) : null}
+      {tasks.length > 0 ? (
+        <div className={requests.length > 0 ? "border-t border-line-default" : undefined}>
+          {requests.length > 0 ? (
+            <p className="border-b border-line-default bg-elevated/30 px-4 py-2 text-xs font-medium text-fg-tertiary sm:px-5">
+              Task libere · {tasks.length}
+            </p>
+          ) : null}
+          <StandaloneTaskBlock tasks={tasks} compact />
         </div>
-        <div id={tasksAnchorId} className="min-w-0 scroll-mt-24">
-          <p className="border-b border-line-default bg-elevated/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-fg-tertiary">
-            Task libere
-          </p>
-          {tasks.length === 0 ? (
-            <EmptyRow title={emptyTaskTitle} hint={emptyTaskHint} />
-          ) : (
-            <StandaloneTaskBlock tasks={tasks} />
-          )}
-        </div>
-      </div>
-    </Section>
+      ) : null}
+    </div>
   );
 }
 
@@ -935,6 +897,7 @@ export function FollowUpView({
   overdueTasks = [],
   todayTasks = [],
   upcomingTasks = [],
+  scopeControl = null,
 }: {
   overdue: Request[];
   today: Request[];
@@ -943,72 +906,123 @@ export function FollowUpView({
   overdueTasks?: Task[];
   todayTasks?: Task[];
   upcomingTasks?: Task[];
+  scopeControl?: ReactNode;
 }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+
+  const overdueCount = overdue.length + overdueTasks.length;
+  const todayCount = today.length + todayTasks.length;
+  const upcomingCount = upcoming.length + upcomingTasks.length;
+  const inboxCount = inbox.length;
+
+  const [activeTab, setActiveTab] = useState<FollowUpTab>(() => {
+    if (typeof window !== "undefined") {
+      const fromHash = tabFromHash(window.location.hash);
+      if (fromHash) return fromHash;
+    }
+    return defaultFollowUpTab(
+      overdueCount,
+      todayCount,
+      upcomingCount,
+      inboxCount,
+    );
+  });
+
+  const syncTabFromHash = useCallback(() => {
+    const fromHash = tabFromHash(window.location.hash);
+    if (fromHash) setActiveTab(fromHash);
+  }, []);
+
+  useEffect(() => {
+    syncTabFromHash();
+    window.addEventListener("hashchange", syncTabFromHash);
+    return () => window.removeEventListener("hashchange", syncTabFromHash);
+  }, [syncTabFromHash]);
+
+  function selectTab(tab: FollowUpTab) {
+    setActiveTab(tab);
+    const hash = TAB_HASH[tab];
+    const query = search ? `?${search}` : "";
+    window.history.replaceState(null, "", `${pathname}${query}#${hash}`);
+  }
+
+  const tabOptions: { value: FollowUpTab; label: string }[] = [
+    { value: "overdue", label: tabLabel("In ritardo", overdueCount) },
+    { value: "today", label: tabLabel("Oggi", todayCount) },
+    { value: "upcoming", label: tabLabel("7 giorni", upcomingCount) },
+    { value: "inbox", label: tabLabel("Inbox", inboxCount) },
+  ];
+
   return (
-    <div className="space-y-10 md:space-y-12">
-      <WorkflowGuide className="mb-2" />
-
-      <InterleavedWindowSection
-        anchorId="follow-up-overdue"
-        tasksAnchorId="follow-up-tasks-overdue"
-        variant="danger"
-        title="In ritardo"
-        description="Richieste e task libere con scadenza prima di oggi."
-        requests={overdue}
-        tasks={overdueTasks}
-        requestAccent="danger"
-        emptyRequestTitle="Nessun ritardo"
-        emptyRequestHint="Nessuna richiesta ha la prossima azione impostata prima di oggi."
-        emptyTaskTitle="Nessuna task in ritardo"
-        emptyTaskHint="Le task libere scadute compariranno qui."
-      />
-
-      <InterleavedWindowSection
-        anchorId="follow-up-today"
-        tasksAnchorId="follow-up-tasks-today"
-        variant="default"
-        title="Oggi"
-        description="Richieste e task libere in scadenza oggi."
-        requests={today}
-        tasks={todayTasks}
-        requestAccent="default"
-        emptyRequestTitle="Niente in scadenza oggi"
-        emptyRequestHint="Le richieste con prossima azione oggi compariranno qui."
-        emptyTaskTitle="Nessuna task oggi"
-        emptyTaskHint="Le task libere con scadenza oggi compariranno qui."
-      />
-
-      <InterleavedWindowSection
-        anchorId="follow-up-upcoming"
-        tasksAnchorId="follow-up-tasks-upcoming"
-        variant="muted"
-        title="Prossimi 7 giorni"
-        description="Richieste e task libere da domani fino al settimo giorno."
-        requests={upcoming}
-        tasks={upcomingTasks}
-        requestAccent="default"
-        emptyRequestTitle="Nessuna scadenza nei prossimi 7 giorni"
-        emptyRequestHint="Le richieste programmate in questa finestra compariranno qui."
-        emptyTaskTitle="Nessuna task in arrivo"
-        emptyTaskHint="Le task libere con scadenza nei prossimi 7 giorni compariranno qui."
-      />
-
-      <Section
-        anchorId="follow-up-inbox"
-        variant="muted"
-        title="Inbox da triage"
-        count={inbox.length}
-        description={`Ingressi in stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non ancora convertiti. Clicca una riga per aprire il dettaglio e convertire; Archivia per toglierla dalla coda.`}
-      >
-        {inbox.length === 0 ? (
-          <EmptyRow
-            title="Nessun ingresso da triage"
-            hint="Gli elementi in stato Nuovo o Esaminato, non ancora convertiti, compariranno qui. Apri una riga per procedere alla conversione."
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="overflow-x-auto pb-0.5">
+          <SegmentedControl
+            ariaLabel="Finestra temporale"
+            value={activeTab}
+            options={tabOptions}
+            onChange={selectTab}
+            className="min-w-max"
           />
-        ) : (
-          <InboxBlock items={inbox} />
+        </div>
+        {scopeControl ? (
+          <div className="flex shrink-0 justify-end">{scopeControl}</div>
+        ) : null}
+      </div>
+
+      <div
+        id={TAB_HASH[activeTab]}
+        className={cn(
+          uiCard,
+          "scroll-mt-24 overflow-hidden",
+          activeTab === "overdue" &&
+            overdueCount > 0 &&
+            "border-l-4 border-l-danger",
         )}
-      </Section>
+      >
+        {activeTab === "overdue" ? (
+          <QueuePanel
+            requests={overdue}
+            tasks={overdueTasks}
+            requestAccent="danger"
+            emptyTitle="Nessun ritardo"
+            emptyHint="Richieste e task con scadenza passata compariranno qui."
+          />
+        ) : null}
+
+        {activeTab === "today" ? (
+          <QueuePanel
+            requests={today}
+            tasks={todayTasks}
+            requestAccent="default"
+            emptyTitle="Niente in scadenza oggi"
+            emptyHint="Richieste e task con scadenza oggi compariranno qui."
+          />
+        ) : null}
+
+        {activeTab === "upcoming" ? (
+          <QueuePanel
+            requests={upcoming}
+            tasks={upcomingTasks}
+            requestAccent="default"
+            emptyTitle="Nessuna scadenza nei prossimi 7 giorni"
+            emptyHint="Richieste e task da domani al settimo giorno compariranno qui."
+          />
+        ) : null}
+
+        {activeTab === "inbox" ? (
+          inboxCount === 0 ? (
+            <EmptyRow
+              title="Nessun ingresso da triage"
+              hint={`Gli elementi in stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non ancora convertiti, compariranno qui.`}
+            />
+          ) : (
+            <InboxBlock items={inbox} />
+          )
+        ) : null}
+      </div>
     </div>
   );
 }
