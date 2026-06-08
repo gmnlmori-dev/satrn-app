@@ -111,7 +111,10 @@ export function NextActionDeadlineFields({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => setDate(todayDateInputValue())}
+            onClick={() => {
+              setDate(todayDateInputValue());
+              setTime("");
+            }}
             className={cn(uiBtnSecondary, "mb-0.5 shrink-0 px-2.5 py-2 text-xs")}
           >
             Oggi

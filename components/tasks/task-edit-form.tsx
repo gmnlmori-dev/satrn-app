@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useId, useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
+import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import {
   NextActionDeadlineFields,
   nextActionDeadlineDraftFromIso,
 } from "@/components/requests/next-action-deadline-fields";
-import { RequestAssigneeFormFields } from "@/components/requests/request-assignees-field";
 import { deleteTask } from "@/lib/actions/delete-task";
-import { listAssigneeOptionsForCreate } from "@/lib/actions/list-assignee-options-for-create";
 import { updateTask } from "@/lib/actions/update-task";
 import { updateTaskAssignment } from "@/lib/actions/update-task-assignment";
 import { fromDateAndTimeInputs } from "@/lib/date";
@@ -18,7 +18,17 @@ import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 import type { Task } from "@/types/task";
-import type { AssigneeOption } from "@/types/profile";
+
+function parseAssigneeIds(fd: FormData): string[] {
+  return [
+    ...new Set(
+      fd
+        .getAll("assignedUserIds")
+        .map((value) => String(value).trim())
+        .filter(Boolean),
+    ),
+  ];
+}
 
 export function TaskEditForm({
   task,
@@ -35,37 +45,14 @@ export function TaskEditForm({
   const idPrefix = useId();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [assigneeOptions, setAssigneeOptions] = useState<AssigneeOption[]>([]);
-  const [assigneeLoading, setAssigneeLoading] = useState(false);
-  const [assigneeLoadError, setAssigneeLoadError] = useState<string | null>(null);
-  const [assignedUserIds, setAssignedUserIds] = useState(() =>
-    taskAssignedUserIds(task),
-  );
+  const [assigneeTeamId, setAssigneeTeamId] = useState(task.teamId);
   const initialDue = nextActionDeadlineDraftFromIso(task.dueAt);
   const [dueDate, setDueDate] = useState(initialDue.date);
   const [dueTime, setDueTime] = useState(initialDue.time);
 
   const canAssign = me ? canAssignRequests(me.role) : false;
-
-  useEffect(() => {
-    if (!canAssign) return;
-    let cancelled = false;
-    setAssigneeLoading(true);
-    setAssigneeLoadError(null);
-    listAssigneeOptionsForCreate(task.teamId).then((result) => {
-      if (cancelled) return;
-      if (!result.ok) {
-        setAssigneeOptions([]);
-        setAssigneeLoadError(result.message);
-      } else {
-        setAssigneeOptions(result.options);
-      }
-      setAssigneeLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [canAssign, task.teamId]);
+  const assigneeTeamIdForSelect =
+    me?.role === "admin" ? assigneeTeamId : task.teamId;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -90,6 +77,7 @@ export function TaskEditForm({
       };
 
       if (canAssign) {
+        const assignedUserIds = parseAssigneeIds(fd);
         const assignResult = await updateTaskAssignment(task.id, assignedUserIds);
         if (!assignResult.ok) {
           setError(assignResult.message);
@@ -150,17 +138,21 @@ export function TaskEditForm({
         onTimeChange={setDueTime}
       />
 
-      {canAssign ? (
-        <div>
-          <p className={uiFormLabel}>Assegnatari</p>
-          <RequestAssigneeFormFields
+      {canAssign && assigneeTeamIdForSelect ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AdminCreateTeamSelect
             idPrefix={idPrefix}
-            options={assigneeOptions}
-            selectedIds={assignedUserIds}
             disabled={pending}
-            loading={assigneeLoading}
-            loadError={assigneeLoadError}
-            onChange={setAssignedUserIds}
+            inputClass={cn(uiControl, "py-2.5 text-[15px]")}
+            teamId={assigneeTeamId}
+            onTeamChange={setAssigneeTeamId}
+          />
+          <CreateRequestAssigneeSelect
+            key={`${task.id}-${assigneeTeamIdForSelect}`}
+            teamId={assigneeTeamIdForSelect}
+            idPrefix={idPrefix}
+            disabled={pending}
+            initialSelectedIds={taskAssignedUserIds(task)}
           />
         </div>
       ) : null}

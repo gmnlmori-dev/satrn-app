@@ -56,14 +56,6 @@ export function NewTaskForm({
         />
       </div>
 
-      <AdminCreateTeamSelect
-        idPrefix={idPrefix}
-        disabled={pending}
-        inputClass={cn(uiControl, "py-2.5 text-[15px]")}
-        teamId={createTeamId}
-        onTeamChange={setCreateTeamId}
-      />
-
       <NextActionDeadlineFields
         idPrefix={idPrefix}
         disabled={pending}
@@ -72,11 +64,20 @@ export function NewTaskForm({
       />
 
       {assigneeTeamId ? (
-        <CreateRequestAssigneeSelect
-          teamId={assigneeTeamId}
-          idPrefix={idPrefix}
-          disabled={pending}
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AdminCreateTeamSelect
+            idPrefix={idPrefix}
+            disabled={pending}
+            inputClass={cn(uiControl, "py-2.5 text-[15px]")}
+            teamId={createTeamId}
+            onTeamChange={setCreateTeamId}
+          />
+          <CreateRequestAssigneeSelect
+            teamId={assigneeTeamId}
+            idPrefix={idPrefix}
+            disabled={pending}
+          />
+        </div>
       ) : null}
 
       {error ? (

@@ -21,18 +21,25 @@ export function CreateRequestAssigneeSelect({
   teamId,
   idPrefix,
   disabled,
+  initialSelectedIds,
 }: {
   teamId: string;
   idPrefix: string;
   disabled?: boolean;
   inputClass?: string;
+  /** Pre-selezione (es. modifica task/richiesta). */
+  initialSelectedIds?: string[];
 }) {
   const me = useOptionalCurrentProfile();
   const [options, setOptions] = useState<AssigneeOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [assignedUserIds, setAssignedUserIds] = useState<string[]>(() =>
-    me?.userId ? [me.userId] : [],
+    initialSelectedIds && initialSelectedIds.length > 0
+      ? initialSelectedIds
+      : me?.userId
+        ? [me.userId]
+        : [],
   );
 
   const canAssign = me ? canAssignRequests(me.role) : false;
