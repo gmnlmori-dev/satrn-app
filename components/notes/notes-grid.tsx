@@ -5,6 +5,7 @@ import { NoteCard } from "@/components/notes/note-card";
 import { cn } from "@/lib/cn";
 import { uiControl, uiTransition } from "@/lib/ui-classes";
 import { canEditTeamNote } from "@/lib/team-note-access";
+import type { NoteSharingTeamOption } from "@/lib/actions/list-note-sharing-teams";
 import type { TeamNote } from "@/types/note";
 import type { AssigneeOption } from "@/types/profile";
 
@@ -13,6 +14,7 @@ type NotesGridProps = {
   currentUserId: string;
   teamId?: string;
   sharingOptions: AssigneeOption[];
+  teamSharingOptions?: NoteSharingTeamOption[];
   draftOpen?: boolean;
   composerTriggerOpen?: boolean;
   onOpenComposer?: () => void;
@@ -107,6 +109,7 @@ export function NotesGrid({
   currentUserId,
   teamId,
   sharingOptions,
+  teamSharingOptions = [],
   draftOpen = false,
   composerTriggerOpen = false,
   onOpenComposer,
@@ -315,6 +318,7 @@ export function NotesGrid({
           note={note}
           currentUserId={currentUserId}
           sharingOptions={sharingOptions}
+          teamSharingOptions={teamSharingOptions}
           onUpdated={onNoteUpdated}
           onArchived={onNoteArchived}
           onDeleted={onNoteDeleted}
@@ -344,6 +348,7 @@ export function NotesGrid({
                   currentUserId={currentUserId}
                   teamId={teamId}
                   sharingOptions={sharingOptions}
+                  teamSharingOptions={teamSharingOptions}
                   autoFocus
                   onDraftCreated={onDraftCreated}
                   onUpdated={onNoteUpdated}

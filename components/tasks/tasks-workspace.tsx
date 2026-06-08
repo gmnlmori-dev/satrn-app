@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useOpenCreateTask } from "@/components/app/create-task-context";
+import { TaskEditSlideOver } from "@/components/tasks/task-edit-slide-over";
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { TasksToolbar } from "@/components/tasks/tasks-toolbar";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
@@ -35,6 +36,7 @@ export function TasksWorkspace({
 }: Props) {
   const openNewTask = useOpenCreateTask();
   const [tasks, setTasks] = useState(initialTasks);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const defaultScope = resolveDefaultAssignScope(preferences, currentUserRole);
   const [toolbar, setToolbar] = useState(() =>
     defaultTaskToolbarFilters(defaultScope === "mine" ? "mine" : "all"),
@@ -94,8 +96,25 @@ export function TasksWorkspace({
           ) : null}
         </AppEmptyState>
       ) : (
-        <TasksTable tasks={filtered} onTasksChange={setTasks} />
+        <TasksTable
+          tasks={filtered}
+          onTasksChange={setTasks}
+          onEditTask={setEditingTask}
+        />
       )}
+
+      <TaskEditSlideOver
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onUpdated={(updated) => {
+          setTasks((prev) =>
+            prev.map((t) => (t.id === updated.id ? updated : t)),
+          );
+        }}
+        onDeleted={(taskId) => {
+          setTasks((prev) => prev.filter((t) => t.id !== taskId));
+        }}
+      />
     </div>
   );
 }

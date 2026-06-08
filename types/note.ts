@@ -21,6 +21,7 @@ export interface TeamNote {
   color: NoteColor | null;
   sortOrder: number;
   sharedUserIds: string[];
+  sharedTeamIds: string[];
   createdAt: string;
   updatedAt: string;
 }

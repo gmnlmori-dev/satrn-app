@@ -68,6 +68,38 @@ export async function getActiveAssigneeOptions(
   }));
 }
 
+/** Utenti attivi di tutti i team (solo admin in UI/actions). */
+export async function getActiveAssigneeOptionsAllTeams(): Promise<AssigneeOption[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_id, full_name, email, team:teams(name)")
+    .eq("is_active", true)
+    .order("full_name", { ascending: true });
+
+  assertNoError("getActiveAssigneeOptionsAllTeams", error);
+
+  return (
+    (data ?? []) as {
+      user_id: string;
+      full_name: string | null;
+      email: string | null;
+      team: { name: string } | { name: string }[] | null;
+    }[]
+  ).map((r) => {
+    const name =
+      (r.full_name ?? "").trim() ||
+      (r.email ?? "").trim() ||
+      r.user_id.slice(0, 8);
+    const teamRaw = r.team;
+    const teamName = Array.isArray(teamRaw)
+      ? teamRaw[0]?.name
+      : teamRaw?.name;
+    const label = teamName ? `${name} · ${teamName}` : name;
+    return { userId: r.user_id, label };
+  });
+}
+
 /** Elenco totale utenti/profilo per pagina admin. */
 export async function getProfilesForAdminList(): Promise<ProfileSummary[]> {
   const supabase = await createSupabaseServerClient();

@@ -22,7 +22,9 @@ export async function createTeamNote(
   const body = String(fd.get("body") ?? "").trim();
   const visibility = parseVisibility(String(fd.get("visibility") ?? "private"));
   const sharedRaw = String(fd.get("sharedUserIds") ?? "[]");
+  const sharedTeamsRaw = String(fd.get("sharedTeamIds") ?? "[]");
   let sharedUserIds: string[] = [];
+  let sharedTeamIds: string[] = [];
   try {
     const parsed = JSON.parse(sharedRaw) as unknown;
     if (Array.isArray(parsed)) {
@@ -31,21 +33,52 @@ export async function createTeamNote(
   } catch {
     sharedUserIds = [];
   }
+  try {
+    const parsed = JSON.parse(sharedTeamsRaw) as unknown;
+    if (Array.isArray(parsed)) {
+      sharedTeamIds = parsed.filter((id): id is string => typeof id === "string");
+    }
+  } catch {
+    sharedTeamIds = [];
+  }
 
   if (!body && !titleRaw) {
     return { ok: false, message: "Scrivi qualcosa nella nota." };
   }
 
-  if (visibility === "shared" && sharedUserIds.length === 0) {
-    return {
-      ok: false,
-      message: "Seleziona almeno un utente per la condivisione.",
-    };
-  }
-
   const me = await getCurrentProfileSummary();
   if (!me?.userId || !me.isActive || !me.teamId) {
     return { ok: false, message: "Sessione non valida." };
+  }
+
+  const uniqueShared = [
+    ...new Set(sharedUserIds.filter((id) => id && id !== me.userId)),
+  ];
+  const uniqueTeams = [...new Set(sharedTeamIds.filter(Boolean))];
+
+  if (
+    visibility === "shared" &&
+    uniqueShared.length === 0 &&
+    uniqueTeams.length === 0
+  ) {
+    return {
+      ok: false,
+      message: "Seleziona almeno un utente o un team per la condivisione.",
+    };
+  }
+
+  if (uniqueTeams.length > 0 && me.role !== "admin") {
+    return {
+      ok: false,
+      message: "Solo gli admin possono condividere con altri team.",
+    };
+  }
+
+  if (uniqueTeams.includes(me.teamId)) {
+    return {
+      ok: false,
+      message: "Usa la visibilità Team per il team proprietario della nota.",
+    };
   }
 
   const title = titleFromBody(body, titleRaw);
@@ -91,22 +124,31 @@ export async function createTeamNote(
     };
   }
 
-  if (visibility === "shared" && sharedUserIds.length > 0) {
-    const uniqueShared = [
-      ...new Set(sharedUserIds.filter((user_id) => user_id !== me.userId)),
-    ];
-    if (uniqueShared.length > 0) {
-      const { error: sharedError } = await supabase
-        .from("team_note_shared_users")
-        .insert(
-          uniqueShared.map((user_id) => ({
-            note_id: id,
-            user_id,
-          })),
-        );
-      if (sharedError) {
-        return { ok: false, message: sharedError.message };
-      }
+  if (visibility === "shared" && uniqueShared.length > 0) {
+    const { error: sharedError } = await supabase
+      .from("team_note_shared_users")
+      .insert(
+        uniqueShared.map((user_id) => ({
+          note_id: id,
+          user_id,
+        })),
+      );
+    if (sharedError) {
+      return { ok: false, message: sharedError.message };
+    }
+  }
+
+  if (visibility === "shared" && uniqueTeams.length > 0) {
+    const { error: teamsError } = await supabase
+      .from("team_note_shared_teams")
+      .insert(
+        uniqueTeams.map((team_id) => ({
+          note_id: id,
+          team_id,
+        })),
+      );
+    if (teamsError) {
+      return { ok: false, message: teamsError.message };
     }
   }
 

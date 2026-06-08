@@ -25,6 +25,7 @@ export function filterNotesByTab(
   notes: TeamNote[],
   tab: NotesTabFilter,
   userId: string,
+  userTeamId = "",
 ): TeamNote[] {
   switch (tab) {
     case "archived":
@@ -39,7 +40,8 @@ export function filterNotesByTab(
           !n.isArchived &&
           n.visibility === "shared" &&
           n.createdByUserId !== userId &&
-          n.sharedUserIds.includes(userId),
+          (n.sharedUserIds.includes(userId) ||
+            (userTeamId !== "" && n.sharedTeamIds.includes(userTeamId))),
       );
     case "team":
       return notes.filter(

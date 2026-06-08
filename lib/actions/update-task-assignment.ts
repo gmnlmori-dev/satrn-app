@@ -1,5 +1,6 @@
 "use server";
 
+import { validateAssigneeProfiles } from "@/lib/assignee-validation";
 import { canAssignRequests } from "@/lib/permissions";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -71,6 +72,7 @@ async function loadAssigneeProfiles(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userIds: string[],
   taskTeamId: string,
+  actorRole: "admin" | "manager" | "operator",
 ): Promise<
   | { ok: true; profiles: Map<string, AssigneeProfile> }
   | { ok: false; message: string }
@@ -98,17 +100,8 @@ async function loadAssigneeProfiles(
     return { ok: false, message: "Uno o più destinatari non sono validi." };
   }
 
-  for (const row of rows) {
-    if (!row.is_active) {
-      return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
-    }
-    if (row.team_id !== taskTeamId) {
-      return {
-        ok: false,
-        message: "Uno o più utenti non appartengono al team della task.",
-      };
-    }
-  }
+  const check = validateAssigneeProfiles(rows, userIds, taskTeamId, actorRole);
+  if (!check.ok) return check;
 
   const profiles = new Map<string, AssigneeProfile>();
   for (const row of rows) {
@@ -191,6 +184,7 @@ export async function updateTaskAssignment(
     supabase,
     normNext,
     taskTeamId,
+    me.role,
   );
   if (!profilesResult.ok) return profilesResult;
 

@@ -3,6 +3,7 @@
 import { canAssignRequests } from "@/lib/permissions";
 import {
   getActiveAssigneeOptions,
+  getActiveAssigneeOptionsAllTeams,
   getCurrentProfileSummary,
 } from "@/lib/supabase/profile-queries";
 import type { AssigneeOption } from "@/types/profile";
@@ -23,13 +24,14 @@ export async function listAssigneeOptionsForCreate(
     return { ok: true, options: [] };
   }
 
-  const resolvedTeamId =
-    me.role === "admin" ? teamId.trim() || me.teamId : me.teamId;
+  if (me.role === "admin") {
+    const options = await getActiveAssigneeOptionsAllTeams();
+    return { ok: true, options };
+  }
+
+  const resolvedTeamId = me.teamId;
   if (!resolvedTeamId) {
     return { ok: false, message: "Team non valido." };
-  }
-  if (me.role !== "admin" && resolvedTeamId !== me.teamId) {
-    return { ok: false, message: "Team non consentito." };
   }
 
   const options = await getActiveAssigneeOptions(resolvedTeamId);

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { formatAssigneeList } from "@/lib/request-assignees";
+import { validateAssigneeProfiles } from "@/lib/assignee-validation";
 import { canAssignRequests } from "@/lib/permissions";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
@@ -76,6 +77,7 @@ async function loadAssigneeProfiles(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userIds: string[],
   requestTeamId: string,
+  actorRole: "admin" | "manager" | "operator",
 ): Promise<
   | { ok: true; profiles: Map<string, { full_name: string | null; email: string | null }> }
   | { ok: false; message: string }
@@ -103,17 +105,8 @@ async function loadAssigneeProfiles(
     return { ok: false, message: "Uno o più destinatari non sono validi." };
   }
 
-  for (const row of rows) {
-    if (!row.is_active) {
-      return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
-    }
-    if (row.team_id !== requestTeamId) {
-      return {
-        ok: false,
-        message: "Uno o più utenti non appartengono al team della richiesta.",
-      };
-    }
-  }
+  const check = validateAssigneeProfiles(rows, userIds, requestTeamId, actorRole);
+  if (!check.ok) return check;
 
   const profiles = new Map<
     string,
@@ -201,6 +194,7 @@ export async function updateRequestAssignment(
     supabase,
     normNext,
     requestTeamId,
+    me.role,
   );
   if (!profilesResult.ok) return profilesResult;
 
@@ -208,6 +202,7 @@ export async function updateRequestAssignment(
     supabase,
     beforeIds,
     requestTeamId,
+    me.role,
   );
   if (!beforeProfilesResult.ok) return beforeProfilesResult;
 

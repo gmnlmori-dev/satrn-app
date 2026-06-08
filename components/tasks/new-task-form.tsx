@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, useTransition } from "react";
+import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
@@ -20,6 +21,9 @@ export function NewTaskForm({
   const idPrefix = useId();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [createTeamId, setCreateTeamId] = useState(me?.teamId ?? "");
+  const assigneeTeamId =
+    me?.role === "admin" ? createTeamId : (me?.teamId ?? "");
 
   return (
     <form
@@ -52,6 +56,14 @@ export function NewTaskForm({
         />
       </div>
 
+      <AdminCreateTeamSelect
+        idPrefix={idPrefix}
+        disabled={pending}
+        inputClass={cn(uiControl, "py-2.5 text-[15px]")}
+        teamId={createTeamId}
+        onTeamChange={setCreateTeamId}
+      />
+
       <NextActionDeadlineFields
         idPrefix={idPrefix}
         disabled={pending}
@@ -59,9 +71,9 @@ export function NewTaskForm({
         hideHint
       />
 
-      {me?.teamId ? (
+      {assigneeTeamId ? (
         <CreateRequestAssigneeSelect
-          teamId={me.teamId}
+          teamId={assigneeTeamId}
           idPrefix={idPrefix}
           disabled={pending}
         />

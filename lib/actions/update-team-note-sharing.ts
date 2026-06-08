@@ -19,6 +19,7 @@ export async function updateTeamNoteSharing(
   noteId: string,
   visibility: NoteVisibility,
   sharedUserIds: string[],
+  sharedTeamIds: string[] = [],
 ): Promise<UpdateTeamNoteSharingResult> {
   const me = await getCurrentProfileSummary();
   if (!me?.userId || !me.isActive) {
@@ -41,15 +42,63 @@ export async function updateTeamNoteSharing(
   const uniqueShared = [
     ...new Set(sharedUserIds.filter((id) => id && id !== me.userId)),
   ];
+  const uniqueTeams = [...new Set(sharedTeamIds.filter(Boolean))];
 
-  if (parsed === "shared" && uniqueShared.length === 0) {
+  if (parsed === "shared" && uniqueShared.length === 0 && uniqueTeams.length === 0) {
     return {
       ok: false,
-      message: "Seleziona almeno un utente per la condivisione.",
+      message: "Seleziona almeno un utente o un team per la condivisione.",
     };
   }
 
   const supabase = await createSupabaseServerClient();
+
+  if (uniqueShared.length > 0) {
+    const { data: profiles, error: profileErr } = await supabase
+      .from("profiles")
+      .select("user_id, team_id, is_active")
+      .in("user_id", uniqueShared);
+
+    if (profileErr) return { ok: false, message: profileErr.message };
+
+    const rows = (profiles ?? []) as {
+      user_id: string;
+      team_id: string;
+      is_active: boolean;
+    }[];
+
+    if (rows.length !== uniqueShared.length) {
+      return { ok: false, message: "Uno o più utenti condivisi non sono validi." };
+    }
+
+    for (const row of rows) {
+      if (!row.is_active) {
+        return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
+      }
+      if (me.role !== "admin" && row.team_id !== note.teamId) {
+        return {
+          ok: false,
+          message: "Puoi condividere solo con utenti del tuo team.",
+        };
+      }
+    }
+  }
+
+  if (uniqueTeams.length > 0) {
+    if (me.role !== "admin") {
+      return {
+        ok: false,
+        message: "Solo gli admin possono condividere con altri team.",
+      };
+    }
+    if (uniqueTeams.includes(note.teamId)) {
+      return {
+        ok: false,
+        message: "Usa la visibilità Team per il team proprietario della nota.",
+      };
+    }
+  }
+
   const { error: updateError } = await supabase
     .from("team_notes")
     .update({ visibility: parsed })
@@ -59,17 +108,26 @@ export async function updateTeamNoteSharing(
     return { ok: false, message: updateError.message };
   }
 
-  const { error: deleteError } = await supabase
+  const { error: deleteUsersError } = await supabase
     .from("team_note_shared_users")
     .delete()
     .eq("note_id", noteId);
 
-  if (deleteError) {
-    return { ok: false, message: deleteError.message };
+  if (deleteUsersError) {
+    return { ok: false, message: deleteUsersError.message };
+  }
+
+  const { error: deleteTeamsError } = await supabase
+    .from("team_note_shared_teams")
+    .delete()
+    .eq("note_id", noteId);
+
+  if (deleteTeamsError) {
+    return { ok: false, message: deleteTeamsError.message };
   }
 
   if (parsed === "shared" && uniqueShared.length > 0) {
-    const { error: insertError } = await supabase
+    const { error: insertUsersError } = await supabase
       .from("team_note_shared_users")
       .insert(
         uniqueShared.map((user_id) => ({
@@ -78,8 +136,23 @@ export async function updateTeamNoteSharing(
         })),
       );
 
-    if (insertError) {
-      return { ok: false, message: insertError.message };
+    if (insertUsersError) {
+      return { ok: false, message: insertUsersError.message };
+    }
+  }
+
+  if (parsed === "shared" && uniqueTeams.length > 0) {
+    const { error: insertTeamsError } = await supabase
+      .from("team_note_shared_teams")
+      .insert(
+        uniqueTeams.map((team_id) => ({
+          note_id: noteId,
+          team_id,
+        })),
+      );
+
+    if (insertTeamsError) {
+      return { ok: false, message: insertTeamsError.message };
     }
   }
 

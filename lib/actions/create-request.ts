@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { formatAssigneeList } from "@/lib/request-assignees";
+import { validateAssigneeProfiles } from "@/lib/assignee-validation";
 import { canAssignRequests } from "@/lib/permissions";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
@@ -124,17 +125,13 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
     };
   }
 
-  for (const profile of profiles) {
-    if (!profile.is_active) {
-      return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
-    }
-    if (profile.team_id !== team_id) {
-      return {
-        ok: false,
-        message: "Uno o più utenti non appartengono al team della richiesta.",
-      };
-    }
-  }
+  const assigneeCheck = validateAssigneeProfiles(
+    profiles,
+    assigneeUserIds,
+    team_id,
+    me.role,
+  );
+  if (!assigneeCheck.ok) return assigneeCheck;
 
   const assigned_user_id = assigneeUserIds[0] ?? null;
   const assigned_at = assigned_user_id ? last_interaction_at : null;

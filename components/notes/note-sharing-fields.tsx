@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { noteVisibilityLabel } from "@/lib/team-note-access";
 import { uiControl } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
+import type { NoteSharingTeamOption } from "@/lib/actions/list-note-sharing-teams";
 import type { NoteVisibility } from "@/types/note";
 import type { AssigneeOption } from "@/types/profile";
 
@@ -17,16 +18,19 @@ const VISIBILITY_OPTIONS: {
   {
     value: "shared",
     label: "Condivisa",
-    hint: "Visibile agli utenti selezionati (sola lettura per loro).",
+    hint: "Visibile agli utenti o ai team selezionati (sola lettura per loro).",
   },
 ];
 
 type NoteSharingFieldsProps = {
   visibility: NoteVisibility;
   sharedUserIds: string[];
+  sharedTeamIds?: string[];
   sharingOptions: AssigneeOption[];
+  teamSharingOptions?: NoteSharingTeamOption[];
   onVisibilityChange: (visibility: NoteVisibility) => void;
   onToggleSharedUser: (userId: string) => void;
+  onToggleSharedTeam?: (teamId: string) => void;
   disabled?: boolean;
   compact?: boolean;
   idPrefix?: string;
@@ -36,9 +40,12 @@ type NoteSharingFieldsProps = {
 export function NoteSharingFields({
   visibility,
   sharedUserIds,
+  sharedTeamIds = [],
   sharingOptions,
+  teamSharingOptions = [],
   onVisibilityChange,
   onToggleSharedUser,
+  onToggleSharedTeam,
   disabled = false,
   compact = false,
   idPrefix = "note-sharing",
@@ -105,7 +112,7 @@ export function NoteSharingFields({
           <p className={uiFormLabel}>Utenti con accesso</p>
           {sharingOptions.length === 0 ? (
             <p className="mt-1 text-xs text-fg-tertiary">
-              Nessun altro utente attivo nel team.
+              Nessun altro utente disponibile.
             </p>
           ) : (
             <ul className="mt-1.5 max-h-40 space-y-0.5 overflow-y-auto rounded-lg border border-line-default bg-canvas/50 p-1">
@@ -132,6 +139,35 @@ export function NoteSharingFields({
               })}
             </ul>
           )}
+        </div>
+      ) : null}
+
+      {visibility === "shared" && teamSharingOptions.length > 0 ? (
+        <div>
+          <p className={uiFormLabel}>Team con accesso</p>
+          <ul className="mt-1.5 max-h-40 space-y-0.5 overflow-y-auto rounded-lg border border-line-default bg-canvas/50 p-1">
+            {teamSharingOptions.map((team) => {
+              const checked = sharedTeamIds.includes(team.id);
+              return (
+                <li key={team.id}>
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5",
+                      checked ? "bg-accent/10" : "hover:bg-elevated",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => onToggleSharedTeam?.(team.id)}
+                      disabled={disabled}
+                    />
+                    <span className="text-sm text-fg-secondary">{team.name}</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
 

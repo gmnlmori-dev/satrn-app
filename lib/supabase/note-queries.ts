@@ -16,6 +16,9 @@ export const TEAM_NOTE_SELECT = `
   ),
   team_note_shared_users (
     user_id
+  ),
+  team_note_shared_teams (
+    team_id
   )
 `;
 

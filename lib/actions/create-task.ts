@@ -1,5 +1,6 @@
 "use server";
 
+import { validateAssigneeProfiles } from "@/lib/assignee-validation";
 import { canAssignRequests } from "@/lib/permissions";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -62,17 +63,19 @@ export async function createTask(fd: FormData): Promise<CreateTaskResult> {
     return { ok: false, message: "Uno o più destinatari non sono validi." };
   }
 
-  for (const profile of profiles) {
-    if (!profile.is_active) {
-      return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
-    }
-    if (profile.team_id !== team_id) {
-      return {
-        ok: false,
-        message: "Uno o più utenti non appartengono al team della task.",
-      };
-    }
-  }
+  const assigneeCheck = validateAssigneeProfiles(
+    profiles.map((p) => ({
+      user_id: p.user_id,
+      full_name: null,
+      email: null,
+      is_active: p.is_active,
+      team_id: p.team_id,
+    })),
+    assigneeUserIds,
+    team_id,
+    me.role,
+  );
+  if (!assigneeCheck.ok) return assigneeCheck;
 
   const { data: taskRow, error: insertErr } = await supabase
     .from("tasks")

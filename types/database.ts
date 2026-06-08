@@ -149,6 +149,11 @@ export type TeamNoteSharedUserRow = {
   user_id: string;
 };
 
+export type TeamNoteSharedTeamRow = {
+  note_id: string;
+  team_id: string;
+};
+
 export type TeamNoteRowWithRelations = TeamNoteRow & {
   creator?: {
     user_id: string;
@@ -156,6 +161,7 @@ export type TeamNoteRowWithRelations = TeamNoteRow & {
     email: string;
   } | null;
   team_note_shared_users?: { user_id: string }[];
+  team_note_shared_teams?: { team_id: string }[];
 };
 
 export type AppAnnouncementAudience = "all" | "team" | "user";

@@ -148,6 +148,7 @@ export function teamNoteRowToNote(row: TeamNoteRowWithRelations): TeamNote {
     color: parseNoteColor(row.color),
     sortOrder: row.sort_order ?? 0,
     sharedUserIds: (row.team_note_shared_users ?? []).map((s) => s.user_id),
+    sharedTeamIds: (row.team_note_shared_teams ?? []).map((s) => s.team_id),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

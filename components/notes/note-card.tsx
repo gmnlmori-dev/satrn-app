@@ -20,6 +20,7 @@ import {
   uiControl,
   uiFocusRingInset,
 } from "@/lib/ui-classes";
+import type { NoteSharingTeamOption } from "@/lib/actions/list-note-sharing-teams";
 import type { TeamNote, NoteColor, NoteVisibility } from "@/types/note";
 import type { AssigneeOption } from "@/types/profile";
 
@@ -111,6 +112,7 @@ type NoteCardProps = {
   teamId?: string;
   draft?: boolean;
   sharingOptions?: AssigneeOption[];
+  teamSharingOptions?: NoteSharingTeamOption[];
   autoFocus?: boolean;
   onDraftCreated?: (note: TeamNote) => void;
   onUpdated?: (note: TeamNote) => void;
@@ -178,6 +180,7 @@ export function NoteCard({
   teamId = "",
   draft = false,
   sharingOptions = [],
+  teamSharingOptions = [],
   autoFocus = false,
   onDraftCreated,
   onUpdated,
@@ -196,6 +199,9 @@ export function NoteCard({
   );
   const [sharedUserIds, setSharedUserIds] = useState<string[]>(
     note?.sharedUserIds ?? [],
+  );
+  const [sharedTeamIds, setSharedTeamIds] = useState<string[]>(
+    note?.sharedTeamIds ?? [],
   );
   const [actionPending, setActionPending] = useState(false);
   const [pinPending, setPinPending] = useState(false);
@@ -216,6 +222,7 @@ export function NoteCard({
     initialBody: (note ?? localNote)?.body ?? "",
     visibility,
     sharedUserIds,
+    sharedTeamIds,
     color: localNote?.color ?? draftColor,
     enabled: editable && expanded,
     onCreated: (id, payload) => {
@@ -232,6 +239,7 @@ export function NoteCard({
         color: payload.color,
         sortOrder: 0,
         sharedUserIds: payload.sharedUserIds,
+        sharedTeamIds: payload.sharedTeamIds,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -248,6 +256,7 @@ export function NoteCard({
       setLocalNote(note);
       setVisibility(note.visibility);
       setSharedUserIds(note.sharedUserIds);
+      setSharedTeamIds(note.sharedTeamIds);
     }
   }, [note]);
 
@@ -387,7 +396,11 @@ export function NoteCard({
   }
 
   const persistSharing = useCallback(
-    async (nextVisibility: NoteVisibility, nextShared: string[]) => {
+    async (
+      nextVisibility: NoteVisibility,
+      nextShared: string[],
+      nextTeams: string[],
+    ) => {
       if (!localNote) return;
       setActionPending(true);
       try {
@@ -395,12 +408,14 @@ export function NoteCard({
           localNote.id,
           nextVisibility,
           nextShared,
+          nextTeams,
         );
         if (result.ok) {
           const updated = {
             ...localNote,
             visibility: nextVisibility,
             sharedUserIds: nextShared,
+            sharedTeamIds: nextTeams,
           };
           setLocalNote(updated);
           onUpdated?.(updated);
@@ -415,11 +430,17 @@ export function NoteCard({
   async function handleVisibilityChange(next: NoteVisibility) {
     setVisibility(next);
     const nextShared = next === "shared" ? sharedUserIds : [];
+    const nextTeams = next === "shared" ? sharedTeamIds : [];
     if (next !== "shared") {
       setSharedUserIds([]);
+      setSharedTeamIds([]);
     }
     if (localNote?.id) {
-      await persistSharing(next, next !== "shared" ? [] : nextShared);
+      await persistSharing(
+        next,
+        next !== "shared" ? [] : nextShared,
+        next !== "shared" ? [] : nextTeams,
+      );
     }
   }
 
@@ -429,7 +450,19 @@ export function NoteCard({
         ? prev.filter((id) => id !== userId)
         : [...prev, userId];
       if (localNote?.id && visibility === "shared") {
-        void persistSharing("shared", next);
+        void persistSharing("shared", next, sharedTeamIds);
+      }
+      return next;
+    });
+  }
+
+  function toggleSharedTeam(teamId: string) {
+    setSharedTeamIds((prev) => {
+      const next = prev.includes(teamId)
+        ? prev.filter((id) => id !== teamId)
+        : [...prev, teamId];
+      if (localNote?.id && visibility === "shared") {
+        void persistSharing("shared", sharedUserIds, next);
       }
       return next;
     });
@@ -889,9 +922,12 @@ export function NoteCard({
                       compact
                       visibility={visibility}
                       sharedUserIds={sharedUserIds}
+                      sharedTeamIds={sharedTeamIds}
                       sharingOptions={sharingOptions}
+                      teamSharingOptions={teamSharingOptions}
                       onVisibilityChange={(v) => void handleVisibilityChange(v)}
                       onToggleSharedUser={toggleSharedUser}
+                      onToggleSharedTeam={toggleSharedTeam}
                       disabled={actionPending}
                     />
                   </div>

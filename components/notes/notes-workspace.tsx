@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOpenCreateNote } from "@/components/app/create-note-context";
 import { listNoteSharingOptions } from "@/lib/actions/list-note-sharing-options";
+import {
+  listNoteSharingTeams,
+  type NoteSharingTeamOption,
+} from "@/lib/actions/list-note-sharing-teams";
 import { reorderTeamNotes } from "@/lib/actions/reorder-team-notes";
 import { NotesGrid } from "@/components/notes/notes-grid";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
@@ -38,6 +42,9 @@ export function NotesWorkspace({
   const [composerOpen, setComposerOpen] = useState(false);
   const [composingNoteId, setComposingNoteId] = useState<string | null>(null);
   const [sharingOptions, setSharingOptions] = useState<AssigneeOption[]>([]);
+  const [teamSharingOptions, setTeamSharingOptions] = useState<
+    NoteSharingTeamOption[]
+  >([]);
 
   useEffect(() => {
     if (composerOpen) return;
@@ -49,16 +56,19 @@ export function NotesWorkspace({
     listNoteSharingOptions().then((result) => {
       if (!cancelled && result.ok) setSharingOptions(result.options);
     });
+    listNoteSharingTeams(teamId).then((result) => {
+      if (!cancelled && result.ok) setTeamSharingOptions(result.teams);
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [teamId]);
 
   const filtered = useMemo(() => {
-    const byTab = filterNotesByTab(notes, tab, currentUserId);
+    const byTab = filterNotesByTab(notes, tab, currentUserId, teamId);
     const bySearch = filterNotesBySearch(byTab, search);
     return sortNotesForGrid(bySearch);
-  }, [notes, tab, currentUserId, search]);
+  }, [notes, tab, currentUserId, teamId, search]);
 
   const gridNotes = useMemo(() => {
     if (!composerOpen || !composingNoteId) return filtered;
@@ -212,6 +222,7 @@ export function NotesWorkspace({
           currentUserId={currentUserId}
           teamId={teamId}
           sharingOptions={sharingOptions}
+          teamSharingOptions={teamSharingOptions}
           draftOpen={composerOpen && tab === "mine"}
           composerTriggerOpen={!composerOpen && tab === "mine"}
           onOpenComposer={handleOpenComposer}

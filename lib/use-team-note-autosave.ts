@@ -17,6 +17,7 @@ export function useTeamNoteAutosave({
   initialBody = "",
   visibility = "private",
   sharedUserIds = [],
+  sharedTeamIds = [],
   color = null,
   enabled = true,
   onCreated,
@@ -26,6 +27,7 @@ export function useTeamNoteAutosave({
   initialBody?: string;
   visibility?: NoteVisibility;
   sharedUserIds?: string[];
+  sharedTeamIds?: string[];
   color?: NoteColor | null;
   enabled?: boolean;
   onCreated?: (
@@ -35,6 +37,7 @@ export function useTeamNoteAutosave({
       body: string;
       visibility: NoteVisibility;
       sharedUserIds: string[];
+      sharedTeamIds: string[];
       color: NoteColor | null;
     },
   ) => void;
@@ -51,6 +54,7 @@ export function useTeamNoteAutosave({
   const pendingSaveRef = useRef(false);
   const visibilityRef = useRef(visibility);
   const sharedUserIdsRef = useRef(sharedUserIds);
+  const sharedTeamIdsRef = useRef(sharedTeamIds);
   const colorRef = useRef(color);
 
   useEffect(() => {
@@ -60,6 +64,10 @@ export function useTeamNoteAutosave({
   useEffect(() => {
     sharedUserIdsRef.current = sharedUserIds;
   }, [sharedUserIds]);
+
+  useEffect(() => {
+    sharedTeamIdsRef.current = sharedTeamIds;
+  }, [sharedTeamIds]);
 
   useEffect(() => {
     colorRef.current = color;
@@ -127,8 +135,13 @@ export function useTeamNoteAutosave({
       if (!noteIdRef.current) {
         const currentVisibility = visibilityRef.current;
         const currentShared = sharedUserIdsRef.current;
+        const currentTeams = sharedTeamIdsRef.current;
         const currentColor = colorRef.current;
-        if (currentVisibility === "shared" && currentShared.length === 0) {
+        if (
+          currentVisibility === "shared" &&
+          currentShared.length === 0 &&
+          currentTeams.length === 0
+        ) {
           setStatus("idle");
           return;
         }
@@ -137,6 +150,7 @@ export function useTeamNoteAutosave({
         fd.set("body", body);
         fd.set("visibility", currentVisibility);
         fd.set("sharedUserIds", JSON.stringify(currentShared));
+        fd.set("sharedTeamIds", JSON.stringify(currentTeams));
         if (currentColor && currentColor !== "default") {
           fd.set("color", currentColor);
         }
@@ -153,6 +167,7 @@ export function useTeamNoteAutosave({
           body,
           visibility: currentVisibility,
           sharedUserIds: currentShared,
+          sharedTeamIds: currentTeams,
           color:
             currentColor && currentColor !== "default" ? currentColor : null,
         });

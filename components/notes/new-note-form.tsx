@@ -3,6 +3,11 @@
 import { useEffect, useId, useState } from "react";
 import { createTeamNote } from "@/lib/actions/create-team-note";
 import { listNoteSharingOptions } from "@/lib/actions/list-note-sharing-options";
+import {
+  listNoteSharingTeams,
+  type NoteSharingTeamOption,
+} from "@/lib/actions/list-note-sharing-teams";
+import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
 import { NoteSharingFields } from "@/components/notes/note-sharing-fields";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { cn } from "@/lib/cn";
@@ -29,7 +34,12 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
   const [body, setBody] = useState("");
   const [visibility, setVisibility] = useState<NoteVisibility>("private");
   const [sharedUserIds, setSharedUserIds] = useState<string[]>([]);
+  const [sharedTeamIds, setSharedTeamIds] = useState<string[]>([]);
   const [sharingOptions, setSharingOptions] = useState<AssigneeOption[]>([]);
+  const [teamSharingOptions, setTeamSharingOptions] = useState<
+    NoteSharingTeamOption[]
+  >([]);
+  const me = useOptionalCurrentProfile();
   const { pulseTopBar } = useDetailSaveFeedback();
 
   useEffect(() => {
@@ -37,10 +47,13 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
     listNoteSharingOptions().then((result) => {
       if (!cancelled && result.ok) setSharingOptions(result.options);
     });
+    listNoteSharingTeams(me?.teamId).then((result) => {
+      if (!cancelled && result.ok) setTeamSharingOptions(result.teams);
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [me?.teamId]);
 
   function toggleSharedUser(userId: string) {
     setSharedUserIds((prev) =>
@@ -50,9 +63,20 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
     );
   }
 
+  function toggleSharedTeam(teamId: string) {
+    setSharedTeamIds((prev) =>
+      prev.includes(teamId)
+        ? prev.filter((id) => id !== teamId)
+        : [...prev, teamId],
+    );
+  }
+
   function handleVisibilityChange(next: NoteVisibility) {
     setVisibility(next);
-    if (next !== "shared") setSharedUserIds([]);
+    if (next !== "shared") {
+      setSharedUserIds([]);
+      setSharedTeamIds([]);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -66,8 +90,12 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
       setError("Scrivi un titolo o il testo della nota.");
       return;
     }
-    if (visibility === "shared" && sharedUserIds.length === 0) {
-      setError("Seleziona almeno un utente per la condivisione.");
+    if (
+      visibility === "shared" &&
+      sharedUserIds.length === 0 &&
+      sharedTeamIds.length === 0
+    ) {
+      setError("Seleziona almeno un utente o un team per la condivisione.");
       return;
     }
 
@@ -76,6 +104,7 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
     fd.set("body", trimmedBody);
     fd.set("visibility", visibility);
     fd.set("sharedUserIds", JSON.stringify(sharedUserIds));
+    fd.set("sharedTeamIds", JSON.stringify(sharedTeamIds));
 
     setPending(true);
     try {
@@ -89,6 +118,7 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
       setBody("");
       setVisibility("private");
       setSharedUserIds([]);
+      setSharedTeamIds([]);
       onSuccess(result.id);
     } finally {
       setPending(false);
@@ -137,9 +167,12 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
             idPrefix={p("sharing")}
             visibility={visibility}
             sharedUserIds={sharedUserIds}
+            sharedTeamIds={sharedTeamIds}
             sharingOptions={sharingOptions}
+            teamSharingOptions={teamSharingOptions}
             onVisibilityChange={handleVisibilityChange}
             onToggleSharedUser={toggleSharedUser}
+            onToggleSharedTeam={toggleSharedTeam}
             disabled={pending}
           />
         </div>
