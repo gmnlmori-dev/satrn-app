@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useState } from "react";
 import { createTeamNote } from "@/lib/actions/create-team-note";
-import { listNoteSharingOptions } from "@/lib/actions/list-note-sharing-options";
 import {
   listNoteSharingTeams,
   type NoteSharingTeamOption,
@@ -15,8 +14,6 @@ import { titleFromBody } from "@/lib/team-note-access";
 import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 import type { NoteVisibility } from "@/types/note";
-import type { AssigneeOption } from "@/types/profile";
-
 const inputClass = cn(uiControl, "py-2.5 text-[15px]");
 
 export type NewNoteFormProps = {
@@ -35,7 +32,6 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
   const [visibility, setVisibility] = useState<NoteVisibility>("private");
   const [sharedUserIds, setSharedUserIds] = useState<string[]>([]);
   const [sharedTeamIds, setSharedTeamIds] = useState<string[]>([]);
-  const [sharingOptions, setSharingOptions] = useState<AssigneeOption[]>([]);
   const [teamSharingOptions, setTeamSharingOptions] = useState<
     NoteSharingTeamOption[]
   >([]);
@@ -50,17 +46,6 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
   }, [me?.teamId]);
 
   useEffect(() => {
-    if (!resolvedUserFilterTeamId) return;
-    let cancelled = false;
-    listNoteSharingOptions(resolvedUserFilterTeamId).then((result) => {
-      if (!cancelled && result.ok) setSharingOptions(result.options);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [resolvedUserFilterTeamId]);
-
-  useEffect(() => {
     let cancelled = false;
     listNoteSharingTeams(me?.teamId).then((result) => {
       if (!cancelled && result.ok) setTeamSharingOptions(result.teams);
@@ -69,14 +54,6 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
       cancelled = true;
     };
   }, [me?.teamId]);
-
-  function toggleSharedUser(userId: string) {
-    setSharedUserIds((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId],
-    );
-  }
 
   function toggleSharedTeam(teamId: string) {
     setSharedTeamIds((prev) =>
@@ -183,12 +160,11 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
             visibility={visibility}
             sharedUserIds={sharedUserIds}
             sharedTeamIds={sharedTeamIds}
-            sharingOptions={sharingOptions}
             teamSharingOptions={teamSharingOptions}
             userFilterTeamId={resolvedUserFilterTeamId}
             onUserFilterTeamChange={setUserFilterTeamId}
             onVisibilityChange={handleVisibilityChange}
-            onToggleSharedUser={toggleSharedUser}
+            onSharedUserIdsChange={setSharedUserIds}
             onToggleSharedTeam={toggleSharedTeam}
             disabled={pending}
           />

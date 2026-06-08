@@ -2,13 +2,13 @@
 
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import { NoteSharingUserSelect } from "@/components/notes/note-sharing-user-select";
 import { cn } from "@/lib/cn";
 import { noteVisibilityLabel } from "@/lib/team-note-access";
 import { uiControl } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 import type { NoteSharingTeamOption } from "@/lib/actions/list-note-sharing-teams";
 import type { NoteVisibility } from "@/types/note";
-import type { AssigneeOption } from "@/types/profile";
 
 const VISIBILITY_OPTIONS: {
   value: NoteVisibility;
@@ -28,12 +28,11 @@ type NoteSharingFieldsProps = {
   visibility: NoteVisibility;
   sharedUserIds: string[];
   sharedTeamIds?: string[];
-  sharingOptions: AssigneeOption[];
   teamSharingOptions?: NoteSharingTeamOption[];
   userFilterTeamId?: string;
   onUserFilterTeamChange?: (teamId: string) => void;
   onVisibilityChange: (visibility: NoteVisibility) => void;
-  onToggleSharedUser: (userId: string) => void;
+  onSharedUserIdsChange: (userIds: string[]) => void;
   onToggleSharedTeam?: (teamId: string) => void;
   disabled?: boolean;
   compact?: boolean;
@@ -45,12 +44,11 @@ export function NoteSharingFields({
   visibility,
   sharedUserIds,
   sharedTeamIds = [],
-  sharingOptions,
   teamSharingOptions = [],
   userFilterTeamId,
   onUserFilterTeamChange,
   onVisibilityChange,
-  onToggleSharedUser,
+  onSharedUserIdsChange,
   onToggleSharedTeam,
   disabled = false,
   compact = false,
@@ -61,6 +59,8 @@ export function NoteSharingFields({
   const isAdmin = me?.role === "admin";
   const showUserTeamFilter =
     isAdmin && onUserFilterTeamChange !== undefined && visibility === "shared";
+  const resolvedUserTeamId =
+    userFilterTeamId ?? me?.teamId ?? "";
   const activeHint =
     VISIBILITY_OPTIONS.find((opt) => opt.value === visibility)?.hint ?? "";
 
@@ -129,42 +129,18 @@ export function NoteSharingFields({
               idPrefix={`${idPrefix}-user-team`}
               disabled={disabled}
               inputClass={cn(uiControl, compact ? "py-2 text-sm" : "py-2.5 text-[15px]")}
-              teamId={userFilterTeamId ?? me?.teamId ?? ""}
+              teamId={resolvedUserTeamId}
               onTeamChange={onUserFilterTeamChange}
             />
           ) : null}
-          <div className={cn(showUserTeamFilter && !compact && "min-w-0")}>
-            <p className={uiFormLabel}>Utenti con accesso</p>
-            {sharingOptions.length === 0 ? (
-              <p className="mt-1 text-xs text-fg-tertiary">
-                Nessun altro utente disponibile.
-              </p>
-            ) : (
-              <ul className="mt-1.5 max-h-40 space-y-0.5 overflow-y-auto rounded-lg border border-line-default bg-canvas/50 p-1">
-                {sharingOptions.map((opt) => {
-                  const checked = sharedUserIds.includes(opt.userId);
-                  return (
-                    <li key={opt.userId}>
-                      <label
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5",
-                          checked ? "bg-accent/10" : "hover:bg-elevated",
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => onToggleSharedUser(opt.userId)}
-                          disabled={disabled}
-                        />
-                        <span className="text-sm text-fg-secondary">{opt.label}</span>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+          <NoteSharingUserSelect
+            key={resolvedUserTeamId}
+            teamId={resolvedUserTeamId}
+            idPrefix={`${idPrefix}-users`}
+            disabled={disabled}
+            selectedIds={sharedUserIds}
+            onChange={onSharedUserIdsChange}
+          />
         </div>
       ) : null}
 

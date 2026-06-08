@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOpenCreateNote } from "@/components/app/create-note-context";
-import { listNoteSharingOptions } from "@/lib/actions/list-note-sharing-options";
 import {
   listNoteSharingTeams,
   type NoteSharingTeamOption,
@@ -22,7 +21,6 @@ import {
 import { uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 import type { NotesTabFilter, TeamNote } from "@/types/note";
-import type { AssigneeOption } from "@/types/profile";
 
 type NotesWorkspaceProps = {
   notes: TeamNote[];
@@ -41,7 +39,6 @@ export function NotesWorkspace({
   const [search, setSearch] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
   const [composingNoteId, setComposingNoteId] = useState<string | null>(null);
-  const [sharingOptions, setSharingOptions] = useState<AssigneeOption[]>([]);
   const [teamSharingOptions, setTeamSharingOptions] = useState<
     NoteSharingTeamOption[]
   >([]);
@@ -56,17 +53,6 @@ export function NotesWorkspace({
   useEffect(() => {
     setUserFilterTeamId((prev) => prev || teamId);
   }, [teamId]);
-
-  useEffect(() => {
-    if (!resolvedUserFilterTeamId) return;
-    let cancelled = false;
-    listNoteSharingOptions(resolvedUserFilterTeamId).then((result) => {
-      if (!cancelled && result.ok) setSharingOptions(result.options);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [resolvedUserFilterTeamId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -235,7 +221,6 @@ export function NotesWorkspace({
           notes={gridNotes}
           currentUserId={currentUserId}
           teamId={teamId}
-          sharingOptions={sharingOptions}
           teamSharingOptions={teamSharingOptions}
           userFilterTeamId={resolvedUserFilterTeamId}
           onUserFilterTeamChange={setUserFilterTeamId}

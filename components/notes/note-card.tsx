@@ -22,7 +22,6 @@ import {
 } from "@/lib/ui-classes";
 import type { NoteSharingTeamOption } from "@/lib/actions/list-note-sharing-teams";
 import type { TeamNote, NoteColor, NoteVisibility } from "@/types/note";
-import type { AssigneeOption } from "@/types/profile";
 
 function AutosaveIndicator({
   status,
@@ -111,7 +110,6 @@ type NoteCardProps = {
   currentUserId: string;
   teamId?: string;
   draft?: boolean;
-  sharingOptions?: AssigneeOption[];
   teamSharingOptions?: NoteSharingTeamOption[];
   userFilterTeamId?: string;
   onUserFilterTeamChange?: (teamId: string) => void;
@@ -181,7 +179,6 @@ export function NoteCard({
   currentUserId,
   teamId = "",
   draft = false,
-  sharingOptions = [],
   teamSharingOptions = [],
   userFilterTeamId,
   onUserFilterTeamChange,
@@ -448,16 +445,11 @@ export function NoteCard({
     }
   }
 
-  function toggleSharedUser(userId: string) {
-    setSharedUserIds((prev) => {
-      const next = prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId];
-      if (localNote?.id && visibility === "shared") {
-        void persistSharing("shared", next, sharedTeamIds);
-      }
-      return next;
-    });
+  function handleSharedUserIdsChange(next: string[]) {
+    setSharedUserIds(next);
+    if (localNote?.id && visibility === "shared") {
+      void persistSharing("shared", next, sharedTeamIds);
+    }
   }
 
   function toggleSharedTeam(teamId: string) {
@@ -927,12 +919,11 @@ export function NoteCard({
                       visibility={visibility}
                       sharedUserIds={sharedUserIds}
                       sharedTeamIds={sharedTeamIds}
-                      sharingOptions={sharingOptions}
                       teamSharingOptions={teamSharingOptions}
                       userFilterTeamId={userFilterTeamId}
                       onUserFilterTeamChange={onUserFilterTeamChange}
                       onVisibilityChange={(v) => void handleVisibilityChange(v)}
-                      onToggleSharedUser={toggleSharedUser}
+                      onSharedUserIdsChange={handleSharedUserIdsChange}
                       onToggleSharedTeam={toggleSharedTeam}
                       disabled={actionPending}
                     />
