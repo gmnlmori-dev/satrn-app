@@ -39,14 +39,29 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
   const [teamSharingOptions, setTeamSharingOptions] = useState<
     NoteSharingTeamOption[]
   >([]);
+  const [userFilterTeamId, setUserFilterTeamId] = useState("");
   const me = useOptionalCurrentProfile();
   const { pulseTopBar } = useDetailSaveFeedback();
+  const resolvedUserFilterTeamId = userFilterTeamId || me?.teamId || "";
+
+  useEffect(() => {
+    if (!me?.teamId) return;
+    setUserFilterTeamId((prev) => prev || me.teamId);
+  }, [me?.teamId]);
+
+  useEffect(() => {
+    if (!resolvedUserFilterTeamId) return;
+    let cancelled = false;
+    listNoteSharingOptions(resolvedUserFilterTeamId).then((result) => {
+      if (!cancelled && result.ok) setSharingOptions(result.options);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedUserFilterTeamId]);
 
   useEffect(() => {
     let cancelled = false;
-    listNoteSharingOptions().then((result) => {
-      if (!cancelled && result.ok) setSharingOptions(result.options);
-    });
     listNoteSharingTeams(me?.teamId).then((result) => {
       if (!cancelled && result.ok) setTeamSharingOptions(result.teams);
     });
@@ -170,6 +185,8 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
             sharedTeamIds={sharedTeamIds}
             sharingOptions={sharingOptions}
             teamSharingOptions={teamSharingOptions}
+            userFilterTeamId={resolvedUserFilterTeamId}
+            onUserFilterTeamChange={setUserFilterTeamId}
             onVisibilityChange={handleVisibilityChange}
             onToggleSharedUser={toggleSharedUser}
             onToggleSharedTeam={toggleSharedTeam}

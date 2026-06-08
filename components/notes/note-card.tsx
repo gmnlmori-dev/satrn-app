@@ -113,6 +113,8 @@ type NoteCardProps = {
   draft?: boolean;
   sharingOptions?: AssigneeOption[];
   teamSharingOptions?: NoteSharingTeamOption[];
+  userFilterTeamId?: string;
+  onUserFilterTeamChange?: (teamId: string) => void;
   autoFocus?: boolean;
   onDraftCreated?: (note: TeamNote) => void;
   onUpdated?: (note: TeamNote) => void;
@@ -181,6 +183,8 @@ export function NoteCard({
   draft = false,
   sharingOptions = [],
   teamSharingOptions = [],
+  userFilterTeamId,
+  onUserFilterTeamChange,
   autoFocus = false,
   onDraftCreated,
   onUpdated,
@@ -925,6 +929,8 @@ export function NoteCard({
                       sharedTeamIds={sharedTeamIds}
                       sharingOptions={sharingOptions}
                       teamSharingOptions={teamSharingOptions}
+                      userFilterTeamId={userFilterTeamId}
+                      onUserFilterTeamChange={onUserFilterTeamChange}
                       onVisibilityChange={(v) => void handleVisibilityChange(v)}
                       onToggleSharedUser={toggleSharedUser}
                       onToggleSharedTeam={toggleSharedTeam}

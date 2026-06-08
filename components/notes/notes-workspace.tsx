@@ -45,6 +45,8 @@ export function NotesWorkspace({
   const [teamSharingOptions, setTeamSharingOptions] = useState<
     NoteSharingTeamOption[]
   >([]);
+  const [userFilterTeamId, setUserFilterTeamId] = useState(teamId);
+  const resolvedUserFilterTeamId = userFilterTeamId || teamId;
 
   useEffect(() => {
     if (composerOpen) return;
@@ -52,10 +54,22 @@ export function NotesWorkspace({
   }, [initialNotes, composerOpen]);
 
   useEffect(() => {
+    setUserFilterTeamId((prev) => prev || teamId);
+  }, [teamId]);
+
+  useEffect(() => {
+    if (!resolvedUserFilterTeamId) return;
     let cancelled = false;
-    listNoteSharingOptions().then((result) => {
+    listNoteSharingOptions(resolvedUserFilterTeamId).then((result) => {
       if (!cancelled && result.ok) setSharingOptions(result.options);
     });
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedUserFilterTeamId]);
+
+  useEffect(() => {
+    let cancelled = false;
     listNoteSharingTeams(teamId).then((result) => {
       if (!cancelled && result.ok) setTeamSharingOptions(result.teams);
     });
@@ -223,6 +237,8 @@ export function NotesWorkspace({
           teamId={teamId}
           sharingOptions={sharingOptions}
           teamSharingOptions={teamSharingOptions}
+          userFilterTeamId={resolvedUserFilterTeamId}
+          onUserFilterTeamChange={setUserFilterTeamId}
           draftOpen={composerOpen && tab === "mine"}
           composerTriggerOpen={!composerOpen && tab === "mine"}
           onOpenComposer={handleOpenComposer}

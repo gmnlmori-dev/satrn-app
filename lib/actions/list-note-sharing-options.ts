@@ -2,7 +2,6 @@
 
 import {
   getActiveAssigneeOptions,
-  getActiveAssigneeOptionsAllTeams,
   getCurrentProfileSummary,
 } from "@/lib/supabase/profile-queries";
 import type { AssigneeOption } from "@/types/profile";
@@ -11,17 +10,21 @@ export type ListNoteSharingOptionsResult =
   | { ok: true; options: AssigneeOption[] }
   | { ok: false; message: string };
 
-/** Utenti per condivisione note (admin: tutti i team). */
-export async function listNoteSharingOptions(): Promise<ListNoteSharingOptionsResult> {
+/** Utenti per condivisione nota nel team indicato (admin: team scelto in UI). */
+export async function listNoteSharingOptions(
+  teamId: string,
+): Promise<ListNoteSharingOptionsResult> {
   const me = await getCurrentProfileSummary();
   if (!me?.userId || !me.isActive || !me.teamId) {
     return { ok: false, message: "Sessione non valida." };
   }
 
-  const options =
-    me.role === "admin"
-      ? await getActiveAssigneeOptionsAllTeams()
-      : await getActiveAssigneeOptions(me.teamId);
+  const resolvedTeamId = teamId.trim() || me.teamId;
+  if (!resolvedTeamId) {
+    return { ok: false, message: "Seleziona un team." };
+  }
+
+  const options = await getActiveAssigneeOptions(resolvedTeamId);
 
   return {
     ok: true,

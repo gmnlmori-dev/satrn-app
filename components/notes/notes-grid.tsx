@@ -15,6 +15,8 @@ type NotesGridProps = {
   teamId?: string;
   sharingOptions: AssigneeOption[];
   teamSharingOptions?: NoteSharingTeamOption[];
+  userFilterTeamId?: string;
+  onUserFilterTeamChange?: (teamId: string) => void;
   draftOpen?: boolean;
   composerTriggerOpen?: boolean;
   onOpenComposer?: () => void;
@@ -110,6 +112,8 @@ export function NotesGrid({
   teamId,
   sharingOptions,
   teamSharingOptions = [],
+  userFilterTeamId,
+  onUserFilterTeamChange,
   draftOpen = false,
   composerTriggerOpen = false,
   onOpenComposer,
@@ -319,6 +323,8 @@ export function NotesGrid({
           currentUserId={currentUserId}
           sharingOptions={sharingOptions}
           teamSharingOptions={teamSharingOptions}
+          userFilterTeamId={userFilterTeamId}
+          onUserFilterTeamChange={onUserFilterTeamChange}
           onUpdated={onNoteUpdated}
           onArchived={onNoteArchived}
           onDeleted={onNoteDeleted}
@@ -349,6 +355,8 @@ export function NotesGrid({
                   teamId={teamId}
                   sharingOptions={sharingOptions}
                   teamSharingOptions={teamSharingOptions}
+                  userFilterTeamId={userFilterTeamId}
+                  onUserFilterTeamChange={onUserFilterTeamChange}
                   autoFocus
                   onDraftCreated={onDraftCreated}
                   onUpdated={onNoteUpdated}
