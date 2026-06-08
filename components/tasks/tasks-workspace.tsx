@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useOpenCreateTask } from "@/components/app/create-task-context";
 import { TaskEditSlideOver } from "@/components/tasks/task-edit-slide-over";
 import { TasksTable } from "@/components/tasks/tasks-table";
@@ -37,6 +37,10 @@ export function TasksWorkspace({
   const openNewTask = useOpenCreateTask();
   const [tasks, setTasks] = useState(initialTasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
   const defaultScope = resolveDefaultAssignScope(preferences, currentUserRole);
   const [toolbar, setToolbar] = useState(() =>
     defaultTaskToolbarFilters(defaultScope === "mine" ? "mine" : "all"),

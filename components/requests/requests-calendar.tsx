@@ -223,8 +223,8 @@ function MonthCell({
               : "text-fg-tertiary",
         )}
       >
-        <span>{cell.date.getDate()}</span>
         <div className="flex items-center gap-1">
+          <span>{cell.date.getDate()}</span>
           <CalendarCountBadge
             count={standaloneTasks.length}
             overdue={standaloneOverdue}
@@ -233,6 +233,8 @@ function MonthCell({
             variant="standalone"
             ariaLabel={`${standaloneTasks.length} task libere in scadenza`}
           />
+        </div>
+        <div className="flex items-center gap-1">
           <CalendarCountBadge
             count={checklistTasks.length}
             overdue={checklistOverdue}
@@ -317,7 +319,7 @@ function WeekColumn({
           cell.isToday ? "font-semibold text-accent" : "text-fg-secondary",
         )}
       >
-        <div className="absolute right-1 top-1 flex flex-col gap-0.5">
+        <div className="absolute left-1 top-1">
           <CalendarCountBadge
             count={standaloneTasks.length}
             overdue={standaloneOverdue}
@@ -326,6 +328,8 @@ function WeekColumn({
             variant="standalone"
             ariaLabel={`${standaloneTasks.length} task libere in scadenza`}
           />
+        </div>
+        <div className="absolute right-1 top-1">
           <CalendarCountBadge
             count={checklistTasks.length}
             overdue={checklistOverdue}
