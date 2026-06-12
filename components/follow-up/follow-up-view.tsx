@@ -271,9 +271,11 @@ function StatusMenuFloating({
 function RequestBlock({
   requests,
   accent,
+  sectioned = false,
 }: {
   requests: Request[];
   accent: "danger" | "default";
+  sectioned?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -393,12 +395,12 @@ function RequestBlock({
           </colgroup>
           <thead>
             <tr>
-              <th className={cn(tableHeadCell, "rounded-tl-2xl")}>Richiesta</th>
+              <th className={cn(tableHeadCell, !sectioned && "rounded-tl-2xl")}>Richiesta</th>
               <th className={tableHeadCell}>Azienda</th>
               <th className={cn(tableHeadCell, "text-right")}>Scadenza</th>
               <th className={tableHeadCell}>Priorità</th>
               <th className={tableHeadCell}>Stato</th>
-              <th className={cn(tableHeadCell, "rounded-tr-2xl text-right")}>
+              <th className={cn(tableHeadCell, !sectioned && "rounded-tr-2xl", "text-right")}>
                 <span className="sr-only">Azioni</span>
               </th>
             </tr>
@@ -605,6 +607,52 @@ function countQueueItems(
   return requests.length + tasks.length + orphanChecklists.length;
 }
 
+function FollowUpQueueSection({
+  title,
+  count,
+  showHeader,
+  isFirst,
+  variant,
+  children,
+}: {
+  title: string;
+  count: number;
+  showHeader: boolean;
+  isFirst: boolean;
+  variant: "requests" | "checklist" | "tasks";
+  children: ReactNode;
+}) {
+  return (
+    <section className={cn(!isFirst && "border-t-2 border-line-default")}>
+      {showHeader ? (
+        <div
+          className={cn(
+            "flex items-center justify-between gap-3 border-b border-line-default px-4 py-3 sm:px-5",
+            variant === "requests" && "border-l-4 border-l-line-default bg-elevated/70",
+            variant === "checklist" && "border-l-4 border-l-accent/40 bg-accent-subtle/25",
+            variant === "tasks" && "border-l-4 border-l-fg-tertiary/25 bg-canvas/80",
+          )}
+        >
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-fg-secondary">
+            {title}
+          </h3>
+          <span className="shrink-0 rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-fg-tertiary ring-1 ring-inset ring-line-default">
+            {count}
+          </span>
+        </div>
+      ) : null}
+      <div
+        className={cn(
+          variant === "checklist" && "bg-canvas/40",
+          variant === "tasks" && "bg-canvas/30",
+        )}
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+
 function QueuePanel({
   requests,
   tasks,
@@ -629,35 +677,69 @@ function QueuePanel({
     return <EmptyRow title={emptyTitle} hint={emptyHint} />;
   }
 
+  const hasRequests = requests.length > 0;
+  const hasChecklists = orphanChecklists.length > 0;
+  const hasTasks = tasks.length > 0;
+  const sectionCount = [hasRequests, hasChecklists, hasTasks].filter(Boolean).length;
+  const showSectionHeader = (variant: "requests" | "checklist" | "tasks") =>
+    sectionCount > 1 || variant !== "requests";
+
+  const sections: {
+    key: string;
+    title: string;
+    count: number;
+    variant: "requests" | "checklist" | "tasks";
+    content: ReactNode;
+  }[] = [];
+
+  if (hasRequests) {
+    sections.push({
+      key: "requests",
+      title: "Richieste",
+      count: requests.length,
+      variant: "requests",
+      content: (
+        <RequestBlock
+          requests={requests}
+          accent={requestAccent}
+          sectioned={showSectionHeader("requests")}
+        />
+      ),
+    });
+  }
+  if (hasChecklists) {
+    sections.push({
+      key: "checklist",
+      title: "Checklist richieste",
+      count: orphanChecklists.length,
+      variant: "checklist",
+      content: <FollowUpChecklistBlock entries={orphanChecklists} />,
+    });
+  }
+  if (hasTasks) {
+    sections.push({
+      key: "tasks",
+      title: "Task libere",
+      count: tasks.length,
+      variant: "tasks",
+      content: <StandaloneTaskBlock tasks={tasks} compact />,
+    });
+  }
+
   return (
     <div>
-      {requests.length > 0 ? (
-        <RequestBlock requests={requests} accent={requestAccent} />
-      ) : null}
-      {orphanChecklists.length > 0 ? (
-        <div
-          className={
-            requests.length > 0 ? "border-t border-line-default" : undefined
-          }
+      {sections.map((section, index) => (
+        <FollowUpQueueSection
+          key={section.key}
+          title={section.title}
+          count={section.count}
+          showHeader={showSectionHeader(section.variant)}
+          isFirst={index === 0}
+          variant={section.variant}
         >
-          {requests.length > 0 || tasks.length > 0 ? (
-            <p className="border-b border-line-default bg-elevated/30 px-4 py-2 text-xs font-medium text-fg-tertiary sm:px-5">
-              Checklist richieste · {orphanChecklists.length}
-            </p>
-          ) : null}
-          <FollowUpChecklistBlock entries={orphanChecklists} />
-        </div>
-      ) : null}
-      {tasks.length > 0 ? (
-        <div className={requests.length > 0 || orphanChecklists.length > 0 ? "border-t border-line-default" : undefined}>
-          {requests.length > 0 || orphanChecklists.length > 0 ? (
-            <p className="border-b border-line-default bg-elevated/30 px-4 py-2 text-xs font-medium text-fg-tertiary sm:px-5">
-              Task libere · {tasks.length}
-            </p>
-          ) : null}
-          <StandaloneTaskBlock tasks={tasks} compact />
-        </div>
-      ) : null}
+          {section.content}
+        </FollowUpQueueSection>
+      ))}
     </div>
   );
 }
