@@ -32,3 +32,22 @@ export async function updateTask(
   revalidateTaskViews();
   return { ok: true };
 }
+
+export async function updateTaskDueAt(
+  taskId: string,
+  dueAt: string,
+): Promise<UpdateTaskResult> {
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ due_at: dueAt })
+    .eq("id", taskId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidateTaskViews();
+  return { ok: true };
+}
