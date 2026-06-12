@@ -29,7 +29,7 @@ import {
   NextActionDeadlineFields,
   nextActionDeadlineDraftFromIso,
 } from "@/components/requests/next-action-deadline-fields";
-import { inboxStatusLabel, statusLabel } from "@/lib/labels";
+import { inboxStatusLabel } from "@/lib/labels";
 import { summarizeNextActionTasks } from "@/lib/next-action-tasks";
 import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
 import type { Task } from "@/types/task";
@@ -41,6 +41,8 @@ import {
   uiBtnSecondary,
   uiControl,
   uiTransition,
+  slideOverDescription,
+  slideOverTitle,
 } from "@/lib/ui-classes";
 import {
   dataTableThClass,
@@ -48,7 +50,7 @@ import {
 } from "@/lib/table-ui";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { uiCard } from "@/lib/surfaces";
-import { uiFormLabel } from "@/lib/typography";
+import { uiFormLabel, uiSectionTitle } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestStatus } from "@/types/request";
 
@@ -89,8 +91,17 @@ function followUpOverlayBackdropClassName() {
   );
 }
 
-/** Freccia circolare (Heroicons arrow-path): riprogramma / sposta scadenza. */
-function IconArrowPath({ className }: { className?: string }) {
+const followUpPopoverPanel = cn(
+  uiTransition,
+  "overflow-hidden rounded-[12px] border border-line-default bg-surface shadow-[var(--shadow-surface)]",
+);
+
+const followUpActionBar = cn(
+  "inline-flex items-center gap-0.5 rounded-[10px] border border-line-default bg-canvas/60 p-0.5",
+);
+
+/** Calendario: sposta scadenza. */
+function IconCalendarDays({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -103,14 +114,14 @@ function IconArrowPath({ className }: { className?: string }) {
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+        d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
       />
     </svg>
   );
 }
 
-/** Menu stato: ellissi verticali. */
-function IconEllipsisVertical({ className }: { className?: string }) {
+/** Stato richiesta. */
+function IconAdjustmentsVertical({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -123,11 +134,96 @@ function IconEllipsisVertical({ className }: { className?: string }) {
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M12 6.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12 12.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12 18.75a.75.75 0 100-1.5.75.75 0 000 1.5z"
+        d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
       />
     </svg>
   );
 }
+
+function IconXMark({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+function IconCheck({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+    </svg>
+  );
+}
+
+function FollowUpActionButton({
+  active = false,
+  label,
+  disabled,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"button"> & {
+  active?: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      disabled={disabled}
+      className={cn(
+        uiTransition,
+        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] text-fg-secondary",
+        "hover:bg-surface hover:text-fg-primary",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40",
+        active && "bg-surface text-accent shadow-sm ring-1 ring-inset ring-accent/25",
+        disabled && "cursor-not-allowed opacity-40",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+const POSTPONE_SHORTCUTS: {
+  label: string;
+  apply: () => { date: string; time: string };
+}[] = [
+  {
+    label: "Oggi",
+    apply: () => ({ date: todayDateInputValue(), time: "" }),
+  },
+  {
+    label: "Domani 9:00",
+    apply: tomorrowAtNineInputs,
+  },
+  {
+    label: "Tra 3 gg",
+    apply: () => daysFromTodayAtNineInputs(3),
+  },
+  {
+    label: "Tra 7 gg",
+    apply: () => daysFromTodayAtNineInputs(7),
+  },
+];
 
 export type FollowUpTab = "overdue" | "today" | "upcoming" | "inbox";
 
@@ -344,120 +440,123 @@ function PostponeScadenzaPopover({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          uiTransition,
-          "fixed z-[59] max-h-[min(32rem,calc(100vh-4rem))] overflow-y-auto rounded-[12px] border border-line-strong bg-surface p-5 shadow-[var(--shadow-surface)]",
+          followUpPopoverPanel,
+          "fixed z-[59] max-h-[min(36rem,calc(100vh-4rem))] overflow-y-auto p-0",
         )}
       >
-        <div className="space-y-4">
-          <div>
-            <h3 id={titleId} className="text-base font-semibold text-fg-primary">
-              Sposta scadenza
-            </h3>
-            <p className="mt-1 text-sm leading-relaxed text-fg-secondary">
-              <span className="font-medium text-fg-primary">{request.title}</span>
-              <span className="text-fg-tertiary"> · {request.companyName}</span>
-            </p>
+        <div className="flex items-start justify-between gap-3 border-b border-line-default px-5 py-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-muted text-accent">
+              <IconCalendarDays className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <h3 id={titleId} className={slideOverTitle}>
+                Sposta scadenza
+              </h3>
+              <p className={cn(slideOverDescription, "mt-0.5 line-clamp-2")}>
+                {request.title}
+                <span className="text-fg-tertiary"> · {request.companyName}</span>
+              </p>
+            </div>
           </div>
+          <button
+            type="button"
+            aria-label="Chiudi"
+            disabled={saving}
+            className={uiBtnIcon}
+            onClick={onDismiss}
+          >
+            <IconXMark className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-5 px-5 py-4">
+          {request.nextActionAt ? (
+            <div className="rounded-[10px] border border-line-default bg-canvas/70 px-3 py-2.5 text-sm">
+              <span className="text-fg-tertiary">Scadenza attuale </span>
+              <span className="font-medium tabular-nums text-fg-primary">
+                {formatDateTime(request.nextActionAt)}
+              </span>
+            </div>
+          ) : null}
 
           <div>
-            <span className={uiFormLabel}>Scorciatoie</span>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={saving}
-                className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
-                onClick={() => {
-                  setDateDraft(todayDateInputValue());
-                  setTimeDraft("");
-                  setError(null);
-                }}
-              >
-                Oggi
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
-                onClick={() => {
-                  const next = tomorrowAtNineInputs();
-                  setDateDraft(next.date);
-                  setTimeDraft(next.time);
-                  setError(null);
-                }}
-              >
-                Domani 9:00
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
-                onClick={() => {
-                  const next = daysFromTodayAtNineInputs(3);
-                  setDateDraft(next.date);
-                  setTimeDraft(next.time);
-                  setError(null);
-                }}
-              >
-                Tra 3 giorni 9:00
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                className={cn(uiBtnSecondary, "px-3 py-2 text-xs")}
-                onClick={() => {
-                  const next = daysFromTodayAtNineInputs(7);
-                  setDateDraft(next.date);
-                  setTimeDraft(next.time);
-                  setError(null);
-                }}
-              >
-                Tra 7 giorni 9:00
-              </button>
+            <span className={uiSectionTitle}>Scorciatoie</span>
+            <div className="mt-2 grid grid-cols-2 gap-1.5 rounded-[10px] border border-line-default bg-canvas p-1 sm:grid-cols-4">
+              {POSTPONE_SHORTCUTS.map((shortcut) => (
+                <button
+                  key={shortcut.label}
+                  type="button"
+                  disabled={saving}
+                  className={cn(
+                    uiTransition,
+                    "rounded-[8px] px-2 py-2 text-center text-xs font-medium text-fg-secondary",
+                    "hover:bg-surface hover:text-fg-primary",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40",
+                    "disabled:cursor-not-allowed disabled:opacity-40",
+                  )}
+                  onClick={() => {
+                    const next = shortcut.apply();
+                    setDateDraft(next.date);
+                    setTimeDraft(next.time);
+                    setError(null);
+                  }}
+                >
+                  {shortcut.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <NextActionDeadlineFields
-            idPrefix={`postpone-${request.id}`}
-            hideHeading
-            hideHint
-            showToday={false}
-            disabled={saving}
-            inputClass={datetimeInputClass}
-            date={dateDraft}
-            time={timeDraft}
-            onDateChange={(value) => {
-              setDateDraft(value);
-              setError(null);
-            }}
-            onTimeChange={(value) => {
-              setTimeDraft(value);
-              setError(null);
-            }}
-          />
+          <div>
+            <span className={uiFormLabel}>Nuova scadenza</span>
+            <div className="mt-2">
+              <NextActionDeadlineFields
+                idPrefix={`postpone-${request.id}`}
+                hideHeading
+                hideHint
+                showToday={false}
+                disabled={saving}
+                inputClass={datetimeInputClass}
+                date={dateDraft}
+                time={timeDraft}
+                onDateChange={(value) => {
+                  setDateDraft(value);
+                  setError(null);
+                }}
+                onTimeChange={(value) => {
+                  setTimeDraft(value);
+                  setError(null);
+                }}
+              />
+            </div>
+          </div>
+
           {error ? (
             <p className="text-sm text-danger" role="alert">
               {error}
             </p>
           ) : null}
+        </div>
 
-          <div className="flex flex-wrap justify-end gap-2 border-t border-line-default pt-4">
-            <button
-              type="button"
-              disabled={saving}
-              className={cn(uiBtnSecondary, "px-4 py-2.5 text-sm")}
-              onClick={onDismiss}
-            >
-              Annulla
-            </button>
-            <button
-              type="button"
-              disabled={saving}
-              className={cn(uiBtnPrimary, "min-w-[7rem] px-4 py-2.5 text-sm")}
-              onClick={() => void apply()}
-            >
-              {saving ? "Salvataggio…" : "Applica"}
-            </button>
-          </div>
+        <div className="flex flex-wrap justify-end gap-2 border-t border-line-default px-5 py-4">
+          <button
+            type="button"
+            disabled={saving}
+            className={cn(uiBtnSecondary, "px-4 py-2.5 text-sm")}
+            onClick={onDismiss}
+          >
+            Annulla
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            aria-busy={saving}
+            className={cn(uiBtnPrimary, "min-w-[7rem] px-4 py-2.5 text-sm")}
+            onClick={() => void apply()}
+          >
+            {saving ? "Salvataggio…" : "Applica"}
+          </button>
         </div>
       </div>
     </>,
@@ -538,28 +637,38 @@ function StatusMenuFloating({
       data-status-menu-panel
       role="listbox"
       aria-label={`Stati per ${requestTitle}`}
-      className={cn(
-        uiTransition,
-        "overflow-hidden rounded-[10px] border border-line-default bg-surface py-1 shadow-[var(--shadow-surface)]",
-      )}
+      className={cn(followUpPopoverPanel, "min-w-[15rem] max-w-[18rem]")}
     >
-      {QUICK_STATUSES.map((s) => (
-        <button
-          key={s}
-          type="button"
-          role="option"
-          aria-selected={currentStatus === s}
-          disabled={pending}
-          className={cn(
-            "flex w-full items-center px-3 py-2 text-left text-sm text-fg-primary",
-            "hover:bg-elevated disabled:opacity-50",
-            currentStatus === s && "bg-accent-subtle font-semibold",
-          )}
-          onClick={() => onPick(s)}
-        >
-          {statusLabel[s]}
-        </button>
-      ))}
+      <div className="border-b border-line-default px-3.5 py-2.5">
+        <p className="text-[13px] font-semibold text-fg-primary">Cambia stato</p>
+        <p className="mt-0.5 truncate text-xs text-fg-tertiary">{requestTitle}</p>
+      </div>
+      <div className="p-1.5">
+        {QUICK_STATUSES.map((s) => {
+          const selected = currentStatus === s;
+          return (
+            <button
+              key={s}
+              type="button"
+              role="option"
+              aria-selected={selected}
+              disabled={pending}
+              className={cn(
+                uiTransition,
+                "flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left",
+                "hover:bg-elevated disabled:cursor-not-allowed disabled:opacity-50",
+                selected && "bg-accent-subtle/60 ring-1 ring-inset ring-accent/20",
+              )}
+              onClick={() => onPick(s)}
+            >
+              <StatusBadge status={s} />
+              {selected ? (
+                <IconCheck className="ml-auto h-4 w-4 shrink-0 text-accent" aria-hidden />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
     </div>,
     document.body,
   );
@@ -711,16 +820,14 @@ function RequestBlock({
                   <StatusBadge status={r.status} className="max-w-full truncate" />
                 </td>
                 <td className="px-4 py-3.5 align-middle" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-0.5">
-                    <button
+                  <div className={followUpActionBar}>
+                    <FollowUpActionButton
                       data-status-trigger={r.id}
-                      type="button"
+                      active={statusMenu?.id === r.id}
                       disabled={pending}
-                      title="Cambia stato"
-                      aria-label={`Cambia stato: ${r.title}`}
+                      label="Cambia stato"
                       aria-expanded={statusMenu?.id === r.id}
                       aria-haspopup="listbox"
-                      className={cn(uiBtnIcon, "h-9 w-9 shrink-0")}
                       onClick={(e) => {
                         e.stopPropagation();
                         setPostpone(null);
@@ -728,14 +835,12 @@ function RequestBlock({
                         setStatusMenu((m) => (m?.id === r.id ? null : { id: r.id, rect }));
                       }}
                     >
-                      <IconEllipsisVertical className="h-4 w-4 text-fg-secondary" />
-                    </button>
-                    <button
-                      type="button"
+                      <IconAdjustmentsVertical className="h-4 w-4" />
+                    </FollowUpActionButton>
+                    <FollowUpActionButton
+                      active={postpone?.request.id === r.id}
                       disabled={pending}
-                      title="Sposta scadenza"
-                      aria-label={`Sposta scadenza: ${r.title}`}
-                      className={cn(uiBtnIcon, "h-9 w-9 shrink-0")}
+                      label="Sposta scadenza"
                       onClick={(e) => {
                         e.stopPropagation();
                         setStatusMenu(null);
@@ -745,8 +850,8 @@ function RequestBlock({
                         });
                       }}
                     >
-                      <IconArrowPath className="h-4 w-4 text-fg-secondary" />
-                    </button>
+                      <IconCalendarDays className="h-4 w-4" />
+                    </FollowUpActionButton>
                   </div>
                 </td>
               </tr>
