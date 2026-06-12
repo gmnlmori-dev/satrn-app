@@ -88,7 +88,7 @@ export function FollowUpChecklistBlock({
                 href={`/app/requests/${requestId}`}
                 className={cn(
                   uiTransition,
-                  "block truncate text-sm font-medium text-accent underline-offset-2 hover:underline",
+                  "block truncate text-sm font-medium text-fg-primary underline-offset-2 hover:underline",
                 )}
               >
                 {group.requestTitle}

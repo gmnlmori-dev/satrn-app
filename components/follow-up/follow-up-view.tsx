@@ -612,27 +612,18 @@ function FollowUpQueueSection({
   count,
   showHeader,
   isFirst,
-  variant,
   children,
 }: {
   title: string;
   count: number;
   showHeader: boolean;
   isFirst: boolean;
-  variant: "requests" | "checklist" | "tasks";
   children: ReactNode;
 }) {
   return (
     <section className={cn(!isFirst && "border-t-2 border-line-default")}>
       {showHeader ? (
-        <div
-          className={cn(
-            "flex items-center justify-between gap-3 border-b border-line-default px-4 py-3 sm:px-5",
-            variant === "requests" && "border-l-4 border-l-line-default bg-elevated/70",
-            variant === "checklist" && "border-l-4 border-l-accent/40 bg-accent-subtle/25",
-            variant === "tasks" && "border-l-4 border-l-fg-tertiary/25 bg-canvas/80",
-          )}
-        >
+        <div className="flex items-center justify-between gap-3 border-b border-line-default bg-elevated/50 px-4 py-3 sm:px-5">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-fg-secondary">
             {title}
           </h3>
@@ -641,14 +632,7 @@ function FollowUpQueueSection({
           </span>
         </div>
       ) : null}
-      <div
-        className={cn(
-          variant === "checklist" && "bg-canvas/40",
-          variant === "tasks" && "bg-canvas/30",
-        )}
-      >
-        {children}
-      </div>
+      {children}
     </section>
   );
 }
@@ -735,7 +719,6 @@ function QueuePanel({
           count={section.count}
           showHeader={showSectionHeader(section.variant)}
           isFirst={index === 0}
-          variant={section.variant}
         >
           {section.content}
         </FollowUpQueueSection>
