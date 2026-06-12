@@ -23,6 +23,11 @@ import { formatDateTime } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
 import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
 import { RequestChecklistInline } from "@/components/follow-up/request-checklist-inline";
+import { FollowUpChecklistBlock } from "@/components/follow-up/follow-up-checklist-block";
+import {
+  orphanChecklistEntriesForRequests,
+  type CalendarTaskEntry,
+} from "@/lib/next-action-tasks";
 import {
   followUpPopoverPanel,
   IconCalendarDays,
@@ -588,20 +593,38 @@ function InboxBlock({ items }: { items: InboxItem[] }) {
   );
 }
 
+function countQueueItems(
+  requests: Request[],
+  tasks: Task[],
+  checklistEntries: CalendarTaskEntry[],
+) {
+  const orphanChecklists = orphanChecklistEntriesForRequests(
+    checklistEntries,
+    requests,
+  );
+  return requests.length + tasks.length + orphanChecklists.length;
+}
+
 function QueuePanel({
   requests,
   tasks,
+  checklistEntries = [],
   requestAccent,
   emptyTitle,
   emptyHint,
 }: {
   requests: Request[];
   tasks: Task[];
+  checklistEntries?: CalendarTaskEntry[];
   requestAccent: "danger" | "default";
   emptyTitle: string;
   emptyHint: string;
 }) {
-  const total = requests.length + tasks.length;
+  const orphanChecklists = orphanChecklistEntriesForRequests(
+    checklistEntries,
+    requests,
+  );
+  const total = countQueueItems(requests, tasks, checklistEntries);
   if (total === 0) {
     return <EmptyRow title={emptyTitle} hint={emptyHint} />;
   }
@@ -611,9 +634,23 @@ function QueuePanel({
       {requests.length > 0 ? (
         <RequestBlock requests={requests} accent={requestAccent} />
       ) : null}
+      {orphanChecklists.length > 0 ? (
+        <div
+          className={
+            requests.length > 0 ? "border-t border-line-default" : undefined
+          }
+        >
+          {requests.length > 0 || tasks.length > 0 ? (
+            <p className="border-b border-line-default bg-elevated/30 px-4 py-2 text-xs font-medium text-fg-tertiary sm:px-5">
+              Checklist richieste · {orphanChecklists.length}
+            </p>
+          ) : null}
+          <FollowUpChecklistBlock entries={orphanChecklists} />
+        </div>
+      ) : null}
       {tasks.length > 0 ? (
-        <div className={requests.length > 0 ? "border-t border-line-default" : undefined}>
-          {requests.length > 0 ? (
+        <div className={requests.length > 0 || orphanChecklists.length > 0 ? "border-t border-line-default" : undefined}>
+          {requests.length > 0 || orphanChecklists.length > 0 ? (
             <p className="border-b border-line-default bg-elevated/30 px-4 py-2 text-xs font-medium text-fg-tertiary sm:px-5">
               Task libere · {tasks.length}
             </p>
@@ -633,6 +670,9 @@ export function FollowUpView({
   overdueTasks = [],
   todayTasks = [],
   upcomingTasks = [],
+  overdueChecklists = [],
+  todayChecklists = [],
+  upcomingChecklists = [],
   scopeControl = null,
 }: {
   overdue: Request[];
@@ -642,15 +682,22 @@ export function FollowUpView({
   overdueTasks?: Task[];
   todayTasks?: Task[];
   upcomingTasks?: Task[];
+  overdueChecklists?: CalendarTaskEntry[];
+  todayChecklists?: CalendarTaskEntry[];
+  upcomingChecklists?: CalendarTaskEntry[];
   scopeControl?: ReactNode;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const search = searchParams.toString();
 
-  const overdueCount = overdue.length + overdueTasks.length;
-  const todayCount = today.length + todayTasks.length;
-  const upcomingCount = upcoming.length + upcomingTasks.length;
+  const overdueCount = countQueueItems(overdue, overdueTasks, overdueChecklists);
+  const todayCount = countQueueItems(today, todayTasks, todayChecklists);
+  const upcomingCount = countQueueItems(
+    upcoming,
+    upcomingTasks,
+    upcomingChecklists,
+  );
   const inboxCount = inbox.length;
 
   const [activeTab, setActiveTab] = useState<FollowUpTab>(() => {
@@ -722,9 +769,10 @@ export function FollowUpView({
           <QueuePanel
             requests={overdue}
             tasks={overdueTasks}
+            checklistEntries={overdueChecklists}
             requestAccent="danger"
             emptyTitle="Nessun ritardo"
-            emptyHint="Richieste e task con scadenza passata compariranno qui."
+            emptyHint="Richieste, checklist e task con scadenza passata compariranno qui."
           />
         ) : null}
 
@@ -732,9 +780,10 @@ export function FollowUpView({
           <QueuePanel
             requests={today}
             tasks={todayTasks}
+            checklistEntries={todayChecklists}
             requestAccent="default"
             emptyTitle="Niente in scadenza oggi"
-            emptyHint="Richieste e task con scadenza oggi compariranno qui."
+            emptyHint="Richieste, checklist e task con scadenza oggi compariranno qui."
           />
         ) : null}
 
@@ -742,9 +791,10 @@ export function FollowUpView({
           <QueuePanel
             requests={upcoming}
             tasks={upcomingTasks}
+            checklistEntries={upcomingChecklists}
             requestAccent="default"
             emptyTitle="Nessuna scadenza nei prossimi 7 giorni"
-            emptyHint="Richieste e task da domani al settimo giorno compariranno qui."
+            emptyHint="Richieste, checklist e task da domani al settimo giorno compariranno qui."
           />
         ) : null}
 

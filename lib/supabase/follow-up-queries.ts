@@ -1,4 +1,11 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
+import {
+  extractCalendarTasks,
+  filterCalendarTasksByWindow,
+  sortCalendarTaskEntries,
+  type CalendarTaskEntry,
+  type FollowUpChecklistWindow,
+} from "@/lib/next-action-tasks";
 import { inboxItemRowToInboxItem, requestRowToRequest } from "@/lib/supabase/mappers";
 import { INBOX_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/inbox-queries";
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
@@ -72,4 +79,24 @@ export async function getInboxTriageItems(): Promise<InboxItem[]> {
 
   assertNoError("getInboxTriageItems", error);
   return ((data ?? []) as InboxItemRowWithAssignee[]).map(inboxItemRowToInboxItem);
+}
+
+async function getOpenRequestsForChecklist(): Promise<Request[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("requests")
+    .select(REQUEST_SELECT_WITH_ASSIGNEE)
+    .neq("status", "closed");
+
+  assertNoError("getOpenRequestsForChecklist", error);
+  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
+}
+
+/** Checklist con scadenza nella finestra, anche se la richiesta non ha next_action_at. */
+export async function getFollowUpChecklistEntries(
+  window: FollowUpChecklistWindow,
+): Promise<CalendarTaskEntry[]> {
+  const requests = await getOpenRequestsForChecklist();
+  const entries = extractCalendarTasks(requests);
+  return sortCalendarTaskEntries(filterCalendarTasksByWindow(entries, window));
 }

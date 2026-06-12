@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { FollowUpAssigneeScope } from "@/components/follow-up/follow-up-assignee-scope";
 import { FollowUpHashScroll } from "@/components/follow-up/follow-up-hash-scroll";
 import {
+  getFollowUpChecklistEntries,
   getFollowUpTodayRequests,
   getInboxTriageItems,
   getOverdueRequests,
@@ -23,16 +24,29 @@ export const metadata = {
 
 export default async function FollowUpPage() {
   const profile = await getCurrentProfileSummary();
-  const [overdue, today, upcoming, inbox, overdueTasks, todayTasks, upcomingTasks] =
-    await Promise.all([
-      getOverdueRequests(),
-      getFollowUpTodayRequests(),
-      getUpcomingRequests(),
-      getInboxTriageItems(),
-      getOverdueStandaloneTasks(),
-      getStandaloneTasksToday(),
-      getUpcomingStandaloneTasks(),
-    ]);
+  const [
+    overdue,
+    today,
+    upcoming,
+    inbox,
+    overdueTasks,
+    todayTasks,
+    upcomingTasks,
+    overdueChecklists,
+    todayChecklists,
+    upcomingChecklists,
+  ] = await Promise.all([
+    getOverdueRequests(),
+    getFollowUpTodayRequests(),
+    getUpcomingRequests(),
+    getInboxTriageItems(),
+    getOverdueStandaloneTasks(),
+    getStandaloneTasksToday(),
+    getUpcomingStandaloneTasks(),
+    getFollowUpChecklistEntries("overdue"),
+    getFollowUpChecklistEntries("today"),
+    getFollowUpChecklistEntries("upcoming"),
+  ]);
 
   const defaultScope = profile
     ? resolveDefaultAssignScope(profile.preferences, profile.role)
@@ -57,6 +71,9 @@ export default async function FollowUpPage() {
           overdueTasks={overdueTasks}
           todayTasks={todayTasks}
           upcomingTasks={upcomingTasks}
+          overdueChecklists={overdueChecklists}
+          todayChecklists={todayChecklists}
+          upcomingChecklists={upcomingChecklists}
           currentUserId={profile?.userId ?? ""}
           defaultScope={defaultScope}
         />

@@ -1,5 +1,6 @@
 import type { InboxItem } from "@/types/inbox";
 import type { Request } from "@/types/request";
+import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import type { Task } from "@/types/task";
 import type { AppRole } from "@/types/profile";
 import {
@@ -26,6 +27,16 @@ export function filterInboxMine(items: InboxItem[], userId: string): InboxItem[]
 export function filterTasksMine(tasks: Task[], userId: string): Task[] {
   if (!userId) return [];
   return tasks.filter((t) => taskIsAssignedTo(t, userId));
+}
+
+export function filterChecklistEntriesMine(
+  entries: CalendarTaskEntry[],
+  userId: string,
+): CalendarTaskEntry[] {
+  if (!userId) return [];
+  return entries.filter((entry) =>
+    entry.assigneeUserIds.some((id) => id === userId),
+  );
 }
 
 /** Default vista Da seguire: operator sul proprio carico, admin/manager su tutta la coda. */

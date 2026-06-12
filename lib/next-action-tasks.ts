@@ -16,9 +16,12 @@ export type NextActionContent = {
 export type CalendarTaskEntry = {
   requestId: string;
   requestTitle: string;
+  companyName: string;
   requestPriority: RequestPriority;
+  nextActionAt: string | null;
   teamName: string | null;
   createdByLabel: string | null;
+  assigneeUserIds: string[];
   task: NextActionTask;
 };
 
@@ -164,9 +167,12 @@ export function extractCalendarTasks(requests: Request[]): CalendarTaskEntry[] {
       entries.push({
         requestId: request.id,
         requestTitle: request.title,
+        companyName: request.companyName,
         requestPriority: request.priority,
+        nextActionAt: request.nextActionAt,
         teamName: request.teamName,
         createdByLabel: request.createdByLabel,
+        assigneeUserIds: request.assignees.map((assignee) => assignee.userId),
         task,
       });
     }
@@ -283,4 +289,46 @@ export function summarizeNextActionTasks(
     total: tasks.length,
     overdue,
   };
+}
+
+export type FollowUpChecklistWindow = "overdue" | "today" | "upcoming";
+
+/** Checklist con scadenza nella finestra temporale di Da seguire. */
+export function filterCalendarTasksByWindow(
+  entries: CalendarTaskEntry[],
+  window: FollowUpChecklistWindow,
+  bounds = getFollowUpWindowBounds(),
+): CalendarTaskEntry[] {
+  const startToday = new Date(bounds.startTodayIso).getTime();
+  const startTomorrow = new Date(bounds.startTomorrowIso).getTime();
+  const endWeek = new Date(bounds.endWeekIso).getTime();
+
+  return entries.filter(({ task }) => {
+    if (task.done || !task.dueAt) return false;
+    const dueMs = new Date(task.dueAt).getTime();
+    if (Number.isNaN(dueMs)) return false;
+    if (window === "overdue") return dueMs < startToday;
+    if (window === "today") return dueMs >= startToday && dueMs < startTomorrow;
+    return dueMs >= startTomorrow && dueMs <= endWeek;
+  });
+}
+
+/** Checklist la cui richiesta non è già nella coda per scadenza generale. */
+export function orphanChecklistEntriesForRequests(
+  entries: CalendarTaskEntry[],
+  requestsInQueue: Pick<Request, "id">[],
+): CalendarTaskEntry[] {
+  const requestIds = new Set(requestsInQueue.map((request) => request.id));
+  return entries.filter((entry) => !requestIds.has(entry.requestId));
+}
+
+export function sortCalendarTaskEntries(
+  entries: CalendarTaskEntry[],
+): CalendarTaskEntry[] {
+  return [...entries].sort((a, b) => {
+    const aDue = a.task.dueAt ? new Date(a.task.dueAt).getTime() : 0;
+    const bDue = b.task.dueAt ? new Date(b.task.dueAt).getTime() : 0;
+    if (aDue !== bDue) return aDue - bDue;
+    return a.task.text.localeCompare(b.task.text, "it");
+  });
 }

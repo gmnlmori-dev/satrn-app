@@ -3,11 +3,13 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
+  filterChecklistEntriesMine,
   filterInboxMine,
   filterRequestsMine,
   filterTasksMine,
   type FollowUpAssigneeScope,
 } from "@/lib/request-assignee";
+import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import type { Task } from "@/types/task";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { InboxItem } from "@/types/inbox";
@@ -22,6 +24,9 @@ type Props = {
   overdueTasks: Task[];
   todayTasks: Task[];
   upcomingTasks: Task[];
+  overdueChecklists: CalendarTaskEntry[];
+  todayChecklists: CalendarTaskEntry[];
+  upcomingChecklists: CalendarTaskEntry[];
   currentUserId: string;
   defaultScope: FollowUpAssigneeScope;
 };
@@ -43,6 +48,9 @@ export function FollowUpAssigneeScope({
   overdueTasks,
   todayTasks,
   upcomingTasks,
+  overdueChecklists,
+  todayChecklists,
+  upcomingChecklists,
   currentUserId,
   defaultScope,
 }: Props) {
@@ -88,6 +96,27 @@ export function FollowUpAssigneeScope({
       mineOnly ? filterTasksMine(upcomingTasks, currentUserId) : upcomingTasks,
     [mineOnly, upcomingTasks, currentUserId],
   );
+  const filteredOverdueChecklists = useMemo(
+    () =>
+      mineOnly
+        ? filterChecklistEntriesMine(overdueChecklists, currentUserId)
+        : overdueChecklists,
+    [mineOnly, overdueChecklists, currentUserId],
+  );
+  const filteredTodayChecklists = useMemo(
+    () =>
+      mineOnly
+        ? filterChecklistEntriesMine(todayChecklists, currentUserId)
+        : todayChecklists,
+    [mineOnly, todayChecklists, currentUserId],
+  );
+  const filteredUpcomingChecklists = useMemo(
+    () =>
+      mineOnly
+        ? filterChecklistEntriesMine(upcomingChecklists, currentUserId)
+        : upcomingChecklists,
+    [mineOnly, upcomingChecklists, currentUserId],
+  );
 
   const scopeControl = showMine ? (
     <SegmentedControl
@@ -110,6 +139,9 @@ export function FollowUpAssigneeScope({
       overdueTasks={filteredOverdueTasks}
       todayTasks={filteredTodayTasks}
       upcomingTasks={filteredUpcomingTasks}
+      overdueChecklists={filteredOverdueChecklists}
+      todayChecklists={filteredTodayChecklists}
+      upcomingChecklists={filteredUpcomingChecklists}
       scopeControl={scopeControl}
     />
   );
