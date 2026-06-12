@@ -7,6 +7,7 @@ import {
   IconCalendarDays,
   PostponeDueAtPopover,
 } from "@/components/follow-up/postpone-due-at-popover";
+import { TaskEditSlideOver } from "@/components/tasks/task-edit-slide-over";
 import { toggleTaskDone } from "@/lib/actions/toggle-task-done";
 import { updateTaskDueAt } from "@/lib/actions/update-task";
 import { formatDateTime } from "@/lib/date";
@@ -19,6 +20,25 @@ import {
 } from "@/lib/table-ui";
 import { uiBtnIcon } from "@/lib/ui-classes";
 import type { Task } from "@/types/task";
+
+function IconPencil({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+      />
+    </svg>
+  );
+}
 
 function PostponeTaskButton({
   task,
@@ -53,6 +73,58 @@ function PostponeTaskButton({
   );
 }
 
+function EditTaskButton({
+  task,
+  disabled,
+  onEdit,
+}: {
+  task: Task;
+  disabled: boolean;
+  onEdit: (task: Task) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={uiBtnIcon}
+      title="Modifica task"
+      aria-label={`Modifica: ${task.title}`}
+      disabled={disabled}
+      onClick={(e) => {
+        e.stopPropagation();
+        onEdit(task);
+      }}
+    >
+      <IconPencil className="h-4 w-4" />
+    </button>
+  );
+}
+
+function TaskRowActions({
+  task,
+  postponeActive,
+  disabled,
+  onEdit,
+  onTogglePostpone,
+}: {
+  task: Task;
+  postponeActive: boolean;
+  disabled: boolean;
+  onEdit: (task: Task) => void;
+  onTogglePostpone: (task: Task, rect: DOMRectReadOnly) => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center justify-end gap-1">
+      <EditTaskButton task={task} disabled={disabled} onEdit={onEdit} />
+      <PostponeTaskButton
+        task={task}
+        active={postponeActive}
+        disabled={disabled}
+        onToggle={onTogglePostpone}
+      />
+    </div>
+  );
+}
+
 export function StandaloneTaskBlock({
   tasks,
   onTasksChange,
@@ -69,6 +141,7 @@ export function StandaloneTaskBlock({
     task: Task;
     rect: DOMRectReadOnly;
   } | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -110,9 +183,29 @@ export function StandaloneTaskBlock({
     setPostpone((p) => (p?.task.id === task.id ? null : { task, rect }));
   }
 
+  function openEdit(task: Task) {
+    setPostpone(null);
+    setEditingTask(task);
+  }
+
+  function handleTaskUpdated() {
+    pulseTopBar();
+    refresh();
+  }
+
+  const slideOver = (
+    <TaskEditSlideOver
+      task={editingTask}
+      onClose={() => setEditingTask(null)}
+      onUpdated={() => handleTaskUpdated()}
+      onDeleted={() => handleTaskUpdated()}
+    />
+  );
+
   if (compact) {
     return (
       <>
+        {slideOver}
         {postpone ? (
           <PostponeDueAtPopover
             key={postpone.task.id}
@@ -169,11 +262,12 @@ export function StandaloneTaskBlock({
                     ) : null}
                   </p>
                 </div>
-                <PostponeTaskButton
+                <TaskRowActions
                   task={task}
-                  active={postpone?.task.id === task.id}
+                  postponeActive={postpone?.task.id === task.id}
                   disabled={pending}
-                  onToggle={togglePostpone}
+                  onEdit={openEdit}
+                  onTogglePostpone={togglePostpone}
                 />
               </li>
             );
@@ -185,6 +279,7 @@ export function StandaloneTaskBlock({
 
   return (
     <>
+      {slideOver}
       {postpone ? (
         <PostponeDueAtPopover
           key={postpone.task.id}
@@ -213,7 +308,7 @@ export function StandaloneTaskBlock({
               <th className={dataTableThClass}>Task</th>
               <th className={dataTableThClass}>Scadenza</th>
               <th className={dataTableThClass}>Assegnatari</th>
-              <th className={cn(dataTableThClass, "w-12 text-right")}>
+              <th className={cn(dataTableThClass, "w-20 text-right")}>
                 <span className="sr-only">Azioni</span>
               </th>
             </tr>
@@ -256,11 +351,12 @@ export function StandaloneTaskBlock({
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-right">
-                    <PostponeTaskButton
+                    <TaskRowActions
                       task={task}
-                      active={postpone?.task.id === task.id}
+                      postponeActive={postpone?.task.id === task.id}
                       disabled={pending}
-                      onToggle={togglePostpone}
+                      onEdit={openEdit}
+                      onTogglePostpone={togglePostpone}
                     />
                   </td>
                 </tr>

@@ -21,8 +21,8 @@ import { updateInboxItemStatus } from "@/lib/actions/update-inbox-status";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
 import { formatDateTime } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
-import { summarizeNextActionTasks } from "@/lib/next-action-tasks";
 import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
+import { RequestChecklistInline } from "@/components/follow-up/request-checklist-inline";
 import {
   followUpPopoverPanel,
   IconCalendarDays,
@@ -142,50 +142,6 @@ function EmptyRow({ title, hint }: { title: string; hint: string }) {
     <div className="bg-surface px-3 py-3 sm:px-4">
       <AppEmptyHint title={title} description={hint} className="py-6" />
     </div>
-  );
-}
-
-function RequestTaskCount({ nextAction }: { nextAction: string }) {
-  const { open, total, overdue } = summarizeNextActionTasks(nextAction);
-  if (total === 0) return null;
-
-  if (overdue > 0) {
-    const overdueLabel =
-      overdue === 1 ? "1 task in ritardo" : `${overdue} task in ritardo`;
-    const otherOpen = open - overdue;
-
-    return (
-      <span className="mt-1 block text-xs tabular-nums">
-        <span className="font-medium text-danger">{overdueLabel}</span>
-        {otherOpen > 0 ? (
-          <span className="text-fg-tertiary">
-            {otherOpen === 1
-              ? " · 1 altra aperta"
-              : ` · ${otherOpen} altre aperte`}
-          </span>
-        ) : open < total ? (
-          <span className="text-fg-tertiary">{` · ${total} totali`}</span>
-        ) : null}
-      </span>
-    );
-  }
-
-  const label =
-    open > 0
-      ? open === 1
-        ? "1 task aperta"
-        : `${open} task aperte`
-      : total === 1
-        ? "1 task completata"
-        : `${total} task completate`;
-
-  return (
-    <span className="mt-1 block text-xs tabular-nums text-fg-tertiary">
-      {label}
-      {open > 0 && open < total ? (
-        <span className="text-fg-tertiary/80">{` · ${total} totali`}</span>
-      ) : null}
-    </span>
   );
 }
 
@@ -460,7 +416,15 @@ function RequestBlock({
                   <span className="line-clamp-2 font-medium leading-snug text-fg-primary">
                     {r.title}
                   </span>
-                  <RequestTaskCount nextAction={r.nextAction} />
+                  <RequestChecklistInline
+                    requestId={r.id}
+                    nextAction={r.nextAction}
+                    disabled={pending}
+                    onChanged={() => {
+                      pulseTopBar();
+                      refresh();
+                    }}
+                  />
                 </td>
                 <td className="px-4 py-3.5 align-middle text-fg-secondary">
                   <span className="line-clamp-2 leading-snug">{r.companyName}</span>

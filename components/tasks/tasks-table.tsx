@@ -1,7 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import {
+  IconCalendarDays,
+  PostponeDueAtPopover,
+} from "@/components/follow-up/postpone-due-at-popover";
 import { toggleTaskDone } from "@/lib/actions/toggle-task-done";
+import { updateTaskDueAt } from "@/lib/actions/update-task";
 import { formatDateTime } from "@/lib/date";
 import { isStandaloneTaskOverdue } from "@/lib/task-windows";
 import { taskAssigneesLabel } from "@/lib/task-assignees";
@@ -19,8 +24,58 @@ type Props = {
   onEditTask?: (task: Task) => void;
 };
 
+function PostponeTaskButton({
+  task,
+  active,
+  disabled,
+  onToggle,
+}: {
+  task: Task;
+  active: boolean;
+  disabled: boolean;
+  onToggle: (task: Task, rect: DOMRectReadOnly) => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-postpone-trigger={task.id}
+      title="Sposta scadenza"
+      aria-label="Sposta scadenza"
+      disabled={disabled}
+      aria-expanded={active}
+      className={cn(
+        uiBtnIcon,
+        active && "border-accent/40 bg-accent-subtle text-accent",
+      )}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle(task, e.currentTarget.getBoundingClientRect());
+      }}
+    >
+      <IconCalendarDays className="h-4 w-4" />
+    </button>
+  );
+}
+
 export function TasksTable({ tasks, onTasksChange, onEditTask }: Props) {
   const [pending, startTransition] = useTransition();
+  const [postpone, setPostpone] = useState<{
+    task: Task;
+    rect: DOMRectReadOnly;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!postpone) return;
+    const taskId = postpone.task.id;
+    function onDocMouseDown(e: MouseEvent) {
+      const t = e.target as HTMLElement;
+      if (t.closest("[data-postpone-panel]")) return;
+      if (t.closest(`[data-postpone-trigger="${taskId}"]`)) return;
+      setPostpone(null);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [postpone]);
 
   function handleToggle(task: Task) {
     const nextDone = !task.done;
@@ -41,99 +96,134 @@ export function TasksTable({ tasks, onTasksChange, onEditTask }: Props) {
     });
   }
 
+  function togglePostpone(task: Task, rect: DOMRectReadOnly) {
+    setPostpone((p) => (p?.task.id === task.id ? null : { task, rect }));
+  }
+
   return (
-    <div className="overflow-x-auto rounded-lg border border-line-default">
-      <table className="w-full min-w-[40rem] text-left text-sm">
-        <thead>
-          <tr className="border-b border-line-default bg-elevated/50">
-            <th className={cn(dataTableThClass, "w-10")}>
-              <span className="sr-only">Completata</span>
-            </th>
-            <th className={dataTableThClass}>Titolo</th>
-            <th className={dataTableThClass}>Scadenza</th>
-            <th className={dataTableThClass}>Assegnatari</th>
-            <th className={cn(dataTableThClass, "w-12")}>
-              <span className="sr-only">Azioni</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map((task) => {
-            const overdue = isStandaloneTaskOverdue(task);
-            return (
-              <tr key={task.id} className={dataTableRowClass}>
-                <td className="px-3 py-2.5">
-                  <input
-                    type="checkbox"
-                    checked={task.done}
-                    disabled={pending}
-                    onChange={() => handleToggle(task)}
-                    aria-label={`Segna come ${task.done ? "non completata" : "completata"}: ${task.title}`}
-                    className="h-4 w-4 rounded border-line-default text-accent focus:ring-accent/40"
-                  />
-                </td>
-                <td className="px-3 py-2.5">
-                  <span
-                    className={cn(
-                      "font-medium",
-                      task.done
-                        ? "text-fg-tertiary line-through"
-                        : "text-fg-primary",
-                    )}
-                  >
-                    {task.title}
-                  </span>
-                </td>
-                <td className="px-3 py-2.5">
-                  {task.dueAt ? (
+    <>
+      {postpone ? (
+        <PostponeDueAtPopover
+          key={postpone.task.id}
+          idPrefix={`postpone-task-${postpone.task.id}`}
+          title={postpone.task.title}
+          currentDueAt={postpone.task.dueAt}
+          anchorRect={postpone.rect}
+          onDismiss={() => setPostpone(null)}
+          onApply={async (iso) => {
+            const taskId = postpone.task.id;
+            const r = await updateTaskDueAt(taskId, iso);
+            if (r.ok && onTasksChange) {
+              onTasksChange(
+                tasks.map((t) => (t.id === taskId ? { ...t, dueAt: iso } : t)),
+              );
+            }
+            return r;
+          }}
+        />
+      ) : null}
+      <div className="overflow-x-auto rounded-lg border border-line-default">
+        <table className="w-full min-w-[40rem] text-left text-sm">
+          <thead>
+            <tr className="border-b border-line-default bg-elevated/50">
+              <th className={cn(dataTableThClass, "w-10")}>
+                <span className="sr-only">Completata</span>
+              </th>
+              <th className={dataTableThClass}>Titolo</th>
+              <th className={dataTableThClass}>Scadenza</th>
+              <th className={dataTableThClass}>Assegnatari</th>
+              <th className={cn(dataTableThClass, "w-20 text-right")}>
+                <span className="sr-only">Azioni</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task) => {
+              const overdue = isStandaloneTaskOverdue(task);
+              return (
+                <tr key={task.id} className={dataTableRowClass}>
+                  <td className="px-3 py-2.5">
+                    <input
+                      type="checkbox"
+                      checked={task.done}
+                      disabled={pending}
+                      onChange={() => handleToggle(task)}
+                      aria-label={`Segna come ${task.done ? "non completata" : "completata"}: ${task.title}`}
+                      className="h-4 w-4 rounded border-line-default text-accent focus:ring-accent/40"
+                    />
+                  </td>
+                  <td className="px-3 py-2.5">
                     <span
                       className={cn(
-                        uiTransition,
-                        overdue && !task.done
-                          ? "font-medium text-danger"
-                          : "text-fg-secondary",
+                        "font-medium",
+                        task.done
+                          ? "text-fg-tertiary line-through"
+                          : "text-fg-primary",
                       )}
                     >
-                      {formatDateTime(task.dueAt)}
+                      {task.title}
                     </span>
-                  ) : (
-                    <span className="text-fg-tertiary">—</span>
-                  )}
-                </td>
-                <td className="px-3 py-2.5 text-fg-secondary">
-                  {taskAssigneesLabel(task) ?? (
-                    <span className="text-fg-tertiary">Non assegnata</span>
-                  )}
-                </td>
-                <td className="px-3 py-2.5">
-                  <button
-                    type="button"
-                    className={uiBtnIcon}
-                    aria-label={`Modifica: ${task.title}`}
-                    disabled={pending}
-                    onClick={() => onEditTask?.(task)}
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      aria-hidden
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                  </td>
+                  <td className="px-3 py-2.5">
+                    {task.dueAt ? (
+                      <span
+                        className={cn(
+                          uiTransition,
+                          overdue && !task.done
+                            ? "font-medium text-danger"
+                            : "text-fg-secondary",
+                        )}
+                      >
+                        {formatDateTime(task.dueAt)}
+                      </span>
+                    ) : (
+                      <span className="text-fg-tertiary">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-fg-secondary">
+                    {taskAssigneesLabel(task) ?? (
+                      <span className="text-fg-tertiary">Non assegnata</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        className={uiBtnIcon}
+                        title="Modifica task"
+                        aria-label={`Modifica: ${task.title}`}
+                        disabled={pending}
+                        onClick={() => onEditTask?.(task)}
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                          />
+                        </svg>
+                      </button>
+                      <PostponeTaskButton
+                        task={task}
+                        active={postpone?.task.id === task.id}
+                        disabled={pending}
+                        onToggle={togglePostpone}
                       />
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
