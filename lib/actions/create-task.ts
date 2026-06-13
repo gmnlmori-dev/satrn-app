@@ -1,11 +1,15 @@
 "use server";
 
 import { validateAssigneeProfiles } from "@/lib/assignee-validation";
+import { nextActionAtFromFormData } from "@/lib/date";
 import { canAssignRequests } from "@/lib/permissions";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  recurrenceFromFormData,
+  validateTaskRecurrence,
+} from "@/lib/task-recurrence";
 import { revalidateTaskViews } from "@/lib/task-revalidate";
-import { nextActionAtFromFormData } from "@/lib/date";
 
 export type CreateTaskResult =
   | { ok: true; id: string }
@@ -41,6 +45,16 @@ export async function createTask(fd: FormData): Promise<CreateTaskResult> {
     : [me.userId];
 
   const due_at = nextActionAtFromFormData(fd);
+  const recurrenceEnabled = String(fd.get("recurrenceEnabled") ?? "") === "1";
+  const recurrence = recurrenceFromFormData(fd, due_at);
+
+  if (recurrenceEnabled && !recurrence) {
+    return { ok: false, message: "Impostazioni di ripetizione non valide." };
+  }
+  if (recurrence) {
+    const recurrenceError = validateTaskRecurrence(recurrence, due_at);
+    if (recurrenceError) return { ok: false, message: recurrenceError };
+  }
 
   const supabase = await createSupabaseServerClient();
 
@@ -84,6 +98,7 @@ export async function createTask(fd: FormData): Promise<CreateTaskResult> {
       created_by_user_id: me.userId,
       title,
       due_at,
+      recurrence,
     })
     .select("id")
     .single();

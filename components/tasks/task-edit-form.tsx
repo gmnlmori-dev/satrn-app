@@ -8,10 +8,12 @@ import {
   NextActionDeadlineFields,
   nextActionDeadlineDraftFromIso,
 } from "@/components/requests/next-action-deadline-fields";
+import { TaskRecurrenceFields } from "@/components/tasks/task-recurrence-fields";
 import { deleteTask } from "@/lib/actions/delete-task";
 import { updateTask } from "@/lib/actions/update-task";
 import { updateTaskAssignment } from "@/lib/actions/update-task-assignment";
 import { fromDateAndTimeInputs } from "@/lib/date";
+import { recurrenceFromFormData } from "@/lib/task-recurrence";
 import { canAssignRequests } from "@/lib/permissions";
 import { taskAssignedUserIds } from "@/lib/task-assignees";
 import { cn } from "@/lib/cn";
@@ -70,10 +72,12 @@ export function TaskEditForm({
       }
 
       const nextDueAt = fromDateAndTimeInputs(dueDate, dueTime);
+      const recurrence = recurrenceFromFormData(fd, nextDueAt, task.recurrence);
       let nextTask: Task = {
         ...task,
         title: String(fd.get("title") ?? "").trim(),
         dueAt: nextDueAt,
+        recurrence,
       };
 
       if (canAssign) {
@@ -136,6 +140,14 @@ export function TaskEditForm({
         time={dueTime}
         onDateChange={setDueDate}
         onTimeChange={setDueTime}
+      />
+
+      <TaskRecurrenceFields
+        idPrefix={`${idPrefix}-recurrence`}
+        dueDate={dueDate}
+        dueTime={dueTime}
+        disabled={pending}
+        initialRecurrence={task.recurrence}
       />
 
       {canAssign && assigneeTeamIdForSelect ? (

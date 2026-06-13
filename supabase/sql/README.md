@@ -12,13 +12,14 @@ Gli script in questa cartella **non** hanno runner automatico: vanno eseguiti ma
 6. `inbox_assigned_user.sql` / `inbox_created_by.sql` — assegnazione e autore inbox
 7. `request_created_by.sql` — autore richiesta
 8. `tasks.sql` — task libere e assignees
-9. `team_notes.sql` — note team
-10. `team_notes_sort_order.sql` — ordinamento note
-11. `team_notes_rls_fix.sql` — correzioni RLS note
-12. `team_note_cross_team_sharing.sql` — `team_note_shared_teams` + RLS condivisione cross-team
-13. `profile_preferences.sql` — preferenze utente (es. scope default Da seguire)
-14. `app_announcements.sql` — novità app e letture
-15. `app_announcement_reads_update_policy.sql` — solo se prod ha già `app_announcements.sql` senza policy UPDATE
+9. `tasks_recurrence.sql` — colonna `recurrence` jsonb su task libere
+10. `team_notes.sql` — note team
+11. `team_notes_sort_order.sql` — ordinamento note
+12. `team_notes_rls_fix.sql` — correzioni RLS note
+13. `team_note_cross_team_sharing.sql` — `team_note_shared_teams` + RLS condivisione cross-team
+14. `profile_preferences.sql` — preferenze utente (es. scope default Da seguire)
+15. `app_announcements.sql` — novità app e letture
+16. `app_announcement_reads_update_policy.sql` — solo se prod ha già `app_announcements.sql` senza policy UPDATE
 
 ## Checklist deploy produzione
 

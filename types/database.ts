@@ -210,6 +210,7 @@ export type TaskRow = {
   done: boolean;
   due_at: string | null;
   completed_at: string | null;
+  recurrence: unknown | null;
   created_at: string;
   updated_at: string;
 };

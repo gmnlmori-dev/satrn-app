@@ -1,4 +1,5 @@
 import { legacyTaskAssigneeFieldsFromAssignees } from "@/lib/task-assignees";
+import { parseTaskRecurrence } from "@/lib/task-recurrence";
 import type { TaskRowWithAssignee } from "@/types/database";
 import type { Task, TaskAssignee } from "@/types/task";
 
@@ -46,6 +47,7 @@ export function taskRowToTask(row: TaskRowWithAssignee): Task {
     done: row.done,
     dueAt: row.due_at,
     completedAt: row.completed_at,
+    recurrence: parseTaskRecurrence(row.recurrence),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     assignees,

@@ -5,9 +5,11 @@ import {
   PostponeDueAtPopover,
 } from "@/components/follow-up/postpone-due-at-popover";
 import { PostponeTaskButton } from "@/components/tasks/postpone-task-button";
+import { TaskRecurrenceSummary } from "@/components/tasks/task-recurrence-summary";
 import { toggleTaskDone } from "@/lib/actions/toggle-task-done";
 import { updateTaskDueAt } from "@/lib/actions/update-task";
 import { formatDateTime } from "@/lib/date";
+import { applyTaskToggleResult } from "@/lib/task-recurrence";
 import { isStandaloneTaskOverdue } from "@/lib/task-windows";
 import { taskAssigneesLabel } from "@/lib/task-assignees";
 import { cn } from "@/lib/cn";
@@ -51,13 +53,7 @@ export function TasksTable({ tasks, onTasksChange, onEditTask }: Props) {
       if (!result.ok || !onTasksChange) return;
       onTasksChange(
         tasks.map((t) =>
-          t.id === task.id
-            ? {
-                ...t,
-                done: nextDone,
-                completedAt: nextDone ? new Date().toISOString() : null,
-              }
-            : t,
+          t.id === task.id ? applyTaskToggleResult(t, result) : t,
         ),
       );
     });
@@ -120,16 +116,22 @@ export function TasksTable({ tasks, onTasksChange, onEditTask }: Props) {
                     />
                   </td>
                   <td className="px-3 py-2.5">
-                    <span
-                      className={cn(
-                        "font-medium",
-                        task.done
-                          ? "text-fg-tertiary line-through"
-                          : "text-fg-primary",
-                      )}
-                    >
-                      {task.title}
-                    </span>
+                    <div>
+                      <span
+                        className={cn(
+                          "font-medium",
+                          task.done
+                            ? "text-fg-tertiary line-through"
+                            : "text-fg-primary",
+                        )}
+                      >
+                        {task.title}
+                      </span>
+                      <TaskRecurrenceSummary
+                        recurrence={task.recurrence}
+                        className="mt-0.5 block"
+                      />
+                    </div>
                   </td>
                   <td className="px-3 py-2.5">
                     {task.dueAt ? (

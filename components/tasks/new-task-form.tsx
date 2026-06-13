@@ -4,6 +4,7 @@ import { useId, useState, useTransition } from "react";
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
+import { TaskRecurrenceFields } from "@/components/tasks/task-recurrence-fields";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
 import { createTask } from "@/lib/actions/create-task";
 import { cn } from "@/lib/cn";
@@ -22,6 +23,8 @@ export function NewTaskForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [createTeamId, setCreateTeamId] = useState(me?.teamId ?? "");
+  const [dueDate, setDueDate] = useState("");
+  const [dueTime, setDueTime] = useState("");
   const assigneeTeamId =
     me?.role === "admin" ? createTeamId : (me?.teamId ?? "");
 
@@ -32,6 +35,8 @@ export function NewTaskForm({
         e.preventDefault();
         setError(null);
         const fd = new FormData(e.currentTarget);
+        fd.set("nextActionAtDate", dueDate);
+        fd.set("nextActionAtTime", dueTime);
         startTransition(async () => {
           const result = await createTask(fd);
           if (!result.ok) {
@@ -61,6 +66,17 @@ export function NewTaskForm({
         disabled={pending}
         hideHeading={false}
         hideHint
+        date={dueDate}
+        time={dueTime}
+        onDateChange={setDueDate}
+        onTimeChange={setDueTime}
+      />
+
+      <TaskRecurrenceFields
+        idPrefix={`${idPrefix}-recurrence`}
+        dueDate={dueDate}
+        dueTime={dueTime}
+        disabled={pending}
       />
 
       {assigneeTeamId ? (

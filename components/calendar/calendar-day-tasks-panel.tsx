@@ -7,10 +7,12 @@ import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import { isCalendarTaskOverdue } from "@/lib/next-action-tasks";
 import { toggleNextActionTask } from "@/lib/actions/toggle-next-action-task";
 import { toggleTaskDone } from "@/lib/actions/toggle-task-done";
+import { TaskRecurrenceSummary } from "@/components/tasks/task-recurrence-summary";
 import { taskAssigneesLabel } from "@/lib/task-assignees";
 import { isStandaloneTaskOverdue } from "@/lib/task-windows";
+import { applyTaskToggleResult } from "@/lib/task-recurrence";
 import { cn } from "@/lib/cn";
-import { formatCalendarDay, formatTime, toTimeInputValue } from "@/lib/date";
+import { formatCalendarDay, formatTime, isSameCalendarDay, toTimeInputValue } from "@/lib/date";
 import { uiBtnGhost, uiTransition } from "@/lib/ui-classes";
 import { uiCard } from "@/lib/surfaces";
 import type { Task } from "@/types/task";
@@ -116,23 +118,26 @@ export function CalendarDayTasksPanel({
   function toggleStandalone(task: Task, checked: boolean) {
     setError(null);
     setPendingId(task.id);
-    const previous = standaloneTasks;
-    const remaining = checked
-      ? standaloneTasks.filter((item) => item.id !== task.id)
-      : standaloneTasks;
-
-    if (checked) onStandaloneChange(remaining);
 
     startTransition(async () => {
       const res = await toggleTaskDone(task.id, checked);
       setPendingId(null);
       if (!res.ok) {
         setError(res.message);
-        onStandaloneChange(previous);
         return;
       }
+      const nextTasks = standaloneTasks
+        .map((item) =>
+          item.id === task.id ? applyTaskToggleResult(item, res) : item,
+        )
+        .filter((item) => {
+          if (item.done) return false;
+          if (!item.dueAt) return true;
+          return isSameCalendarDay(item.dueAt, date);
+        });
+      onStandaloneChange(nextTasks);
       router.refresh();
-      maybeClose(checklistEntries.length, remaining.length);
+      maybeClose(checklistEntries.length, nextTasks.length);
     });
   }
 
@@ -230,6 +235,10 @@ export function CalendarDayTasksPanel({
                             {taskAssigneesLabel(task)}
                           </p>
                         ) : null}
+                        <TaskRecurrenceSummary
+                          recurrence={task.recurrence}
+                          className="mt-0.5 block"
+                        />
                       </div>
                     </li>
                   );

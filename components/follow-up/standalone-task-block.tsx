@@ -5,10 +5,12 @@ import { useEffect, useState, useTransition } from "react";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { PostponeDueAtPopover } from "@/components/follow-up/postpone-due-at-popover";
 import { PostponeTaskButton } from "@/components/tasks/postpone-task-button";
+import { TaskRecurrenceSummary } from "@/components/tasks/task-recurrence-summary";
 import { TaskEditSlideOver } from "@/components/tasks/task-edit-slide-over";
 import { toggleTaskDone } from "@/lib/actions/toggle-task-done";
 import { updateTaskDueAt } from "@/lib/actions/update-task";
 import { formatDateTime } from "@/lib/date";
+import { applyTaskToggleResult } from "@/lib/task-recurrence";
 import { isStandaloneTaskOverdue } from "@/lib/task-windows";
 import { taskAssigneesLabel } from "@/lib/task-assignees";
 import { cn } from "@/lib/cn";
@@ -133,13 +135,7 @@ export function StandaloneTaskBlock({
       if (onTasksChange) {
         onTasksChange(
           tasks.map((t) =>
-            t.id === task.id
-              ? {
-                  ...t,
-                  done: nextDone,
-                  completedAt: nextDone ? new Date().toISOString() : null,
-                }
-              : t,
+            t.id === task.id ? applyTaskToggleResult(t, result) : t,
           ),
         );
       } else {
@@ -231,6 +227,10 @@ export function StandaloneTaskBlock({
                       <span>{` · ${taskAssigneesLabel(task)}`}</span>
                     ) : null}
                   </p>
+                  <TaskRecurrenceSummary
+                    recurrence={task.recurrence}
+                    className="mt-1 block"
+                  />
                 </div>
                 <TaskRowActions
                   task={task}
