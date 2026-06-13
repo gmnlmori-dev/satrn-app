@@ -29,7 +29,7 @@ function formatRequestMeta(group: RequestGroup): string {
   if (group.companyName.trim()) parts.push(group.companyName.trim());
   if (group.teamName) parts.push(group.teamName);
   if (group.nextActionAt) {
-    parts.push(`Scadenza richiesta: ${formatDateTime(group.nextActionAt)}`);
+    parts.push(`Scadenza prossima azione: ${formatDateTime(group.nextActionAt)}`);
   } else {
     parts.push("Richiesta senza scadenza");
   }

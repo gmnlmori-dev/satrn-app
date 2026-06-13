@@ -15,6 +15,10 @@ import {
   type NextActionContent,
   type NextActionTask,
 } from "@/lib/next-action-tasks";
+import {
+  checklistDueAfterNextActionMessage,
+  isChecklistDueAllowed,
+} from "@/lib/next-action-deadline-validation";
 
 type Props = {
   value: string;
@@ -24,6 +28,9 @@ type Props = {
   idPrefix?: string;
   textRows?: number;
   className?: string;
+  /** Scadenza richiesta già impostata (limita le date checklist). */
+  requestNextActionAt?: string | null;
+  onValidationError?: (message: string | null) => void;
 };
 
 function updateTask(
@@ -39,28 +46,41 @@ function TaskDueFields({
   taskId,
   dueAt,
   disabled,
+  requestNextActionAt,
+  onValidationError,
   onChange,
 }: {
   idPrefix: string;
   taskId: string;
   dueAt: string | null;
   disabled?: boolean;
+  requestNextActionAt?: string | null;
+  onValidationError?: (message: string | null) => void;
   onChange: (dueAt: string | null) => void;
 }) {
   const date = toDateInputValue(dueAt);
   const time = toTimeInputValue(dueAt);
 
-  function setDate(nextDate: string) {
-    if (!nextDate.trim()) {
-      onChange(null);
+  function applyDue(next: string | null) {
+    if (next && !isChecklistDueAllowed(next, requestNextActionAt ?? null)) {
+      onValidationError?.(checklistDueAfterNextActionMessage());
       return;
     }
-    onChange(fromDateAndTimeInputs(nextDate, time));
+    onValidationError?.(null);
+    onChange(next);
+  }
+
+  function setDate(nextDate: string) {
+    if (!nextDate.trim()) {
+      applyDue(null);
+      return;
+    }
+    applyDue(fromDateAndTimeInputs(nextDate, time));
   }
 
   function setTime(nextTime: string) {
     if (!date) return;
-    onChange(fromDateAndTimeInputs(date, nextTime));
+    applyDue(fromDateAndTimeInputs(date, nextTime));
   }
 
   return (
@@ -103,6 +123,8 @@ export function NextActionField({
   idPrefix = "next-action",
   textRows = 4,
   className,
+  requestNextActionAt = null,
+  onValidationError,
 }: Props) {
   const [content, setContent] = useState<NextActionContent>(() =>
     parseNextAction(value),
@@ -226,6 +248,8 @@ export function NextActionField({
                     taskId={task.id}
                     dueAt={task.dueAt}
                     disabled={disabled}
+                    requestNextActionAt={requestNextActionAt}
+                    onValidationError={onValidationError}
                     onChange={(dueAt) =>
                       patchContent({
                         ...content,

@@ -6,6 +6,7 @@ import type { Task } from "@/types/task";
 import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import {
   extractCalendarTasks,
+  effectiveNextActionAt,
   isCalendarTaskOverdue,
 } from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
@@ -434,7 +435,8 @@ export function RequestsCalendar({
     () =>
       requests.filter(
         (request) =>
-          request.nextActionAt != null && request.status !== "closed",
+          effectiveNextActionAt(request) != null &&
+          request.status !== "closed",
       ).length,
     [requests],
   );

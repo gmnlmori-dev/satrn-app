@@ -8,6 +8,7 @@ import { insertRequestActivity } from "@/lib/request-activity-log";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { nextActionAtFromFormData } from "@/lib/date";
+import { validateNextActionDeadlineAlignment } from "@/lib/next-action-deadline-validation";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
 const STATUSES: RequestStatus[] = [
@@ -82,6 +83,12 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
   }
 
   const next_action_at = nextActionAtFromFormData(fd);
+
+  const deadlineCheck = validateNextActionDeadlineAlignment(
+    next_action_at,
+    next_action,
+  );
+  if (!deadlineCheck.ok) return deadlineCheck;
 
   const me = await getCurrentProfileSummary();
   if (!me?.userId || !me.isActive || !me.teamId) {

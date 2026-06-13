@@ -1,5 +1,6 @@
 import type { Request, RequestStatus } from "@/types/request";
 import { isSameCalendarDay } from "@/lib/date";
+import { effectiveNextActionAt } from "@/lib/next-action-tasks";
 
 export function countOpenRequests(requests: Request[]): number {
   return requests.filter((r) => r.status !== "closed").length;
@@ -16,7 +17,7 @@ export function countDueToday(requests: Request[], ref: Date = new Date()): numb
   return requests.filter(
     (r) =>
       r.status !== "closed" &&
-      r.nextActionAt &&
-      isSameCalendarDay(r.nextActionAt, ref)
+      effectiveNextActionAt(r) &&
+      isSameCalendarDay(effectiveNextActionAt(r)!, ref),
   ).length;
 }

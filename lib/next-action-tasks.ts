@@ -171,7 +171,7 @@ export function extractCalendarTasks(requests: Request[]): CalendarTaskEntry[] {
         requestTitle: request.title,
         companyName: request.companyName,
         requestPriority: request.priority,
-        nextActionAt: request.nextActionAt,
+        nextActionAt: effectiveNextActionAt(request),
         teamName: request.teamName,
         createdByLabel: request.createdByLabel,
         assigneeUserIds: request.assignees.map((assignee) => assignee.userId),
@@ -229,6 +229,105 @@ function taskDueMs(task: NextActionTask): number | null {
   if (task.done || !task.dueAt) return null;
   const t = new Date(task.dueAt).getTime();
   return Number.isNaN(t) ? null : t;
+}
+
+/** Scadenza checklist aperta più urgente (la più in ritardo = data più antica). */
+export function earliestOpenChecklistDueAt(nextActionRaw: string): string | null {
+  const content = parseNextAction(nextActionRaw);
+  let earliestMs: number | null = null;
+  let earliestIso: string | null = null;
+
+  for (const task of content.tasks) {
+    const dueMs = taskDueMs(task);
+    if (dueMs === null) continue;
+    if (earliestMs === null || dueMs < earliestMs) {
+      earliestMs = dueMs;
+      earliestIso = task.dueAt;
+    }
+  }
+
+  return earliestIso;
+}
+
+type RequestDeadlineSource = Pick<Request, "nextActionAt" | "nextAction">;
+
+function earliestDueIso(candidates: (string | null)[]): string | null {
+  let earliestMs: number | null = null;
+  let earliestIso: string | null = null;
+
+  for (const iso of candidates) {
+    if (!iso) continue;
+    const ms = new Date(iso).getTime();
+    if (Number.isNaN(ms)) continue;
+    if (earliestMs === null || ms < earliestMs) {
+      earliestMs = ms;
+      earliestIso = iso;
+    }
+  }
+
+  return earliestIso;
+}
+
+/**
+ * Scadenza operativa: la più in ritardo tra `nextActionAt` e checklist aperte
+ * (data più antica = più urgente).
+ */
+export function effectiveNextActionAt(request: RequestDeadlineSource): string | null {
+  return earliestDueIso([
+    request.nextActionAt,
+    earliestOpenChecklistDueAt(request.nextAction),
+  ]);
+}
+
+export function effectiveNextActionAtMs(request: RequestDeadlineSource): number | null {
+  const iso = effectiveNextActionAt(request);
+  if (!iso) return null;
+  const ms = new Date(iso).getTime();
+  return Number.isNaN(ms) ? null : ms;
+}
+
+export type FollowUpChecklistWindow = "overdue" | "today" | "upcoming";
+
+function requestInFollowUpWindow(
+  request: Request,
+  window: FollowUpChecklistWindow,
+  bounds: ReturnType<typeof getFollowUpWindowBounds>,
+): boolean {
+  if (request.status === "closed") return false;
+  const dueMs = effectiveNextActionAtMs(request);
+  if (dueMs === null) return false;
+
+  const startToday = new Date(bounds.startTodayIso).getTime();
+  const startTomorrow = new Date(bounds.startTomorrowIso).getTime();
+  const endWeek = new Date(bounds.endWeekIso).getTime();
+
+  if (window === "overdue") return dueMs < startToday;
+  if (window === "today") return dueMs >= startToday && dueMs < startTomorrow;
+  return dueMs >= startTomorrow && dueMs <= endWeek;
+}
+
+/** Richieste aperte nella finestra temporale di Da seguire (scadenza effettiva). */
+export function filterRequestsByFollowUpWindow(
+  requests: Request[],
+  window: FollowUpChecklistWindow,
+  bounds = getFollowUpWindowBounds(),
+): Request[] {
+  return requests
+    .filter((request) => requestInFollowUpWindow(request, window, bounds))
+    .sort((a, b) => {
+      const ta = effectiveNextActionAtMs(a) ?? Number.MAX_SAFE_INTEGER;
+      const tb = effectiveNextActionAtMs(b) ?? Number.MAX_SAFE_INTEGER;
+      if (ta !== tb) return ta - tb;
+      return a.title.localeCompare(b.title, "it");
+    });
+}
+
+export function countRequestsInFollowUpWindow(
+  requests: Request[],
+  window: FollowUpChecklistWindow,
+  bounds = getFollowUpWindowBounds(),
+): number {
+  return filterRequestsByFollowUpWindow(requests, window, bounds).length;
 }
 
 /** Conteggi task checklist aperti per finestra temporale (richieste assegnate). */
@@ -293,8 +392,6 @@ export function summarizeNextActionTasks(
     overdue,
   };
 }
-
-export type FollowUpChecklistWindow = "overdue" | "today" | "upcoming";
 
 /** Checklist con scadenza nella finestra temporale di Da seguire. */
 export function filterCalendarTasksByWindow(

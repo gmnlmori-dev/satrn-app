@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Request } from "@/types/request";
 import { PriorityBadge } from "@/components/requests/priority-badge";
 import { StatusBadge } from "@/components/requests/status-badge";
-import { formatNextActionPreview } from "@/lib/next-action-tasks";
+import { formatNextActionPreview, effectiveNextActionAt } from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
 import { formatDateTime, isRequestOverdue } from "@/lib/date";
 import { uiBtnGhost, uiBtnPrimary, uiTransition } from "@/lib/ui-classes";
@@ -39,9 +39,8 @@ export function RequestsCalendarRequestPreviewPanel({
   showRequestMeta = false,
   onClose,
 }: Props) {
-  const overdue =
-    request.nextActionAt &&
-    isRequestOverdue(request.nextActionAt, request.status);
+  const dueAt = effectiveNextActionAt(request);
+  const overdue = dueAt && isRequestOverdue(dueAt, request.status);
   const nextActionPreview = formatNextActionPreview(request.nextAction);
 
   useEffect(() => {
@@ -99,7 +98,7 @@ export function RequestsCalendarRequestPreviewPanel({
             <PreviewRow label="Assegnata a">
               {request.assignedToLabel ?? "Non assegnata"}
             </PreviewRow>
-            {request.nextActionAt ? (
+            {dueAt ? (
               <PreviewRow label="Scadenza">
                 <span
                   className={cn(
@@ -107,7 +106,7 @@ export function RequestsCalendarRequestPreviewPanel({
                     overdue ? "font-medium text-danger" : undefined,
                   )}
                 >
-                  {formatDateTime(request.nextActionAt)}
+                  {formatDateTime(dueAt)}
                   {overdue ? " · In ritardo" : null}
                 </span>
               </PreviewRow>

@@ -1,5 +1,9 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
-import { countOpenTasksByWindow, type OpenTaskWindowCounts } from "@/lib/next-action-tasks";
+import {
+  countOpenTasksByWindow,
+  countRequestsInFollowUpWindow,
+  type OpenTaskWindowCounts,
+} from "@/lib/next-action-tasks";
 import { countTasksByWindow } from "@/lib/task-windows";
 import type { Task } from "@/types/task";
 import { requestActivityRowToActivity, requestRowToRequest } from "@/lib/supabase/mappers";
@@ -33,51 +37,56 @@ export type DashboardMineCounts = {
 
 export type { OpenTaskWindowCounts as DashboardMineTaskCounts };
 
-function requestCountQuery(
+async function fetchOpenRequestsForDashboard(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  bounds: ReturnType<typeof getFollowUpWindowBounds>,
-  window: "overdue" | "today" | "upcoming",
   scope: TeamQueryScope,
   assignedUserId?: string,
-) {
-  const { startTodayIso, startTomorrowIso, endWeekIso } = bounds;
+): Promise<Request[]> {
   const teamId = teamIdForScope(scope);
 
-  let q = assignedUserId
-    ? supabase
-        .from("requests")
-        .select("id, request_assignees!inner(user_id)", {
-          count: "exact",
-          head: true,
-        })
-        .neq("status", "closed")
-        .eq("request_assignees.user_id", assignedUserId)
-    : supabase
-        .from("requests")
-        .select("*", { count: "exact", head: true })
-        .neq("status", "closed");
+  const select = assignedUserId
+    ? `
+      *,
+      request_assignees!inner (
+        user_id,
+        assigned_at,
+        assigned_by_user_id,
+        assignee:profiles!request_assignees_user_id_fkey (
+          user_id,
+          full_name,
+          email
+        )
+      ),
+      assignee:profiles!requests_assigned_user_id_fkey (
+        user_id,
+        full_name,
+        email
+      ),
+      team:teams!requests_team_id_fkey ( name ),
+      creator:profiles!requests_created_by_user_id_fkey (
+        user_id,
+        full_name,
+        email
+      )
+    `
+    : REQUEST_SELECT_WITH_ASSIGNEE;
+
+  let q = supabase.from("requests").select(select).neq("status", "closed");
 
   if (teamId) {
     q = q.eq("team_id", teamId);
   }
 
-  if (window === "overdue") {
-    return q
-      .not("next_action_at", "is", null)
-      .lt("next_action_at", startTodayIso);
+  if (assignedUserId) {
+    q = q.eq("request_assignees.user_id", assignedUserId);
   }
-  if (window === "today") {
-    return q
-      .gte("next_action_at", startTodayIso)
-      .lt("next_action_at", startTomorrowIso);
-  }
-  return q
-    .not("next_action_at", "is", null)
-    .gte("next_action_at", startTomorrowIso)
-    .lte("next_action_at", endWeekIso);
+
+  const { data, error } = await q;
+  assertNoError("dashboard open requests", error);
+  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
-/** Conteggi allineati alla vista «Da seguire» (stessi filtri), scoped per team. */
+/** Conteggi allineati alla vista «Da seguire» (scadenza effettiva), scoped per team. */
 export async function getDashboardOperationalCounts(
   scope: TeamQueryScope,
 ): Promise<DashboardOperationalCounts> {
@@ -95,22 +104,17 @@ export async function getDashboardOperationalCounts(
     inboxQuery = inboxQuery.eq("team_id", teamId);
   }
 
-  const [overdue, today, upcoming, inbox] = await Promise.all([
-    requestCountQuery(supabase, bounds, "overdue", scope),
-    requestCountQuery(supabase, bounds, "today", scope),
-    requestCountQuery(supabase, bounds, "upcoming", scope),
+  const [requests, inbox] = await Promise.all([
+    fetchOpenRequestsForDashboard(supabase, scope),
     inboxQuery,
   ]);
 
-  assertNoError("dashboard overdue count", overdue.error);
-  assertNoError("dashboard today count", today.error);
-  assertNoError("dashboard upcoming count", upcoming.error);
   assertNoError("dashboard inbox count", inbox.error);
 
   return {
-    overdue: overdue.count ?? 0,
-    today: today.count ?? 0,
-    upcomingWeek: upcoming.count ?? 0,
+    overdue: countRequestsInFollowUpWindow(requests, "overdue", bounds),
+    today: countRequestsInFollowUpWindow(requests, "today", bounds),
+    upcomingWeek: countRequestsInFollowUpWindow(requests, "upcoming", bounds),
     inboxTriage: inbox.count ?? 0,
   };
 }
@@ -124,21 +128,12 @@ export async function getDashboardMineCounts(
 
   const supabase = await createSupabaseServerClient();
   const bounds = getFollowUpWindowBounds();
-
-  const [overdue, today, upcoming] = await Promise.all([
-    requestCountQuery(supabase, bounds, "overdue", scope, userId),
-    requestCountQuery(supabase, bounds, "today", scope, userId),
-    requestCountQuery(supabase, bounds, "upcoming", scope, userId),
-  ]);
-
-  assertNoError("dashboard mine overdue count", overdue.error);
-  assertNoError("dashboard mine today count", today.error);
-  assertNoError("dashboard mine upcoming count", upcoming.error);
+  const requests = await fetchOpenRequestsForDashboard(supabase, scope, userId);
 
   return {
-    overdue: overdue.count ?? 0,
-    today: today.count ?? 0,
-    upcomingWeek: upcoming.count ?? 0,
+    overdue: countRequestsInFollowUpWindow(requests, "overdue", bounds),
+    today: countRequestsInFollowUpWindow(requests, "today", bounds),
+    upcomingWeek: countRequestsInFollowUpWindow(requests, "upcoming", bounds),
   };
 }
 

@@ -1,6 +1,7 @@
 import type { Request, RequestPriority } from "@/types/request";
 import { cn } from "@/lib/cn";
 import { formatTime, isRequestOverdue } from "@/lib/date";
+import { effectiveNextActionAt } from "@/lib/next-action-tasks";
 import { uiTransition } from "@/lib/ui-classes";
 
 const priorityBar: Record<RequestPriority, string> = {
@@ -41,16 +42,19 @@ function EventContent({
         <span className="block truncate font-medium text-fg-primary">
           {request.title}
         </span>
-        {request.nextActionAt ? (
+        {(() => {
+          const dueAt = effectiveNextActionAt(request);
+          return dueAt ? (
           <span
             className={cn(
               "tabular-nums",
               overdue ? "text-danger" : "text-fg-tertiary",
             )}
           >
-            {formatTime(request.nextActionAt)}
+            {formatTime(dueAt)}
           </span>
-        ) : null}
+        ) : null;
+        })()}
       </span>
     </>
   );
@@ -65,9 +69,9 @@ export function RequestsCalendarEvent({
   compact?: boolean;
   onSelect?: (request: Request) => void;
 }) {
+  const dueAt = effectiveNextActionAt(request);
   const overdue = Boolean(
-    request.nextActionAt &&
-      isRequestOverdue(request.nextActionAt, request.status),
+    dueAt && isRequestOverdue(dueAt, request.status),
   );
 
   if (onSelect) {

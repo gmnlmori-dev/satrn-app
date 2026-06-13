@@ -46,6 +46,9 @@ import { createRequestNote } from "@/lib/actions/create-request-note";
 import { updateRequestAssignment } from "@/lib/actions/update-request-assignment";
 import { updateRequestDetails } from "@/lib/actions/update-request-details";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
+import {
+  validateNextActionDeadlineAlignment,
+} from "@/lib/next-action-deadline-validation";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { Panel } from "@/components/ui/panel";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
@@ -121,6 +124,25 @@ export function RequestDetailWorkspace({
   );
   const [nextAtDateDraft, setNextAtDateDraft] = useState(initialDeadline.date);
   const [nextAtTimeDraft, setNextAtTimeDraft] = useState(initialDeadline.time);
+  const [nextDeadlineError, setNextDeadlineError] = useState<string | null>(
+    null,
+  );
+
+  const nextAtDraftIso = useMemo(
+    () =>
+      nextAtDateDraft.trim()
+        ? fromDateAndTimeInputs(nextAtDateDraft, nextAtTimeDraft)
+        : null,
+    [nextAtDateDraft, nextAtTimeDraft],
+  );
+
+  const syncNextDeadlineError = useCallback(
+    (at: string | null, action: string) => {
+      const result = validateNextActionDeadlineAlignment(at, action);
+      setNextDeadlineError(result.ok ? null : result.message);
+    },
+    [],
+  );
 
   useEffect(() => {
     // Allinea allo stato server dopo refresh o navigazione (stesso id, props aggiornate).
@@ -262,8 +284,18 @@ export function RequestDetailWorkspace({
   const saveNextAction = useCallback(async () => {
     if (!nextDirty || nextSaveUi === "saving") return;
     setOperationalError(null);
+    const nextAt = nextAtDraftIso;
+    const deadlineCheck = validateNextActionDeadlineAlignment(
+      nextAt,
+      nextDraft,
+    );
+    if (!deadlineCheck.ok) {
+      setNextDeadlineError(deadlineCheck.message);
+      setOperationalError(deadlineCheck.message);
+      return;
+    }
+    setNextDeadlineError(null);
     setNextSaveUi("saving");
-    const nextAt = fromDateAndTimeInputs(nextAtDateDraft, nextAtTimeDraft);
     const res = await updateRequestOperational(request.id, {
       next_action: nextDraft,
       next_action_at: nextAt,
@@ -292,8 +324,7 @@ export function RequestDetailWorkspace({
     }, 2000);
     router.refresh();
   }, [
-    nextAtDateDraft,
-    nextAtTimeDraft,
+    nextAtDraftIso,
     nextDraft,
     nextDirty,
     nextSaveUi,
@@ -520,7 +551,12 @@ export function RequestDetailWorkspace({
             <NextActionField
               idPrefix="detail-next-action"
               value={nextDraft}
-              onChange={setNextDraft}
+              onChange={(serialized) => {
+                setNextDraft(serialized);
+                syncNextDeadlineError(nextAtDraftIso, serialized);
+              }}
+              requestNextActionAt={nextAtDraftIso}
+              onValidationError={setNextDeadlineError}
               disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
               className="mt-1.5"
             />
@@ -540,10 +576,27 @@ export function RequestDetailWorkspace({
                   inputClass={inputClass}
                   date={nextAtDateDraft}
                   time={nextAtTimeDraft}
-                  onDateChange={setNextAtDateDraft}
-                  onTimeChange={setNextAtTimeDraft}
+                  onDateChange={(date) => {
+                    setNextAtDateDraft(date);
+                    const iso = date.trim()
+                      ? fromDateAndTimeInputs(date, nextAtTimeDraft)
+                      : null;
+                    syncNextDeadlineError(iso, nextDraft);
+                  }}
+                  onTimeChange={(time) => {
+                    setNextAtTimeDraft(time);
+                    const iso = nextAtDateDraft.trim()
+                      ? fromDateAndTimeInputs(nextAtDateDraft, time)
+                      : null;
+                    syncNextDeadlineError(iso, nextDraft);
+                  }}
                 />
               </div>
+              {nextDeadlineError ? (
+                <p role="alert" className="text-sm text-danger">
+                  {nextDeadlineError}
+                </p>
+              ) : null}
               {nextAtDateDraft !== "" || request.nextActionAt !== null ? (
                 <button
                   type="button"
@@ -564,7 +617,7 @@ export function RequestDetailWorkspace({
         <div className="mt-7 flex flex-wrap items-center gap-2 border-t border-line-default pt-5">
           <button
             type="button"
-            disabled={!nextDirty || nextSaveUi === "saving" || opBusy}
+            disabled={!nextDirty || nextSaveUi === "saving" || opBusy || Boolean(nextDeadlineError)}
             aria-busy={nextSaveUi === "saving"}
             onClick={() => void saveNextAction()}
             className={cn(

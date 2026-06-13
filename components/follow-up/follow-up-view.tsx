@@ -26,6 +26,7 @@ import { RequestChecklistInline } from "@/components/follow-up/request-checklist
 import { FollowUpChecklistBlock } from "@/components/follow-up/follow-up-checklist-block";
 import {
   orphanChecklistEntriesForRequests,
+  effectiveNextActionAt,
   type CalendarTaskEntry,
 } from "@/lib/next-action-tasks";
 import {
@@ -356,7 +357,7 @@ function RequestBlock({
           key={postpone.request.id}
           idPrefix={`postpone-req-${postpone.request.id}`}
           title={postpone.request.title}
-          currentDueAt={postpone.request.nextActionAt}
+          currentDueAt={effectiveNextActionAt(postpone.request)}
           anchorRect={postpone.rect}
           onDismiss={() => setPostpone(null)}
           onApply={async (iso) => {
@@ -437,7 +438,10 @@ function RequestBlock({
                   <span className="line-clamp-2 leading-snug">{r.companyName}</span>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3.5 align-middle text-right tabular-nums text-fg-secondary">
-                  {r.nextActionAt ? formatDateTime(r.nextActionAt) : "—"}
+                  {(() => {
+                    const dueAt = effectiveNextActionAt(r);
+                    return dueAt ? formatDateTime(dueAt) : "—";
+                  })()}
                 </td>
                 <td className="px-4 py-3.5 align-middle">
                   <PriorityBadge priority={r.priority} className="max-w-full truncate" />

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { validateNextActionDeadlineAlignment } from "@/lib/next-action-deadline-validation";
 import { logOperationalChanges } from "@/lib/request-activity-log";
 import { markAllNextActionTasksDone } from "@/lib/next-action-tasks";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -40,6 +41,33 @@ export async function updateRequestOperational(
     return { ok: false, message: "Richiesta non trovata." };
   }
 
+  const beforeRow = before as {
+    status: string;
+    priority: string;
+    next_action: string;
+    next_action_at: string | null;
+  };
+
+  const nextActionAt =
+    fields.next_action_at !== undefined
+      ? fields.next_action_at
+      : beforeRow.next_action_at;
+  const nextActionRaw =
+    fields.next_action !== undefined
+      ? fields.next_action
+      : beforeRow.next_action ?? "";
+
+  if (
+    fields.next_action_at !== undefined ||
+    fields.next_action !== undefined
+  ) {
+    const deadlineCheck = validateNextActionDeadlineAlignment(
+      nextActionAt,
+      nextActionRaw,
+    );
+    if (!deadlineCheck.ok) return deadlineCheck;
+  }
+
   const payload: Record<string, unknown> = {};
   if (fields.status !== undefined) payload.status = fields.status;
   if (fields.priority !== undefined) payload.priority = fields.priority;
@@ -55,9 +83,7 @@ export async function updateRequestOperational(
     fields.status === "closed" &&
     before.status !== "closed"
   ) {
-    const marked = markAllNextActionTasksDone(
-      (before as { next_action: string }).next_action ?? "",
-    );
+    const marked = markAllNextActionTasksDone(beforeRow.next_action ?? "");
     if (marked.changed) {
       payload.next_action = marked.next;
     }
@@ -83,17 +109,7 @@ export async function updateRequestOperational(
     last_interaction_at: string;
   };
 
-  await logOperationalChanges(
-    supabase,
-    id,
-    before as {
-      status: string;
-      priority: string;
-      next_action: string;
-      next_action_at: string | null;
-    },
-    fields,
-  );
+  await logOperationalChanges(supabase, id, beforeRow, fields);
 
   revalidatePath("/app/requests");
   revalidatePath(`/app/requests/${id}`);

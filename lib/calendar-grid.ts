@@ -1,4 +1,5 @@
 import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
+import { effectiveNextActionAt } from "@/lib/next-action-tasks";
 import type { Request, RequestPriority } from "@/types/request";
 import type { Task } from "@/types/task";
 import { toDateKey, toDateKeyFromIso } from "@/lib/date";
@@ -83,9 +84,11 @@ export function sortDayEvents(requests: Request[]): Request[] {
     const pa = priorityRank[a.priority];
     const pb = priorityRank[b.priority];
     if (pa !== pb) return pa - pb;
-    const ta = a.nextActionAt ? new Date(a.nextActionAt).getTime() : 0;
-    const tb = b.nextActionAt ? new Date(b.nextActionAt).getTime() : 0;
-    if (ta !== tb) return ta - tb;
+    const ta = effectiveNextActionAt(a);
+    const tb = effectiveNextActionAt(b);
+    const tmsA = ta ? new Date(ta).getTime() : 0;
+    const tmsB = tb ? new Date(tb).getTime() : 0;
+    if (tmsA !== tmsB) return tmsA - tmsB;
     return a.title.localeCompare(b.title, "it");
   });
 }
@@ -94,8 +97,9 @@ export function groupRequestsByDay(requests: Request[]): Map<string, Request[]> 
   const map = new Map<string, Request[]>();
   for (const r of requests) {
     if (r.status === "closed") continue;
-    if (!r.nextActionAt) continue;
-    const key = toDateKeyFromIso(r.nextActionAt);
+    const dueAt = effectiveNextActionAt(r);
+    if (!dueAt) continue;
+    const key = toDateKeyFromIso(dueAt);
     if (!key) continue;
     const list = map.get(key) ?? [];
     list.push(r);

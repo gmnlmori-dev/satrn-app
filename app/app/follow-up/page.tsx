@@ -3,10 +3,8 @@ import { FollowUpAssigneeScope } from "@/components/follow-up/follow-up-assignee
 import { FollowUpHashScroll } from "@/components/follow-up/follow-up-hash-scroll";
 import {
   getFollowUpChecklistEntries,
-  getFollowUpTodayRequests,
+  getFollowUpRequestQueues,
   getInboxTriageItems,
-  getOverdueRequests,
-  getUpcomingRequests,
 } from "@/lib/supabase/follow-up-queries";
 import {
   getOverdueStandaloneTasks,
@@ -25,9 +23,7 @@ export const metadata = {
 export default async function FollowUpPage() {
   const profile = await getCurrentProfileSummary();
   const [
-    overdue,
-    today,
-    upcoming,
+    requestQueues,
     inbox,
     overdueTasks,
     todayTasks,
@@ -36,9 +32,7 @@ export default async function FollowUpPage() {
     todayChecklists,
     upcomingChecklists,
   ] = await Promise.all([
-    getOverdueRequests(),
-    getFollowUpTodayRequests(),
-    getUpcomingRequests(),
+    getFollowUpRequestQueues(),
     getInboxTriageItems(),
     getOverdueStandaloneTasks(),
     getStandaloneTasksToday(),
@@ -47,6 +41,8 @@ export default async function FollowUpPage() {
     getFollowUpChecklistEntries("today"),
     getFollowUpChecklistEntries("upcoming"),
   ]);
+
+  const { overdue, today, upcoming } = requestQueues;
 
   const defaultScope = profile
     ? resolveDefaultAssignScope(profile.preferences, profile.role)
