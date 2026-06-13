@@ -9,6 +9,7 @@ import { toggleNextActionTask } from "@/lib/actions/toggle-next-action-task";
 import { formatDateTime } from "@/lib/date";
 import {
   isCalendarTaskOverdue,
+  sortChecklistEntriesForRequest,
   type CalendarTaskEntry,
 } from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
@@ -59,7 +60,13 @@ export function FollowUpChecklistBlock({
       bucket.tasks.push(entry);
       map.set(entry.requestId, bucket);
     }
-    return [...map.entries()];
+    return [...map.entries()].map(([requestId, group]) => [
+      requestId,
+      {
+        ...group,
+        tasks: sortChecklistEntriesForRequest(group.tasks),
+      },
+    ] as const);
   }, [entries]);
 
   function completeTask(entry: CalendarTaskEntry) {

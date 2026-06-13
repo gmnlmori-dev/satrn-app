@@ -22,6 +22,8 @@ export type CalendarTaskEntry = {
   teamName: string | null;
   createdByLabel: string | null;
   assigneeUserIds: string[];
+  /** Posizione nella checklist della richiesta (ordine di creazione). */
+  taskIndex: number;
   task: NextActionTask;
 };
 
@@ -162,7 +164,7 @@ export function extractCalendarTasks(requests: Request[]): CalendarTaskEntry[] {
   for (const request of requests) {
     if (request.status === "closed") continue;
     const content = parseNextAction(request.nextAction);
-    for (const task of content.tasks) {
+    for (const [taskIndex, task] of content.tasks.entries()) {
       if (task.done || !task.dueAt) continue;
       entries.push({
         requestId: request.id,
@@ -173,6 +175,7 @@ export function extractCalendarTasks(requests: Request[]): CalendarTaskEntry[] {
         teamName: request.teamName,
         createdByLabel: request.createdByLabel,
         assigneeUserIds: request.assignees.map((assignee) => assignee.userId),
+        taskIndex,
         task,
       });
     }
@@ -322,6 +325,49 @@ export function orphanChecklistEntriesForRequests(
   return entries.filter((entry) => !requestIds.has(entry.requestId));
 }
 
+function checklistTaskIndex(
+  task: NextActionTask,
+  sourceOrder: NextActionTask[],
+): number {
+  const index = sourceOrder.findIndex((item) => item.id === task.id);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+/** Ordine checklist in Da seguire: scadenza propria, altrimenti ordine in richiesta. */
+export function sortChecklistTasksForFollowUp(
+  tasks: NextActionTask[],
+  sourceOrder: NextActionTask[],
+  bounds = getFollowUpWindowBounds(),
+): NextActionTask[] {
+  const startToday = new Date(bounds.startTodayIso).getTime();
+
+  return [...tasks].sort((a, b) => {
+    const aDue = a.dueAt ? new Date(a.dueAt).getTime() : null;
+    const bDue = b.dueAt ? new Date(b.dueAt).getTime() : null;
+    const aOverdue = aDue !== null && aDue < startToday;
+    const bOverdue = bDue !== null && bDue < startToday;
+
+    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+    if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
+    if (aDue !== null && bDue === null) return -1;
+    if (aDue === null && bDue !== null) return 1;
+    return (
+      checklistTaskIndex(a, sourceOrder) - checklistTaskIndex(b, sourceOrder)
+    );
+  });
+}
+
+export function sortChecklistEntriesForRequest(
+  entries: CalendarTaskEntry[],
+): CalendarTaskEntry[] {
+  return [...entries].sort((a, b) => {
+    const aDue = a.task.dueAt ? new Date(a.task.dueAt).getTime() : null;
+    const bDue = b.task.dueAt ? new Date(b.task.dueAt).getTime() : null;
+    if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
+    return a.taskIndex - b.taskIndex;
+  });
+}
+
 export function sortCalendarTaskEntries(
   entries: CalendarTaskEntry[],
 ): CalendarTaskEntry[] {
@@ -329,6 +375,9 @@ export function sortCalendarTaskEntries(
     const aDue = a.task.dueAt ? new Date(a.task.dueAt).getTime() : 0;
     const bDue = b.task.dueAt ? new Date(b.task.dueAt).getTime() : 0;
     if (aDue !== bDue) return aDue - bDue;
-    return a.task.text.localeCompare(b.task.text, "it");
+    if (a.requestId !== b.requestId) {
+      return a.requestTitle.localeCompare(b.requestTitle, "it");
+    }
+    return a.taskIndex - b.taskIndex;
   });
 }

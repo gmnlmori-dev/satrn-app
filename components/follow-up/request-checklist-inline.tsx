@@ -3,30 +3,13 @@
 import { useState, useTransition } from "react";
 import { toggleNextActionTask } from "@/lib/actions/toggle-next-action-task";
 import { formatDateTime } from "@/lib/date";
-import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import {
   isCalendarTaskOverdue,
   parseNextAction,
+  sortChecklistTasksForFollowUp,
   type NextActionTask,
 } from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
-
-function sortOpenChecklistTasks(tasks: NextActionTask[]): NextActionTask[] {
-  const startToday = new Date(getFollowUpWindowBounds().startTodayIso).getTime();
-
-  return [...tasks].sort((a, b) => {
-    const aDue = a.dueAt ? new Date(a.dueAt).getTime() : null;
-    const bDue = b.dueAt ? new Date(b.dueAt).getTime() : null;
-    const aOverdue = aDue !== null && aDue < startToday;
-    const bOverdue = bDue !== null && bDue < startToday;
-
-    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
-    if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
-    if (aDue !== null && bDue === null) return -1;
-    if (aDue === null && bDue !== null) return 1;
-    return a.text.localeCompare(b.text, "it");
-  });
-}
 
 export function RequestChecklistInline({
   requestId,
@@ -41,8 +24,10 @@ export function RequestChecklistInline({
 }) {
   const [pending, startTransition] = useTransition();
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
-  const openTasks = sortOpenChecklistTasks(
-    parseNextAction(nextAction).tasks.filter((task) => task.text.trim() && !task.done),
+  const content = parseNextAction(nextAction);
+  const openTasks = sortChecklistTasksForFollowUp(
+    content.tasks.filter((task) => task.text.trim() && !task.done),
+    content.tasks,
   );
 
   if (openTasks.length === 0) return null;
