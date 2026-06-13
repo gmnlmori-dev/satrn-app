@@ -658,8 +658,8 @@ function QueuePanel({
   const requestsColumnEmpty = !hasRequests && !hasChecklists;
 
   return (
-    <div className="grid grid-cols-1 divide-y divide-line-default lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-      <section className="flex min-w-0 flex-col">
+    <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-2 lg:gap-6">
+      <section className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-line-default">
         <FollowUpColumnHeader title="Richieste" count={requests.length} />
         {hasRequests ? (
           <RequestBlock requests={requests} accent={requestAccent} />
@@ -679,7 +679,7 @@ function QueuePanel({
         ) : null}
       </section>
 
-      <section className="flex min-w-0 flex-col">
+      <section className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-line-default">
         <FollowUpColumnHeader title="Task libere" count={tasks.length} />
         {hasTasks ? (
           <StandaloneTaskBlock tasks={tasks} compact />
