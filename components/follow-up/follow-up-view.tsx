@@ -48,6 +48,7 @@ import {
 } from "@/lib/table-ui";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { uiCard } from "@/lib/surfaces";
+import { uiSectionTitle } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestStatus } from "@/types/request";
 
@@ -611,34 +612,44 @@ function countQueueItems(
   return requests.length + tasks.length + orphanChecklists.length;
 }
 
-function FollowUpQueueSection({
-  title,
-  count,
-  showHeader,
-  isFirst,
-  children,
-}: {
-  title: string;
-  count: number;
-  showHeader: boolean;
-  isFirst: boolean;
-  children: ReactNode;
-}) {
+function FollowUpCountBadge({ count }: { count: number }) {
   return (
-    <section className={cn(!isFirst && "border-t-2 border-line-default")}>
-      {showHeader ? (
-        <div className="flex items-center justify-between gap-3 border-b border-line-default bg-elevated/50 px-4 py-3 sm:px-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-fg-secondary">
-            {title}
-          </h3>
-          <span className="shrink-0 rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-medium tabular-nums text-fg-tertiary ring-1 ring-inset ring-line-default">
-            {count}
-          </span>
-        </div>
-      ) : null}
-      {children}
-    </section>
+    <span
+      className={cn(
+        "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums",
+        count > 0
+          ? "bg-accent-muted text-accent"
+          : "bg-surface text-fg-tertiary ring-1 ring-inset ring-line-default",
+      )}
+    >
+      {count}
+    </span>
   );
+}
+
+function FollowUpColumnHeader({ title, count }: { title: string; count: number }) {
+  return (
+    <header className="flex items-center gap-3 border-b border-line-default bg-elevated/70 px-4 py-3.5 sm:px-5">
+      <span className="h-4 w-1 shrink-0 rounded-full bg-accent" aria-hidden />
+      <h3 className={cn(uiSectionTitle, "min-w-0 flex-1")}>{title}</h3>
+      <FollowUpCountBadge count={count} />
+    </header>
+  );
+}
+
+function FollowUpSubSectionHeader({ title, count }: { title: string; count: number }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-line-default/70 bg-surface px-4 py-2.5 sm:px-5">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-fg-secondary">
+        {title}
+      </h4>
+      <FollowUpCountBadge count={count} />
+    </div>
+  );
+}
+
+function FollowUpColumnEmpty({ hint }: { hint: string }) {
+  return <p className="px-4 py-10 text-center text-sm text-fg-tertiary sm:px-5">{hint}</p>;
 }
 
 function QueuePanel({
@@ -668,65 +679,38 @@ function QueuePanel({
   const hasRequests = requests.length > 0;
   const hasChecklists = orphanChecklists.length > 0;
   const hasTasks = tasks.length > 0;
-  const sectionCount = [hasRequests, hasChecklists, hasTasks].filter(Boolean).length;
-  const showSectionHeader = (variant: "requests" | "checklist" | "tasks") =>
-    sectionCount > 1 || variant !== "requests";
-
-  const sections: {
-    key: string;
-    title: string;
-    count: number;
-    variant: "requests" | "checklist" | "tasks";
-    content: ReactNode;
-  }[] = [];
-
-  if (hasRequests) {
-    sections.push({
-      key: "requests",
-      title: "Richieste",
-      count: requests.length,
-      variant: "requests",
-      content: (
-        <RequestBlock
-          requests={requests}
-          accent={requestAccent}
-          sectioned={showSectionHeader("requests")}
-        />
-      ),
-    });
-  }
-  if (hasChecklists) {
-    sections.push({
-      key: "checklist",
-      title: "Checklist richieste",
-      count: orphanChecklists.length,
-      variant: "checklist",
-      content: <FollowUpChecklistBlock entries={orphanChecklists} />,
-    });
-  }
-  if (hasTasks) {
-    sections.push({
-      key: "tasks",
-      title: "Task libere",
-      count: tasks.length,
-      variant: "tasks",
-      content: <StandaloneTaskBlock tasks={tasks} compact />,
-    });
-  }
+  const requestsColumnEmpty = !hasRequests && !hasChecklists;
 
   return (
-    <div>
-      {sections.map((section, index) => (
-        <FollowUpQueueSection
-          key={section.key}
-          title={section.title}
-          count={section.count}
-          showHeader={showSectionHeader(section.variant)}
-          isFirst={index === 0}
-        >
-          {section.content}
-        </FollowUpQueueSection>
-      ))}
+    <div className="grid grid-cols-1 divide-y divide-line-default lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+      <section className="flex min-w-0 flex-col">
+        <FollowUpColumnHeader title="Richieste" count={requests.length} />
+        {hasRequests ? (
+          <RequestBlock requests={requests} accent={requestAccent} sectioned={false} />
+        ) : null}
+        {hasChecklists ? (
+          <>
+            {hasRequests ? <div className="border-t border-line-default" /> : null}
+            <FollowUpSubSectionHeader
+              title="Checklist richieste"
+              count={orphanChecklists.length}
+            />
+            <FollowUpChecklistBlock entries={orphanChecklists} />
+          </>
+        ) : null}
+        {requestsColumnEmpty ? (
+          <FollowUpColumnEmpty hint="Nessuna richiesta in questa finestra." />
+        ) : null}
+      </section>
+
+      <section className="flex min-w-0 flex-col">
+        <FollowUpColumnHeader title="Task libere" count={tasks.length} />
+        {hasTasks ? (
+          <StandaloneTaskBlock tasks={tasks} compact />
+        ) : (
+          <FollowUpColumnEmpty hint="Nessuna task libera in questa finestra." />
+        )}
+      </section>
     </div>
   );
 }
