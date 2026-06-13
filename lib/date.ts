@@ -1,3 +1,6 @@
+/** Fuso orario di riferimento per scadenze solo-data parse lato server. */
+export const APP_TIMEZONE = "Europe/Rome";
+
 const itDate = new Intl.DateTimeFormat("it-IT", {
   day: "2-digit",
   month: "short",
@@ -72,16 +75,102 @@ export function todayDateInputValue(ref: Date = new Date()): string {
   return toDateKey(ref);
 }
 
-/**
- * Combina data e ora opzionale (locale). Solo data → fine giornata (23:59).
- */
-export function endOfLocalDayFromDateInput(date: string): string | null {
+function zonedDateTimeParts(
+  date: Date,
+  timeZone: string,
+): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+} {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts: Record<string, string> = {};
+  for (const part of dtf.formatToParts(date)) {
+    if (part.type !== "literal") parts[part.type] = part.value;
+  }
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour === "24" ? "0" : parts.hour),
+    minute: Number(parts.minute),
+    second: Number(parts.second),
+  };
+}
+
+/** Istante UTC per data/ora “a parete” in un fuso IANA (es. solo-data → 23:59). */
+export function zonedDateTimeToUtcIso(
+  date: string,
+  time: string,
+  timeZone: string = APP_TIMEZONE,
+): string | null {
+  const d = date.trim();
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+
+  const [y, m, day] = d.split("-").map(Number);
+  let hour = 23;
+  let minute = 59;
+  let second = 0;
+
+  const t = time.trim();
+  if (t) {
+    if (!/^\d{2}:\d{2}$/.test(t)) return null;
+    [hour, minute] = t.split(":").map(Number);
+    second = 0;
+  }
+
+  let utcMs = Date.UTC(y, m - 1, day, hour, minute, second);
+  for (let i = 0; i < 4; i++) {
+    const parts = zonedDateTimeParts(new Date(utcMs), timeZone);
+    const desiredMs = Date.UTC(y, m - 1, day, hour, minute, second);
+    const actualMs = Date.UTC(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+    );
+    const diff = desiredMs - actualMs;
+    if (diff === 0) break;
+    utcMs += diff;
+  }
+
+  const result = new Date(utcMs);
+  if (Number.isNaN(result.getTime())) return null;
+  return result.toISOString();
+}
+
+function endOfLocalDayFromDateInputInRuntimeTimezone(date: string): string | null {
   const d = date.trim();
   if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
   const [y, m, day] = d.split("-").map(Number);
   const end = new Date(y, m - 1, day, 23, 59, 0, 0);
   if (Number.isNaN(end.getTime())) return null;
   return end.toISOString();
+}
+
+/**
+ * Combina data e ora opzionale (locale). Solo data → fine giornata (23:59).
+ * Lato server usa `APP_TIMEZONE` (Vercel è UTC e altrimenti sposterebbe la scadenza).
+ */
+export function endOfLocalDayFromDateInput(date: string): string | null {
+  if (typeof window === "undefined") {
+    return zonedDateTimeToUtcIso(date, "", APP_TIMEZONE);
+  }
+  return endOfLocalDayFromDateInputInRuntimeTimezone(date);
 }
 
 export function fromDateAndTimeInputs(
@@ -93,6 +182,10 @@ export function fromDateAndTimeInputs(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
 
   const t = time.trim();
+  if (typeof window === "undefined") {
+    return zonedDateTimeToUtcIso(d, t, APP_TIMEZONE);
+  }
+
   if (t) {
     if (!/^\d{2}:\d{2}$/.test(t)) return null;
     const local = new Date(`${d}T${t}`);
@@ -100,13 +193,17 @@ export function fromDateAndTimeInputs(
     return local.toISOString();
   }
 
-  return endOfLocalDayFromDateInput(d);
+  return endOfLocalDayFromDateInputInRuntimeTimezone(d);
 }
 
 /** True se l'ISO cade alle 23:59 locali (scadenza solo-data). */
 export function isEndOfLocalDayIso(iso: string): boolean {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return false;
+  if (typeof window === "undefined") {
+    const parts = zonedDateTimeParts(d, APP_TIMEZONE);
+    return parts.hour === 23 && parts.minute === 59 && parts.second === 0;
+  }
   return d.getHours() === 23 && d.getMinutes() === 59;
 }
 

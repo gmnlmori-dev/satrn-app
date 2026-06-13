@@ -60,6 +60,9 @@ export function TaskEditForm({
     const fd = new FormData(form);
     fd.set("nextActionAtDate", dueDate);
     fd.set("nextActionAtTime", dueTime);
+    const dueIso = fromDateAndTimeInputs(dueDate, dueTime);
+    if (dueIso) fd.set("nextActionAtIso", dueIso);
+    else fd.delete("nextActionAtIso");
 
     startTransition(async () => {
       const updateResult = await updateTask(task.id, fd);

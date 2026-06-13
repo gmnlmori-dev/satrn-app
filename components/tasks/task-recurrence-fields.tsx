@@ -245,6 +245,9 @@ export function TaskScheduleFields({
         value={repeatEnabled && hasDueDate ? "1" : "0"}
       />
       <input type="hidden" name="recurrenceJson" value={serializedRule} readOnly />
+      {dueIso ? (
+        <input type="hidden" name="nextActionAtIso" value={dueIso} readOnly />
+      ) : null}
 
       {repeatEnabled && hasDueDate ? (
         <div className="mt-4 space-y-4 border-t border-line-default/70 pt-4">

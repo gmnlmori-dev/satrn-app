@@ -6,6 +6,7 @@ import { CreateRequestAssigneeSelect } from "@/components/requests/create-reques
 import { TaskScheduleFields } from "@/components/tasks/task-recurrence-fields";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
 import { createTask } from "@/lib/actions/create-task";
+import { fromDateAndTimeInputs } from "@/lib/date";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiControl } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
@@ -36,6 +37,9 @@ export function NewTaskForm({
         const fd = new FormData(e.currentTarget);
         fd.set("nextActionAtDate", dueDate);
         fd.set("nextActionAtTime", dueTime);
+        const dueIso = fromDateAndTimeInputs(dueDate, dueTime);
+        if (dueIso) fd.set("nextActionAtIso", dueIso);
+        else fd.delete("nextActionAtIso");
         startTransition(async () => {
           const result = await createTask(fd);
           if (!result.ok) {

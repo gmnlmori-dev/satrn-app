@@ -149,7 +149,7 @@ export function nextActionDeadlineDraftEquals(
   date: string,
   time: string,
 ): boolean {
-  return (
-    toDateInputValue(iso) === date && toTimeInputValue(iso) === time
-  );
+  if (!iso) return !date && !time;
+  const draft = nextActionDeadlineDraftFromIso(iso);
+  return draft.date === date && draft.time === time;
 }
