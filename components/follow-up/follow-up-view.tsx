@@ -127,17 +127,9 @@ function tabFromHash(hash: string): FollowUpTab | null {
   return HASH_TO_TAB[id] ?? null;
 }
 
-function defaultFollowUpTab(
-  overdue: number,
-  today: number,
-  upcoming: number,
-  inbox: number,
-): FollowUpTab {
+function defaultFollowUpTab(overdue: number): FollowUpTab {
   if (overdue > 0) return "overdue";
-  if (today > 0) return "today";
-  if (upcoming > 0) return "upcoming";
-  if (inbox > 0) return "inbox";
-  return "overdue";
+  return "today";
 }
 
 function tabLabel(label: string, count: number) {
@@ -649,7 +641,11 @@ function QueuePanel({
   );
   const total = countQueueItems(requests, tasks, checklistEntries);
   if (total === 0) {
-    return <EmptyRow title={emptyTitle} hint={emptyHint} />;
+    return (
+      <div className={cn(uiCard, "overflow-hidden")}>
+        <EmptyRow title={emptyTitle} hint={emptyHint} />
+      </div>
+    );
   }
 
   const hasRequests = requests.length > 0;
@@ -658,8 +654,14 @@ function QueuePanel({
   const requestsColumnEmpty = !hasRequests && !hasChecklists;
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-2 lg:gap-6">
-      <section className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-line-default">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+      <section
+        className={cn(
+          uiCard,
+          "flex min-w-0 flex-col overflow-hidden",
+          requestAccent === "danger" && "border-l-4 border-l-danger",
+        )}
+      >
         <FollowUpColumnHeader title="Richieste" count={requests.length} />
         {hasRequests ? (
           <RequestBlock requests={requests} accent={requestAccent} />
@@ -679,7 +681,7 @@ function QueuePanel({
         ) : null}
       </section>
 
-      <section className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-line-default">
+      <section className={cn(uiCard, "flex min-w-0 flex-col overflow-hidden")}>
         <FollowUpColumnHeader title="Task libere" count={tasks.length} />
         {hasTasks ? (
           <StandaloneTaskBlock tasks={tasks} compact />
@@ -729,29 +731,25 @@ export function FollowUpView({
   );
   const inboxCount = inbox.length;
 
-  const [activeTab, setActiveTab] = useState<FollowUpTab>(() => {
-    if (typeof window !== "undefined") {
-      const fromHash = tabFromHash(window.location.hash);
-      if (fromHash) return fromHash;
-    }
-    return defaultFollowUpTab(
-      overdueCount,
-      todayCount,
-      upcomingCount,
-      inboxCount,
-    );
-  });
+  const [activeTab, setActiveTab] = useState<FollowUpTab>(() =>
+    defaultFollowUpTab(overdueCount),
+  );
 
-  const syncTabFromHash = useCallback(() => {
+  const syncTabFromLocation = useCallback(() => {
     const fromHash = tabFromHash(window.location.hash);
-    if (fromHash) setActiveTab(fromHash);
-  }, []);
+    const tab = fromHash ?? defaultFollowUpTab(overdueCount);
+    setActiveTab(tab);
+    if (!fromHash) {
+      const query = search ? `?${search}` : "";
+      window.history.replaceState(null, "", `${pathname}${query}#${TAB_HASH[tab]}`);
+    }
+  }, [overdueCount, pathname, search]);
 
   useEffect(() => {
-    syncTabFromHash();
-    window.addEventListener("hashchange", syncTabFromHash);
-    return () => window.removeEventListener("hashchange", syncTabFromHash);
-  }, [syncTabFromHash]);
+    syncTabFromLocation();
+    window.addEventListener("hashchange", syncTabFromLocation);
+    return () => window.removeEventListener("hashchange", syncTabFromLocation);
+  }, [syncTabFromLocation]);
 
   function selectTab(tab: FollowUpTab) {
     setActiveTab(tab);
@@ -784,16 +782,7 @@ export function FollowUpView({
         ) : null}
       </div>
 
-      <div
-        id={TAB_HASH[activeTab]}
-        className={cn(
-          uiCard,
-          "scroll-mt-24 overflow-hidden",
-          activeTab === "overdue" &&
-            overdueCount > 0 &&
-            "border-l-4 border-l-danger",
-        )}
-      >
+      <div id={TAB_HASH[activeTab]} className="scroll-mt-24">
         {activeTab === "overdue" ? (
           <QueuePanel
             requests={overdue}
@@ -829,12 +818,16 @@ export function FollowUpView({
 
         {activeTab === "inbox" ? (
           inboxCount === 0 ? (
-            <EmptyRow
-              title="Nessun ingresso da triage"
-              hint={`Gli elementi in stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non ancora convertiti, compariranno qui.`}
-            />
+            <div className={cn(uiCard, "overflow-hidden")}>
+              <EmptyRow
+                title="Nessun ingresso da triage"
+                hint={`Gli elementi in stato ${inboxStatusLabel.new} o ${inboxStatusLabel.reviewed}, non ancora convertiti, compariranno qui.`}
+              />
+            </div>
           ) : (
-            <InboxBlock items={inbox} />
+            <div className={cn(uiCard, "overflow-hidden")}>
+              <InboxBlock items={inbox} />
+            </div>
           )
         ) : null}
       </div>
