@@ -19,7 +19,7 @@ import { PriorityBadge } from "@/components/requests/priority-badge";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { updateInboxItemStatus } from "@/lib/actions/update-inbox-status";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
-import { formatDateTime } from "@/lib/date";
+import { formatDateTime, isRequestOverdue } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
 import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
 import { RequestChecklistInline } from "@/components/follow-up/request-checklist-inline";
@@ -273,11 +273,9 @@ function StatusMenuFloating({
 function RequestBlock({
   requests,
   accent,
-  sectioned = false,
 }: {
   requests: Request[];
   accent: "danger" | "default";
-  sectioned?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -385,123 +383,109 @@ function RequestBlock({
           onPick={(s) => void saveRequestStatus(statusMenu.id, s)}
         />
       ) : null}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[56rem] table-fixed border-collapse text-left text-sm">
-          <colgroup>
-            <col className="min-w-0 w-[30%]" />
-            <col className="min-w-0 w-[17%]" />
-            <col className="w-[14%]" />
-            <col className="min-w-0 w-[11%]" />
-            <col className="min-w-0 w-[19%]" />
-            <col className="w-[9%]" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th className={cn(tableHeadCell, !sectioned && "rounded-tl-2xl")}>Richiesta</th>
-              <th className={tableHeadCell}>Azienda</th>
-              <th className={cn(tableHeadCell, "text-right")}>Scadenza</th>
-              <th className={tableHeadCell}>Priorità</th>
-              <th className={tableHeadCell}>Stato</th>
-              <th className={cn(tableHeadCell, !sectioned && "rounded-tr-2xl", "text-right")}>
-                <span className="sr-only">Azioni</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-surface">
-            {requests.map((r) => (
-              <tr
-                key={r.id}
-                className={cn(tableRowInteractive, rowHover, pending && "pointer-events-none opacity-75")}
-                onClick={(e) => rowNavigate(r.id, e)}
+      <ul className="divide-y divide-line-default">
+        {requests.map((r) => {
+          const dueAt = effectiveNextActionAt(r);
+          const overdue = dueAt != null && isRequestOverdue(dueAt, r.status);
+
+          return (
+            <li
+              key={r.id}
+              className={cn(
+                "flex cursor-pointer items-start gap-3 px-4 py-3 sm:px-5",
+                rowHover,
+                pending && "pointer-events-none opacity-75",
+              )}
+              onClick={(e) => rowNavigate(r.id, e)}
+            >
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/app/requests/${r.id}`}
+                  className="sr-only"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Apri dettaglio: {r.title}
+                </Link>
+                <p className="font-medium leading-snug text-fg-primary">{r.title}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {dueAt ? (
+                    <time
+                      className={cn(
+                        "text-xs tabular-nums",
+                        overdue ? "font-medium text-danger" : "text-fg-tertiary",
+                      )}
+                      dateTime={dueAt}
+                    >
+                      {formatDateTime(dueAt)}
+                    </time>
+                  ) : (
+                    <span className="text-xs text-fg-tertiary">Senza scadenza</span>
+                  )}
+                  <PriorityBadge priority={r.priority} />
+                  <StatusBadge status={r.status} />
+                </div>
+                <RequestChecklistInline
+                  requestId={r.id}
+                  nextAction={r.nextAction}
+                  disabled={pending}
+                  onChanged={() => {
+                    pulseTopBar();
+                    refresh();
+                  }}
+                />
+              </div>
+              <div
+                className="flex shrink-0 items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
               >
-                <td className="px-4 py-3.5 align-middle">
-                  <Link
-                    href={`/app/requests/${r.id}`}
-                    className="sr-only"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Apri dettaglio: {r.title}
-                  </Link>
-                  <span className="line-clamp-2 font-medium leading-snug text-fg-primary">
-                    {r.title}
-                  </span>
-                  <RequestChecklistInline
-                    requestId={r.id}
-                    nextAction={r.nextAction}
-                    disabled={pending}
-                    onChanged={() => {
-                      pulseTopBar();
-                      refresh();
-                    }}
-                  />
-                </td>
-                <td className="px-4 py-3.5 align-middle text-fg-secondary">
-                  <span className="line-clamp-2 leading-snug">{r.companyName}</span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3.5 align-middle text-right tabular-nums text-fg-secondary">
-                  {(() => {
-                    const dueAt = effectiveNextActionAt(r);
-                    return dueAt ? formatDateTime(dueAt) : "—";
-                  })()}
-                </td>
-                <td className="px-4 py-3.5 align-middle">
-                  <PriorityBadge priority={r.priority} className="max-w-full truncate" />
-                </td>
-                <td className="px-4 py-3.5 align-middle">
-                  <StatusBadge status={r.status} className="max-w-full truncate" />
-                </td>
-                <td className="px-4 py-3.5 align-middle" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      data-status-trigger={r.id}
-                      title="Cambia stato"
-                      aria-label="Cambia stato"
-                      disabled={pending}
-                      aria-expanded={statusMenu?.id === r.id}
-                      aria-haspopup="listbox"
-                      className={cn(
-                        uiBtnIcon,
-                        statusMenu?.id === r.id && "border-accent/40 bg-accent-subtle text-accent",
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPostpone(null);
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setStatusMenu((m) => (m?.id === r.id ? null : { id: r.id, rect }));
-                      }}
-                    >
-                      <IconAdjustmentsVertical className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      data-postpone-trigger={r.id}
-                      title="Sposta scadenza"
-                      aria-label="Sposta scadenza"
-                      disabled={pending}
-                      aria-expanded={postpone?.request.id === r.id}
-                      className={cn(
-                        uiBtnIcon,
-                        postpone?.request.id === r.id && "border-accent/40 bg-accent-subtle text-accent",
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setStatusMenu(null);
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setPostpone((p) =>
-                          p?.request.id === r.id ? null : { request: r, rect },
-                        );
-                      }}
-                    >
-                      <IconCalendarDays className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                <button
+                  type="button"
+                  data-status-trigger={r.id}
+                  title="Cambia stato"
+                  aria-label="Cambia stato"
+                  disabled={pending}
+                  aria-expanded={statusMenu?.id === r.id}
+                  aria-haspopup="listbox"
+                  className={cn(
+                    uiBtnIcon,
+                    statusMenu?.id === r.id && "border-accent/40 bg-accent-subtle text-accent",
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPostpone(null);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setStatusMenu((m) => (m?.id === r.id ? null : { id: r.id, rect }));
+                  }}
+                >
+                  <IconAdjustmentsVertical className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  data-postpone-trigger={r.id}
+                  title="Sposta scadenza"
+                  aria-label="Sposta scadenza"
+                  disabled={pending}
+                  aria-expanded={postpone?.request.id === r.id}
+                  className={cn(
+                    uiBtnIcon,
+                    postpone?.request.id === r.id && "border-accent/40 bg-accent-subtle text-accent",
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setStatusMenu(null);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setPostpone((p) =>
+                      p?.request.id === r.id ? null : { request: r, rect },
+                    );
+                  }}
+                >
+                  <IconCalendarDays className="h-4 w-4" />
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }
@@ -614,14 +598,7 @@ function countQueueItems(
 
 function FollowUpCountBadge({ count }: { count: number }) {
   return (
-    <span
-      className={cn(
-        "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums",
-        count > 0
-          ? "bg-accent-muted text-accent"
-          : "bg-surface text-fg-tertiary ring-1 ring-inset ring-line-default",
-      )}
-    >
+    <span className="shrink-0 rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium tabular-nums text-fg-tertiary ring-1 ring-inset ring-line-default">
       {count}
     </span>
   );
@@ -629,9 +606,8 @@ function FollowUpCountBadge({ count }: { count: number }) {
 
 function FollowUpColumnHeader({ title, count }: { title: string; count: number }) {
   return (
-    <header className="flex items-center gap-3 border-b border-line-default bg-elevated/70 px-4 py-3.5 sm:px-5">
-      <span className="h-4 w-1 shrink-0 rounded-full bg-accent" aria-hidden />
-      <h3 className={cn(uiSectionTitle, "min-w-0 flex-1")}>{title}</h3>
+    <header className="flex items-center justify-between gap-3 border-b border-line-default bg-elevated/70 px-4 py-3.5 sm:px-5">
+      <h3 className={cn(uiSectionTitle, "min-w-0")}>{title}</h3>
       <FollowUpCountBadge count={count} />
     </header>
   );
@@ -686,7 +662,7 @@ function QueuePanel({
       <section className="flex min-w-0 flex-col">
         <FollowUpColumnHeader title="Richieste" count={requests.length} />
         {hasRequests ? (
-          <RequestBlock requests={requests} accent={requestAccent} sectioned={false} />
+          <RequestBlock requests={requests} accent={requestAccent} />
         ) : null}
         {hasChecklists ? (
           <>
