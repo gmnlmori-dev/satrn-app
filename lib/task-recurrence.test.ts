@@ -7,6 +7,7 @@ import {
   isRecurrenceSeriesEnded,
   parseTaskRecurrence,
   recurrenceSeriesEndedAfterComplete,
+  syncRecurrenceDraftWithDueAt,
   validateTaskRecurrence,
 } from "@/lib/task-recurrence";
 
@@ -122,5 +123,20 @@ describe("formatTaskRecurrenceSummary", () => {
     );
     expect(formatTaskRecurrenceSummary(rule)).toContain("settimana");
     expect(formatTaskRecurrenceSummary(rule)).toContain("mar");
+  });
+});
+
+describe("syncRecurrenceDraftWithDueAt", () => {
+  it("locks monthly day to due date", () => {
+    const synced = syncRecurrenceDraftWithDueAt(
+      {
+        interval: 1,
+        frequency: "monthly",
+        monthlyBy: { mode: "dayOfMonth", day: 5 },
+        end: { type: "never" },
+      },
+      "2026-06-13T09:00:00.000Z",
+    );
+    expect(synced.monthlyBy).toEqual({ mode: "dayOfMonth", day: 13 });
   });
 });

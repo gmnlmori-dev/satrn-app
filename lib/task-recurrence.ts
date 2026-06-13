@@ -5,7 +5,7 @@ import type {
   TaskRecurrenceEnd,
   TaskRecurrenceMonthlyBy,
 } from "@/types/task";
-import { endOfLocalDayFromDateInput, toDateInputValue } from "@/lib/date";
+import { endOfLocalDayFromDateInput, formatDate, toDateInputValue } from "@/lib/date";
 
 const RRULE_WEEKDAYS = [
   RRule.MO,
@@ -39,6 +39,66 @@ export type TaskRecurrenceDraft = Omit<TaskRecurrence, "startAt" | "completedCou
 export function weekdayFromIso(iso: string): number {
   const d = new Date(iso);
   return (d.getDay() + 6) % 7;
+}
+
+export function nthWeekdayFromIso(iso: string): Extract<TaskRecurrenceMonthlyBy, { mode: "nthWeekday" }> {
+  const d = new Date(iso);
+  const weekday = weekdayFromIso(iso);
+  const day = d.getDate();
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+
+  let count = 0;
+  for (let i = 1; i <= day; i++) {
+    const test = new Date(year, month, i);
+    if (weekdayFromIso(test.toISOString()) === weekday) count++;
+  }
+
+  let isLast = true;
+  for (let i = day + 1; i <= lastDay; i++) {
+    const test = new Date(year, month, i);
+    if (weekdayFromIso(test.toISOString()) === weekday) {
+      isLast = false;
+      break;
+    }
+  }
+
+  return {
+    mode: "nthWeekday",
+    nth: isLast ? -1 : (Math.min(count, 4) as 1 | 2 | 3 | 4),
+    weekday,
+  };
+}
+
+/** Allinea pattern ricorrente alla prima scadenza (unica fonte di verità). */
+export function syncRecurrenceDraftWithDueAt(
+  draft: TaskRecurrenceDraft,
+  dueIso: string,
+): TaskRecurrenceDraft {
+  const anchorWeekday = weekdayFromIso(dueIso);
+  const dayOfMonth = new Date(dueIso).getDate();
+
+  if (draft.frequency === "weekly") {
+    const weekdays = new Set(draft.weekdays ?? [anchorWeekday]);
+    weekdays.add(anchorWeekday);
+    return {
+      ...draft,
+      weekdays: [...weekdays].sort((a, b) => a - b),
+    };
+  }
+
+  if (draft.frequency === "monthly") {
+    if (!draft.monthlyBy || draft.monthlyBy.mode === "dayOfMonth") {
+      return {
+        ...draft,
+        monthlyBy: { mode: "dayOfMonth", day: dayOfMonth },
+      };
+    }
+    return draft;
+  }
+
+  return draft;
 }
 
 export function defaultRecurrenceDraft(
@@ -196,6 +256,12 @@ export function validateTaskRecurrence(
     if (Number.isNaN(untilMs)) {
       return "La data di fine non è valida.";
     }
+    if (dueAt) {
+      const dueMs = new Date(dueAt).getTime();
+      if (!Number.isNaN(dueMs) && untilMs < dueMs) {
+        return "La fine ripetizione deve essere uguale o successiva alla prima scadenza.";
+      }
+    }
   }
   return null;
 }
@@ -285,20 +351,21 @@ export function buildRecurrenceForSave(
   dueAt: string,
   completedCount = 0,
 ): TaskRecurrence {
-  const base = defaultRecurrenceDraft(dueAt, draft.frequency);
+  const synced = syncRecurrenceDraftWithDueAt(draft, dueAt);
+  const base = defaultRecurrenceDraft(dueAt, synced.frequency);
   return {
-    interval: draft.interval,
-    frequency: draft.frequency,
+    interval: synced.interval,
+    frequency: synced.frequency,
     weekdays:
-      draft.frequency === "weekly"
-        ? (draft.weekdays?.length ? draft.weekdays : base.weekdays)
+      synced.frequency === "weekly"
+        ? (synced.weekdays?.length ? synced.weekdays : base.weekdays)
         : undefined,
     monthlyBy:
-      draft.frequency === "monthly"
-        ? (draft.monthlyBy ?? base.monthlyBy)
+      synced.frequency === "monthly"
+        ? (synced.monthlyBy ?? base.monthlyBy)
         : undefined,
     startAt: dueAt,
-    end: draft.end,
+    end: synced.end,
     completedCount,
   };
 }
@@ -332,6 +399,12 @@ export function recurrenceRulesEqual(a: TaskRecurrence, b: TaskRecurrence): bool
 }
 
 export function formatTaskRecurrenceSummary(rule: TaskRecurrence): string {
+  return formatTaskRecurrenceCadence(rule);
+}
+
+function formatTaskRecurrenceCadence(
+  rule: TaskRecurrence | TaskRecurrenceDraft,
+): string {
   const unit =
     rule.interval === 1
       ? FREQUENCY_LABELS[rule.frequency]
@@ -341,7 +414,7 @@ export function formatTaskRecurrenceSummary(rule: TaskRecurrence): string {
 
   if (rule.frequency === "weekly" && rule.weekdays?.length) {
     const days = rule.weekdays.map((d) => WEEKDAY_SHORT[d]).join(", ");
-    cadence += ` · ${days}`;
+    cadence += ` (${days})`;
   }
 
   if (rule.frequency === "monthly" && rule.monthlyBy) {
@@ -353,11 +426,22 @@ export function formatTaskRecurrenceSummary(rule: TaskRecurrence): string {
   }
 
   if (rule.end.type === "until") {
-    cadence += ` · fino al ${toDateInputValue(rule.end.until).split("-").reverse().join("/")}`;
+    cadence += ` · fino al ${formatDate(rule.end.until)}`;
   } else if (rule.end.type === "count") {
     cadence += ` · ${rule.end.count} volte`;
   }
 
+  return cadence;
+}
+
+export function formatTaskSchedulePreview(
+  dueIso: string | null,
+  rule: TaskRecurrence | TaskRecurrenceDraft,
+): string {
+  const cadence = formatTaskRecurrenceCadence(rule);
+  if (dueIso) {
+    return `Prima scadenza ${formatDate(dueIso)} · ${cadence}`;
+  }
   return cadence;
 }
 

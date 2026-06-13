@@ -4,11 +4,8 @@ import { useId, useState, useTransition } from "react";
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
-import {
-  NextActionDeadlineFields,
-  nextActionDeadlineDraftFromIso,
-} from "@/components/requests/next-action-deadline-fields";
-import { TaskRecurrenceFields } from "@/components/tasks/task-recurrence-fields";
+import { nextActionDeadlineDraftFromIso } from "@/components/requests/next-action-deadline-fields";
+import { TaskScheduleFields } from "@/components/tasks/task-recurrence-fields";
 import { deleteTask } from "@/lib/actions/delete-task";
 import { updateTask } from "@/lib/actions/update-task";
 import { updateTaskAssignment } from "@/lib/actions/update-task-assignment";
@@ -131,21 +128,12 @@ export function TaskEditForm({
         />
       </div>
 
-      <NextActionDeadlineFields
+      <TaskScheduleFields
         idPrefix={idPrefix}
-        disabled={pending}
-        hideHeading={false}
-        hideHint
-        date={dueDate}
-        time={dueTime}
-        onDateChange={setDueDate}
-        onTimeChange={setDueTime}
-      />
-
-      <TaskRecurrenceFields
-        idPrefix={`${idPrefix}-recurrence`}
         dueDate={dueDate}
         dueTime={dueTime}
+        onDueDateChange={setDueDate}
+        onDueTimeChange={setDueTime}
         disabled={pending}
         initialRecurrence={task.recurrence}
       />

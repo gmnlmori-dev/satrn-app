@@ -1,25 +1,34 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fromDateAndTimeInputs } from "@/lib/date";
+import {
+  fromDateAndTimeInputs,
+  todayDateInputValue,
+} from "@/lib/date";
 import { cn } from "@/lib/cn";
 import {
   buildRecurrenceForSave,
   defaultRecurrenceDraft,
   endOfLocalDayIsoFromDateInput,
-  formatTaskRecurrenceSummary,
+  formatTaskSchedulePreview,
+  nthWeekdayFromIso,
+  syncRecurrenceDraftWithDueAt,
   type TaskRecurrenceDraft,
+  weekdayFromIso,
   WEEKDAY_SHORT,
 } from "@/lib/task-recurrence";
-import { uiControl, uiDateControl } from "@/lib/ui-classes";
-import { uiCaption, uiFormLabel } from "@/lib/typography";
+import { uiBtnSecondary, uiControl, uiDateControl } from "@/lib/ui-classes";
+import { uiCaption, uiFilterLabel, uiFormLabel } from "@/lib/typography";
 import type { TaskRecurrence } from "@/types/task";
 
-const FREQUENCY_OPTIONS: { value: TaskRecurrence["frequency"]; label: string }[] = [
-  { value: "daily", label: "giorno" },
-  { value: "weekly", label: "settimana" },
-  { value: "monthly", label: "mese" },
-  { value: "yearly", label: "anno" },
+const FREQUENCY_OPTIONS: {
+  value: TaskRecurrence["frequency"];
+  label: string;
+}[] = [
+  { value: "daily", label: "Giornaliera" },
+  { value: "weekly", label: "Settimanale" },
+  { value: "monthly", label: "Mensile" },
+  { value: "yearly", label: "Annuale" },
 ];
 
 const WEEKDAY_LABELS = ["L", "M", "M", "G", "V", "S", "D"] as const;
@@ -36,23 +45,28 @@ function draftFromRecurrence(rule: TaskRecurrence): TaskRecurrenceDraft {
   };
 }
 
-export function TaskRecurrenceFields({
+export function TaskScheduleFields({
   idPrefix,
   dueDate,
   dueTime,
+  onDueDateChange,
+  onDueTimeChange,
   disabled = false,
   initialRecurrence = null,
 }: {
   idPrefix: string;
   dueDate: string;
   dueTime: string;
+  onDueDateChange: (value: string) => void;
+  onDueTimeChange: (value: string) => void;
   disabled?: boolean;
   initialRecurrence?: TaskRecurrence | null;
 }) {
   const dueIso = fromDateAndTimeInputs(dueDate, dueTime);
   const hasDueDate = Boolean(dueDate.trim());
+  const anchorWeekday = dueIso != null ? weekdayFromIso(dueIso) : null;
 
-  const [enabled, setEnabled] = useState(Boolean(initialRecurrence));
+  const [repeatEnabled, setRepeatEnabled] = useState(Boolean(initialRecurrence));
   const [draft, setDraft] = useState<TaskRecurrenceDraft>(() =>
     initialRecurrence
       ? draftFromRecurrence(initialRecurrence)
@@ -75,17 +89,9 @@ export function TaskRecurrenceFields({
   });
 
   useEffect(() => {
-    if (!enabled || !dueIso) return;
-    setDraft((prev) => {
-      if (prev.frequency === "weekly" && (!prev.weekdays || prev.weekdays.length === 0)) {
-        return defaultRecurrenceDraft(dueIso, "weekly");
-      }
-      if (prev.frequency === "monthly" && !prev.monthlyBy) {
-        return defaultRecurrenceDraft(dueIso, "monthly");
-      }
-      return prev;
-    });
-  }, [dueIso, enabled]);
+    if (!repeatEnabled || !dueIso) return;
+    setDraft((prev) => syncRecurrenceDraftWithDueAt(prev, dueIso));
+  }, [dueIso, repeatEnabled]);
 
   const endValue = useMemo((): TaskRecurrence["end"] => {
     if (endMode === "until") {
@@ -101,74 +107,152 @@ export function TaskRecurrenceFields({
     return { type: "never" };
   }, [dueDate, endMode, occurrenceCount, untilDate]);
 
-  const draftWithEnd: TaskRecurrenceDraft = useMemo(
-    () => ({ ...draft, end: endValue }),
-    [draft, endValue],
+  const draftWithEnd = useMemo(
+    () =>
+      dueIso
+        ? syncRecurrenceDraftWithDueAt({ ...draft, end: endValue }, dueIso)
+        : { ...draft, end: endValue },
+    [draft, dueIso, endValue],
   );
 
   const serializedRule = useMemo(() => {
-    if (!enabled || !dueIso) return "";
+    if (!repeatEnabled || !dueIso) return "";
     return JSON.stringify(buildRecurrenceForSave(draftWithEnd, dueIso, 0));
-  }, [draftWithEnd, dueIso, enabled]);
+  }, [draftWithEnd, dueIso, repeatEnabled]);
 
-  const summary = useMemo(() => {
-    if (!enabled || !dueIso) return null;
-    return formatTaskRecurrenceSummary(buildRecurrenceForSave(draftWithEnd, dueIso, 0));
-  }, [draftWithEnd, dueIso, enabled]);
+  const preview = useMemo(() => {
+    if (!repeatEnabled || !dueIso) return null;
+    return formatTaskSchedulePreview(dueIso, draftWithEnd);
+  }, [draftWithEnd, dueIso, repeatEnabled]);
+
+  function handleRepeatToggle(checked: boolean) {
+    setRepeatEnabled(checked);
+    if (checked && !dueDate.trim()) {
+      onDueDateChange(todayDateInputValue());
+    }
+    if (checked && dueIso) {
+      setDraft(defaultRecurrenceDraft(dueIso, draft.frequency));
+    }
+  }
 
   function setFrequency(frequency: TaskRecurrence["frequency"]) {
     if (!dueIso) return;
-    const base = defaultRecurrenceDraft(dueIso, frequency);
-    setDraft((prev) => ({
-      ...base,
-      interval: prev.interval,
-      end: prev.end,
-    }));
+    setDraft((prev) =>
+      syncRecurrenceDraftWithDueAt(
+        {
+          ...defaultRecurrenceDraft(dueIso, frequency),
+          interval: prev.interval,
+          end: prev.end,
+        },
+        dueIso,
+      ),
+    );
   }
 
   function toggleWeekday(day: number) {
+    if (anchorWeekday != null && day === anchorWeekday) return;
+    if (!dueIso) return;
     setDraft((prev) => {
       const current = prev.weekdays ?? [];
       const next = current.includes(day)
         ? current.filter((value) => value !== day)
         : [...current, day].sort((a, b) => a - b);
-      return { ...prev, weekdays: next.length > 0 ? next : [day] };
+      return syncRecurrenceDraftWithDueAt(
+        { ...prev, weekdays: next.length > 0 ? next : current },
+        dueIso,
+      );
     });
   }
 
+  const control = cn(uiDateControl, "py-2.5 text-[15px]");
+
   return (
     <div className="rounded-lg border border-line-default bg-elevated/40 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <span className={uiFormLabel}>Ripeti</span>
-          <p className={cn(uiCaption, "mt-1")}>
-            {hasDueDate
-              ? "Alla chiusura la task si riprogramma automaticamente."
-              : "Imposta una scadenza per abilitare la ripetizione."}
-          </p>
+      <div>
+        <span className={uiFormLabel}>
+          {repeatEnabled ? "Prima scadenza" : "Scadenza"}{" "}
+          <span className="text-sm font-normal text-fg-tertiary">
+            {repeatEnabled ? "(obbligatoria)" : "(opzionale)"}
+          </span>
+        </span>
+        <p className={cn(uiCaption, "mt-1")}>
+          {repeatEnabled
+            ? "Data e ora della prossima occorrenza; le ripetizioni partono da qui."
+            : "Solo data: fine giornata. L'ora è facoltativa."}
+        </p>
+        <div className="mt-2 flex flex-wrap items-end gap-2">
+          <div className="min-w-0 flex-1 sm:max-w-[12rem]">
+            <label htmlFor={`${idPrefix}-date`} className={uiFilterLabel}>
+              Data
+            </label>
+            <input
+              id={`${idPrefix}-date`}
+              type="date"
+              disabled={disabled}
+              value={dueDate}
+              onChange={(e) => onDueDateChange(e.target.value)}
+              className={cn(control, "mt-1")}
+            />
+          </div>
+          <div className="min-w-0 flex-1 sm:max-w-[9rem]">
+            <label htmlFor={`${idPrefix}-time`} className={uiFilterLabel}>
+              Ora
+            </label>
+            <input
+              id={`${idPrefix}-time`}
+              type="time"
+              disabled={disabled}
+              value={dueTime}
+              onChange={(e) => onDueTimeChange(e.target.value)}
+              className={cn(control, "mt-1")}
+            />
+          </div>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              onDueDateChange(todayDateInputValue());
+              onDueTimeChange("");
+            }}
+            className={cn(uiBtnSecondary, "mb-0.5 shrink-0 px-2.5 py-2 text-xs")}
+          >
+            Oggi
+          </button>
         </div>
-        <label className="inline-flex shrink-0 items-center gap-2">
+      </div>
+
+      <div className="mt-4 border-t border-line-default/70 pt-4">
+        <label className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
-            checked={enabled}
-            disabled={disabled || !hasDueDate}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="h-4 w-4 rounded border-line-default accent-accent"
+            checked={repeatEnabled}
+            disabled={disabled}
+            onChange={(e) => handleRepeatToggle(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-line-default accent-accent"
           />
-          <span className="sr-only">Abilita ripetizione</span>
+          <span>
+            <span className="block text-sm font-medium text-fg-primary">Ripeti task</span>
+            <span className={cn(uiCaption, "mt-0.5 block")}>
+              Al completamento si crea automaticamente la prossima scadenza.
+            </span>
+          </span>
         </label>
       </div>
 
-      <input type="hidden" name="recurrenceEnabled" value={enabled && hasDueDate ? "1" : "0"} />
+      <input
+        type="hidden"
+        name="recurrenceEnabled"
+        value={repeatEnabled && hasDueDate ? "1" : "0"}
+      />
       <input type="hidden" name="recurrenceJson" value={serializedRule} readOnly />
 
-      {enabled && hasDueDate ? (
-        <div className="mt-4 space-y-4">
+      {repeatEnabled && hasDueDate ? (
+        <div className="mt-4 space-y-4 border-t border-line-default/70 pt-4">
           <div>
-            <span className={uiFormLabel}>Si ripete ogni</span>
+            <span className={uiFormLabel}>Frequenza</span>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-fg-secondary">Ogni</span>
               <input
-                id={`${idPrefix}-recurrence-interval`}
                 type="number"
                 min={1}
                 max={999}
@@ -180,16 +264,15 @@ export function TaskRecurrenceFields({
                     interval: Math.max(1, Number(e.target.value) || 1),
                   }))
                 }
-                className={cn(uiControl, "w-20 py-2 text-center tabular-nums")}
+                className={cn(uiControl, "w-16 py-2 text-center tabular-nums")}
               />
               <select
-                id={`${idPrefix}-recurrence-frequency`}
                 value={draft.frequency}
                 disabled={disabled}
                 onChange={(e) =>
                   setFrequency(e.target.value as TaskRecurrence["frequency"])
                 }
-                className={cn(uiControl, "min-w-[9rem] py-2")}
+                className={cn(uiControl, "min-w-[10rem] py-2")}
               >
                 {FREQUENCY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -200,22 +283,28 @@ export function TaskRecurrenceFields({
             </div>
           </div>
 
-          {draft.frequency === "weekly" ? (
+          {draft.frequency === "weekly" && anchorWeekday != null ? (
             <div>
-              <span className={uiFormLabel}>Giorni</span>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <span className={uiFormLabel}>Giorni della settimana</span>
+              <p className={cn(uiCaption, "mt-1")}>
+                Il giorno della prima scadenza ({WEEKDAY_SHORT[anchorWeekday]}) resta
+                sempre incluso.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 {WEEKDAY_LABELS.map((label, index) => {
                   const active = draft.weekdays?.includes(index) ?? false;
+                  const locked = index === anchorWeekday;
                   return (
                     <button
                       key={index}
                       type="button"
-                      disabled={disabled}
+                      disabled={disabled || locked}
                       aria-pressed={active}
                       title={WEEKDAY_SHORT[index]}
                       onClick={() => toggleWeekday(index)}
                       className={cn(
                         "flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold",
+                        locked && "cursor-default opacity-90",
                         active
                           ? "border-accent/40 bg-accent-muted text-accent"
                           : "border-line-default bg-surface text-fg-secondary hover:bg-elevated",
@@ -229,55 +318,40 @@ export function TaskRecurrenceFields({
             </div>
           ) : null}
 
-          {draft.frequency === "monthly" ? (
-            <div className="space-y-2">
-              <span className={uiFormLabel}>Ogni mese</span>
-              <div className="mt-1.5 space-y-2">
-                <label className="flex items-center gap-2 text-sm text-fg-secondary">
+          {draft.frequency === "monthly" && dueIso ? (
+            <div>
+              <span className={uiFormLabel}>Ripetizione mensile</span>
+              <div className="mt-2 space-y-2">
+                <label className="flex items-start gap-2 text-sm text-fg-secondary">
                   <input
                     type="radio"
                     name={`${idPrefix}-monthly-mode`}
                     checked={draft.monthlyBy?.mode !== "nthWeekday"}
                     disabled={disabled}
                     onChange={() =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        monthlyBy: {
-                          mode: "dayOfMonth",
-                          day: dueIso ? new Date(dueIso).getDate() : 1,
-                        },
-                      }))
+                      setDraft((prev) =>
+                        syncRecurrenceDraftWithDueAt(
+                          {
+                            ...prev,
+                            monthlyBy: {
+                              mode: "dayOfMonth",
+                              day: new Date(dueIso).getDate(),
+                            },
+                          },
+                          dueIso,
+                        ),
+                      )
                     }
+                    className="mt-1"
                   />
-                  <span>Giorno</span>
-                  <select
-                    value={
-                      draft.monthlyBy?.mode === "dayOfMonth"
-                        ? draft.monthlyBy.day
-                        : dueIso
-                          ? new Date(dueIso).getDate()
-                          : 1
-                    }
-                    disabled={disabled || draft.monthlyBy?.mode === "nthWeekday"}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        monthlyBy: {
-                          mode: "dayOfMonth",
-                          day: Number(e.target.value),
-                        },
-                      }))
-                    }
-                    className={cn(uiControl, "w-20 py-1.5")}
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                      <option key={day} value={day}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
+                  <span>
+                    Stesso giorno del mese della prima scadenza
+                    <span className="mt-0.5 block font-medium text-fg-primary">
+                      Giorno {new Date(dueIso).getDate()}
+                    </span>
+                  </span>
                 </label>
-                <label className="flex flex-wrap items-center gap-2 text-sm text-fg-secondary">
+                <label className="flex items-start gap-2 text-sm text-fg-secondary">
                   <input
                     type="radio"
                     name={`${idPrefix}-monthly-mode`}
@@ -286,133 +360,139 @@ export function TaskRecurrenceFields({
                     onChange={() =>
                       setDraft((prev) => ({
                         ...prev,
-                        monthlyBy: {
-                          mode: "nthWeekday",
-                          nth: 1,
-                          weekday: dueIso ? ((new Date(dueIso).getDay() + 6) % 7) : 0,
-                        },
+                        monthlyBy: nthWeekdayFromIso(dueIso),
                       }))
                     }
+                    className="mt-1"
                   />
-                  <select
-                    value={
-                      draft.monthlyBy?.mode === "nthWeekday" ? draft.monthlyBy.nth : 1
-                    }
-                    disabled={disabled || draft.monthlyBy?.mode !== "nthWeekday"}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        monthlyBy: {
-                          mode: "nthWeekday",
-                          nth: Number(e.target.value) as 1 | 2 | 3 | 4 | -1,
-                          weekday:
-                            prev.monthlyBy?.mode === "nthWeekday"
-                              ? prev.monthlyBy.weekday
-                              : 0,
-                        },
-                      }))
-                    }
-                    className={cn(uiControl, "w-24 py-1.5")}
-                  >
-                    <option value={1}>1°</option>
-                    <option value={2}>2°</option>
-                    <option value={3}>3°</option>
-                    <option value={4}>4°</option>
-                    <option value={-1}>Ultimo</option>
-                  </select>
-                  <select
-                    value={
-                      draft.monthlyBy?.mode === "nthWeekday"
-                        ? draft.monthlyBy.weekday
-                        : 0
-                    }
-                    disabled={disabled || draft.monthlyBy?.mode !== "nthWeekday"}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        monthlyBy: {
-                          mode: "nthWeekday",
-                          nth:
-                            prev.monthlyBy?.mode === "nthWeekday"
-                              ? prev.monthlyBy.nth
-                              : 1,
-                          weekday: Number(e.target.value),
-                        },
-                      }))
-                    }
-                    className={cn(uiControl, "min-w-[7rem] py-1.5")}
-                  >
-                    {WEEKDAY_SHORT.map((label, index) => (
-                      <option key={label} value={index}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
+                  <span className="min-w-0 flex-1">
+                    Ennesimo giorno della settimana
+                    {draft.monthlyBy?.mode === "nthWeekday" ? (
+                      <span className="mt-1.5 flex flex-wrap gap-2">
+                        <select
+                          value={draft.monthlyBy.nth}
+                          disabled={disabled}
+                          onChange={(e) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              monthlyBy: {
+                                mode: "nthWeekday",
+                                nth: Number(e.target.value) as 1 | 2 | 3 | 4 | -1,
+                                weekday:
+                                  prev.monthlyBy?.mode === "nthWeekday"
+                                    ? prev.monthlyBy.weekday
+                                    : weekdayFromIso(dueIso),
+                              },
+                            }))
+                          }
+                          className={cn(uiControl, "py-1.5")}
+                        >
+                          <option value={1}>1°</option>
+                          <option value={2}>2°</option>
+                          <option value={3}>3°</option>
+                          <option value={4}>4°</option>
+                          <option value={-1}>Ultimo</option>
+                        </select>
+                        <select
+                          value={
+                            draft.monthlyBy?.mode === "nthWeekday"
+                              ? draft.monthlyBy.weekday
+                              : weekdayFromIso(dueIso)
+                          }
+                          disabled={disabled}
+                          onChange={(e) =>
+                            setDraft((prev) => ({
+                              ...prev,
+                              monthlyBy: {
+                                mode: "nthWeekday",
+                                nth:
+                                  prev.monthlyBy?.mode === "nthWeekday"
+                                    ? prev.monthlyBy.nth
+                                    : 1,
+                                weekday: Number(e.target.value),
+                              },
+                            }))
+                          }
+                          className={cn(uiControl, "py-1.5")}
+                        >
+                          {WEEKDAY_SHORT.map((label, index) => (
+                            <option key={label} value={index}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </span>
+                    ) : null}
+                  </span>
                 </label>
               </div>
             </div>
           ) : null}
 
           <div>
-            <span className={uiFormLabel}>Fine</span>
-            <div className="mt-1.5 space-y-2">
-              <label className="flex items-center gap-2 text-sm text-fg-secondary">
-                <input
-                  type="radio"
-                  name={`${idPrefix}-recurrence-end`}
-                  checked={endMode === "never"}
+            <span className={uiFormLabel}>Termine ripetizione</span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(
+                [
+                  { value: "never", label: "Mai" },
+                  { value: "until", label: "Fino a data" },
+                  { value: "count", label: "Per N volte" },
+                ] as const
+              ).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
                   disabled={disabled}
-                  onChange={() => setEndMode("never")}
-                />
-                Mai
-              </label>
-              <label className="flex flex-wrap items-center gap-2 text-sm text-fg-secondary">
-                <input
-                  type="radio"
-                  name={`${idPrefix}-recurrence-end`}
-                  checked={endMode === "until"}
-                  disabled={disabled}
-                  onChange={() => setEndMode("until")}
-                />
-                Il
-                <input
-                  type="date"
-                  value={untilDate}
-                  disabled={disabled || endMode !== "until"}
-                  onChange={(e) => setUntilDate(e.target.value)}
-                  className={cn(uiDateControl, "py-1.5")}
-                />
-              </label>
-              <label className="flex flex-wrap items-center gap-2 text-sm text-fg-secondary">
-                <input
-                  type="radio"
-                  name={`${idPrefix}-recurrence-end`}
-                  checked={endMode === "count"}
-                  disabled={disabled}
-                  onChange={() => setEndMode("count")}
-                />
-                Dopo
+                  onClick={() => setEndMode(option.value)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium",
+                    endMode === option.value
+                      ? "border-accent/40 bg-accent-muted text-accent"
+                      : "border-line-default bg-surface text-fg-secondary hover:bg-elevated",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {endMode === "until" ? (
+              <input
+                type="date"
+                value={untilDate}
+                min={dueDate || undefined}
+                disabled={disabled}
+                onChange={(e) => setUntilDate(e.target.value)}
+                className={cn(uiDateControl, "mt-2 py-2")}
+              />
+            ) : null}
+            {endMode === "count" ? (
+              <div className="mt-2 flex items-center gap-2">
                 <input
                   type="number"
                   min={1}
                   max={999}
                   value={occurrenceCount}
-                  disabled={disabled || endMode !== "count"}
+                  disabled={disabled}
                   onChange={(e) =>
                     setOccurrenceCount(Math.max(1, Number(e.target.value) || 1))
                   }
-                  className={cn(uiControl, "w-20 py-1.5 text-center tabular-nums")}
+                  className={cn(uiControl, "w-20 py-2 text-center tabular-nums")}
                 />
-                occorrenze
-              </label>
-            </div>
+                <span className="text-sm text-fg-secondary">occorrenze totali</span>
+              </div>
+            ) : null}
           </div>
 
-          {summary ? (
-            <p className={cn(uiCaption, "border-t border-line-default/70 pt-3")}>{summary}</p>
+          {preview ? (
+            <p className={cn(uiCaption, "rounded-md bg-surface px-3 py-2 text-fg-secondary")}>
+              {preview}
+            </p>
           ) : null}
         </div>
       ) : null}
     </div>
   );
 }
+
+/** @deprecated Usa TaskScheduleFields */
+export const TaskRecurrenceFields = TaskScheduleFields;

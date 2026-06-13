@@ -48,8 +48,11 @@ export async function createTask(fd: FormData): Promise<CreateTaskResult> {
   const recurrenceEnabled = String(fd.get("recurrenceEnabled") ?? "") === "1";
   const recurrence = recurrenceFromFormData(fd, due_at);
 
+  if (recurrenceEnabled && !due_at) {
+    return { ok: false, message: "Imposta la prima scadenza per una task ricorrente." };
+  }
   if (recurrenceEnabled && !recurrence) {
-    return { ok: false, message: "Impostazioni di ripetizione non valide." };
+    return { ok: false, message: "Controlla frequenza e termine della ripetizione." };
   }
   if (recurrence) {
     const recurrenceError = validateTaskRecurrence(recurrence, due_at);

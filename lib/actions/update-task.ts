@@ -42,8 +42,11 @@ export async function updateTask(
   );
   let recurrence = recurrenceFromFormData(fd, due_at, previous);
 
+  if (recurrenceEnabled && !due_at) {
+    return { ok: false, message: "Imposta la prima scadenza per una task ricorrente." };
+  }
   if (recurrenceEnabled && !recurrence) {
-    return { ok: false, message: "Impostazioni di ripetizione non valide." };
+    return { ok: false, message: "Controlla frequenza e termine della ripetizione." };
   }
 
   if (recurrence) {
