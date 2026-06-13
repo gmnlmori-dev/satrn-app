@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateInboxViews } from "@/lib/request-revalidate";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -62,8 +62,7 @@ export async function createInboxItem(
     };
   }
 
-  revalidatePath("/app/inbox");
-  revalidatePath("/app/follow-up");
+  revalidateInboxViews();
 
   return { ok: true, id };
 }

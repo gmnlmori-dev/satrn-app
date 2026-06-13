@@ -1,9 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { formatAssigneeList } from "@/lib/request-assignees";
-import { validateAssigneeProfiles } from "@/lib/assignee-validation";
+import {
+  assigneeCaption,
+  loadAssigneeProfiles,
+  nestedAssigneeProfile,
+  normalizeAssigneeIds,
+  sameAssigneeSet,
+  type AssigneeProfile,
+} from "@/lib/assignee-actions";
 import { canAssignRequests } from "@/lib/permissions";
+import { revalidateRequestViews } from "@/lib/request-revalidate";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -19,37 +26,11 @@ export type UpdateRequestAssignmentResult =
     }
   | { ok: false; message: string };
 
-function assigneeCaption(
-  p: {
-    full_name: string | null;
-    email: string | null;
-  } | null,
-): string {
-  if (!p) return "Utente sconosciuto";
-  const n = (p.full_name ?? "").trim();
-  const e = (p.email ?? "").trim();
-  if (n && e) return `${n} (${e})`;
-  return n || e || "Utente sconosciuto";
-}
-
-type AssigneeProfile = {
-  full_name: string | null;
-  email: string | null;
-};
-
 type RequestAssigneeRow = {
   user_id: string;
   assigned_at: string;
   assignee?: AssigneeProfile | AssigneeProfile[] | null;
 };
-
-function nestedAssigneeProfile(
-  value: AssigneeProfile | AssigneeProfile[] | null | undefined,
-): AssigneeProfile | null {
-  if (!value) return null;
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value;
-}
 
 function mapAssigneeRows(rows: unknown): RequestAssignee[] {
   return ((rows ?? []) as RequestAssigneeRow[])
@@ -62,64 +43,6 @@ function mapAssigneeRows(rows: unknown): RequestAssignee[] {
       (a, b) =>
         new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
     );
-}
-
-function normalizeAssigneeIds(raw: string[]): string[] {
-  return [...new Set(raw.map((id) => id.trim()).filter(Boolean))].sort();
-}
-
-function sameAssigneeSet(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((id, i) => id === b[i]);
-}
-
-async function loadAssigneeProfiles(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  userIds: string[],
-  requestTeamId: string,
-  actorRole: "admin" | "manager" | "operator",
-): Promise<
-  | { ok: true; profiles: Map<string, { full_name: string | null; email: string | null }> }
-  | { ok: false; message: string }
-> {
-  if (userIds.length === 0) {
-    return { ok: true, profiles: new Map() };
-  }
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("user_id, full_name, email, is_active, team_id")
-    .in("user_id", userIds);
-
-  if (error) return { ok: false, message: error.message };
-
-  const rows = (data ?? []) as {
-    user_id: string;
-    full_name: string | null;
-    email: string | null;
-    is_active: boolean;
-    team_id: string;
-  }[];
-
-  if (rows.length !== userIds.length) {
-    return { ok: false, message: "Uno o più destinatari non sono validi." };
-  }
-
-  const check = validateAssigneeProfiles(rows, userIds, requestTeamId, actorRole);
-  if (!check.ok) return check;
-
-  const profiles = new Map<
-    string,
-    { full_name: string | null; email: string | null }
-  >();
-  for (const row of rows) {
-    profiles.set(row.user_id, {
-      full_name: row.full_name,
-      email: row.email,
-    });
-  }
-
-  return { ok: true, profiles };
 }
 
 /** Imposta gli assegnatari (solo admin e manager). Registra timeline. */
@@ -285,11 +208,7 @@ export async function updateRequestAssignment(
     },
   });
 
-  revalidatePath("/app/requests");
-  revalidatePath(`/app/requests/${requestId}`);
-  revalidatePath("/app/dashboard");
-  revalidatePath("/app/follow-up");
-  revalidatePath("/app/calendar");
+  revalidateRequestViews(requestId);
 
   const labels = assignees.map((a) => a.label).filter(Boolean);
   return {

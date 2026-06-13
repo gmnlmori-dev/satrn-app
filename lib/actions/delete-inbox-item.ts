@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateInboxViews } from "@/lib/request-revalidate";
 import { canDeleteInboxItem } from "@/lib/inbox-delete";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -50,9 +50,7 @@ export async function deleteInboxItem(
 
   if (delErr) return { ok: false, message: delErr.message };
 
-  revalidatePath("/app/inbox");
-  revalidatePath("/app/follow-up");
-  revalidatePath("/app/dashboard");
+  revalidateInboxViews(inboxItemId);
 
   return { ok: true };
 }

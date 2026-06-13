@@ -1,6 +1,13 @@
 "use server";
 
-import { validateAssigneeProfiles } from "@/lib/assignee-validation";
+import {
+  assigneeCaption,
+  loadAssigneeProfiles,
+  nestedAssigneeProfile,
+  normalizeAssigneeIds,
+  sameAssigneeSet,
+  type AssigneeProfile,
+} from "@/lib/assignee-actions";
 import { canAssignRequests } from "@/lib/permissions";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -17,34 +24,11 @@ export type UpdateTaskAssignmentResult =
     }
   | { ok: false; message: string };
 
-function assigneeCaption(
-  p: { full_name: string | null; email: string | null } | null,
-): string {
-  if (!p) return "Utente sconosciuto";
-  const n = (p.full_name ?? "").trim();
-  const e = (p.email ?? "").trim();
-  if (n && e) return `${n} (${e})`;
-  return n || e || "Utente sconosciuto";
-}
-
-type AssigneeProfile = {
-  full_name: string | null;
-  email: string | null;
-};
-
 type TaskAssigneeRow = {
   user_id: string;
   assigned_at: string;
   assignee?: AssigneeProfile | AssigneeProfile[] | null;
 };
-
-function nestedAssigneeProfile(
-  value: AssigneeProfile | AssigneeProfile[] | null | undefined,
-): AssigneeProfile | null {
-  if (!value) return null;
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value;
-}
 
 function mapAssigneeRows(rows: unknown): TaskAssignee[] {
   return ((rows ?? []) as TaskAssigneeRow[])
@@ -57,61 +41,6 @@ function mapAssigneeRows(rows: unknown): TaskAssignee[] {
       (a, b) =>
         new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime(),
     );
-}
-
-function normalizeAssigneeIds(raw: string[]): string[] {
-  return [...new Set(raw.map((id) => id.trim()).filter(Boolean))].sort();
-}
-
-function sameAssigneeSet(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((id, i) => id === b[i]);
-}
-
-async function loadAssigneeProfiles(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  userIds: string[],
-  taskTeamId: string,
-  actorRole: "admin" | "manager" | "operator",
-): Promise<
-  | { ok: true; profiles: Map<string, AssigneeProfile> }
-  | { ok: false; message: string }
-> {
-  if (userIds.length === 0) {
-    return { ok: true, profiles: new Map() };
-  }
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("user_id, full_name, email, is_active, team_id")
-    .in("user_id", userIds);
-
-  if (error) return { ok: false, message: error.message };
-
-  const rows = (data ?? []) as {
-    user_id: string;
-    full_name: string | null;
-    email: string | null;
-    is_active: boolean;
-    team_id: string;
-  }[];
-
-  if (rows.length !== userIds.length) {
-    return { ok: false, message: "Uno o più destinatari non sono validi." };
-  }
-
-  const check = validateAssigneeProfiles(rows, userIds, taskTeamId, actorRole);
-  if (!check.ok) return check;
-
-  const profiles = new Map<string, AssigneeProfile>();
-  for (const row of rows) {
-    profiles.set(row.user_id, {
-      full_name: row.full_name,
-      email: row.email,
-    });
-  }
-
-  return { ok: true, profiles };
 }
 
 export async function updateTaskAssignment(

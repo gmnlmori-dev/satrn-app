@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateRequestViews } from "@/lib/request-revalidate";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Request } from "@/types/request";
 
@@ -49,9 +49,7 @@ export async function updateRequestDetails(
 
   const row = data as { updated_at: string };
 
-  revalidatePath("/app/requests");
-  revalidatePath(`/app/requests/${id}`);
-  revalidatePath("/app/dashboard");
+  revalidateRequestViews(id);
 
   return { ok: true, updatedAt: row.updated_at };
 }

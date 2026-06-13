@@ -1,7 +1,11 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import {
+  persistAssigneeScopeInUrl,
+  scopeFromSearchParam,
+} from "@/lib/assignee-scope-url";
 import {
   filterChecklistEntriesMine,
   filterInboxMine,
@@ -31,15 +35,6 @@ type Props = {
   defaultScope: FollowUpAssigneeScope;
 };
 
-function scopeFromSearchParam(
-  raw: string | null,
-  fallback: FollowUpAssigneeScope,
-): FollowUpAssigneeScope {
-  if (raw === "mine") return "mine";
-  if (raw === "all") return "all";
-  return fallback;
-}
-
 export function FollowUpAssigneeScope({
   overdue,
   today,
@@ -54,6 +49,7 @@ export function FollowUpAssigneeScope({
   currentUserId,
   defaultScope,
 }: Props) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlScope = searchParams.get("scope");
   const [scope, setScope] = useState<FollowUpAssigneeScope>(() =>
@@ -63,6 +59,11 @@ export function FollowUpAssigneeScope({
   useEffect(() => {
     setScope(scopeFromSearchParam(urlScope, defaultScope));
   }, [urlScope, defaultScope]);
+
+  function handleScopeChange(next: FollowUpAssigneeScope) {
+    setScope(next);
+    persistAssigneeScopeInUrl(next, pathname, searchParams);
+  }
 
   const showMine = Boolean(currentUserId);
   const mineOnly = scope === "mine" && showMine;
@@ -126,7 +127,7 @@ export function FollowUpAssigneeScope({
         { value: "all", label: "Tutte" },
         { value: "mine", label: "Le mie" },
       ]}
-      onChange={setScope}
+      onChange={handleScopeChange}
     />
   ) : null;
 

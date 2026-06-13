@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateRequestViews } from "@/lib/request-revalidate";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requestNoteRowToNote } from "@/lib/supabase/mappers";
@@ -73,9 +73,7 @@ export async function createRequestNote(
     meta: { note_id: noteId },
   });
 
-  revalidatePath("/app/requests");
-  revalidatePath(`/app/requests/${requestId}`);
-  revalidatePath("/app/dashboard");
+  revalidateRequestViews(requestId);
 
   return {
     ok: true,

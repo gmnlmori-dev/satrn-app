@@ -1,7 +1,11 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import {
+  persistAssigneeScopeInUrl,
+  scopeFromSearchParam,
+} from "@/lib/assignee-scope-url";
 import {
   filterInboxMine,
   type FollowUpAssigneeScope,
@@ -14,15 +18,6 @@ import { cn } from "@/lib/cn";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 
-function scopeFromSearchParam(
-  raw: string | null,
-  fallback: FollowUpAssigneeScope,
-): FollowUpAssigneeScope {
-  if (raw === "mine") return "mine";
-  if (raw === "all") return "all";
-  return fallback;
-}
-
 type Props = {
   items: InboxItem[];
   currentUserId: string;
@@ -30,6 +25,7 @@ type Props = {
 };
 
 export function InboxWorkspace({ items, currentUserId, defaultScope }: Props) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlScope = searchParams.get("scope");
   const [scope, setScope] = useState<FollowUpAssigneeScope>(() =>
@@ -39,6 +35,11 @@ export function InboxWorkspace({ items, currentUserId, defaultScope }: Props) {
   useEffect(() => {
     setScope(scopeFromSearchParam(urlScope, defaultScope));
   }, [urlScope, defaultScope]);
+
+  function handleScopeChange(next: FollowUpAssigneeScope) {
+    setScope(next);
+    persistAssigneeScopeInUrl(next, pathname, searchParams);
+  }
 
   const showMine = Boolean(currentUserId);
   const mineOnly = scope === "mine" && showMine;
@@ -80,7 +81,7 @@ export function InboxWorkspace({ items, currentUserId, defaultScope }: Props) {
               { value: "all", label: "Tutte" },
               { value: "mine", label: "Le mie" },
             ]}
-            onChange={setScope}
+            onChange={handleScopeChange}
           />
         </Panel>
       ) : null}

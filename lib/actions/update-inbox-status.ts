@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateInboxViews } from "@/lib/request-revalidate";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getInboxItemById } from "@/lib/supabase/inbox-queries";
 import type { InboxItemStatus } from "@/types/inbox";
@@ -40,9 +40,7 @@ export async function updateInboxItemStatus(
     return { ok: false, message: error.message };
   }
 
-  revalidatePath("/app/inbox");
-  revalidatePath(`/app/inbox/${id}`);
-  revalidatePath("/app/follow-up");
+  revalidateInboxViews(id);
 
   return { ok: true };
 }

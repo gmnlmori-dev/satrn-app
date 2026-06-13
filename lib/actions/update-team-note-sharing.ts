@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { validateSharedNoteUsers } from "@/lib/assignee-actions";
 import { getTeamNoteById } from "@/lib/supabase/note-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -61,27 +62,13 @@ export async function updateTeamNoteSharing(
 
     if (profileErr) return { ok: false, message: profileErr.message };
 
-    const rows = (profiles ?? []) as {
-      user_id: string;
-      team_id: string;
-      is_active: boolean;
-    }[];
-
-    if (rows.length !== uniqueShared.length) {
-      return { ok: false, message: "Uno o più utenti condivisi non sono validi." };
-    }
-
-    for (const row of rows) {
-      if (!row.is_active) {
-        return { ok: false, message: "Uno o più utenti selezionati non sono attivi." };
-      }
-      if (me.role !== "admin" && row.team_id !== note.teamId) {
-        return {
-          ok: false,
-          message: "Puoi condividere solo con utenti del tuo team.",
-        };
-      }
-    }
+    const check = validateSharedNoteUsers(
+      (profiles ?? []) as { user_id: string; team_id: string; is_active: boolean }[],
+      uniqueShared,
+      note.teamId,
+      me.role,
+    );
+    if (!check.ok) return check;
   }
 
   if (uniqueTeams.length > 0) {

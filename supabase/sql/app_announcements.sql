@@ -160,6 +160,7 @@ CREATE POLICY "app_announcements_admin_delete"
 
 DROP POLICY IF EXISTS "app_announcement_reads_select_own" ON public.app_announcement_reads;
 DROP POLICY IF EXISTS "app_announcement_reads_insert_own" ON public.app_announcement_reads;
+DROP POLICY IF EXISTS "app_announcement_reads_update_own" ON public.app_announcement_reads;
 
 CREATE POLICY "app_announcement_reads_select_own"
   ON public.app_announcement_reads
@@ -171,4 +172,11 @@ CREATE POLICY "app_announcement_reads_insert_own"
   ON public.app_announcement_reads
   FOR INSERT
   TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "app_announcement_reads_update_own"
+  ON public.app_announcement_reads
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());

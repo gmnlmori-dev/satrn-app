@@ -333,51 +333,113 @@ function checklistTaskIndex(
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 }
 
-/** Ordine checklist in Da seguire: scadenza propria, altrimenti ordine in richiesta. */
+type ChecklistSortItem = {
+  dueAt: string | null;
+  taskIndex: number;
+};
+
+type ChecklistSortMode = "followUp" | "requestGroup" | "calendar";
+
+function dueAtTime(dueAt: string | null): number | null {
+  if (!dueAt) return null;
+  const t = new Date(dueAt).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+/** Comparatore unificato: ritardo → scadenza → indice (→ titolo richiesta in modalità calendar). */
+export function compareChecklistSortItems(
+  a: ChecklistSortItem,
+  b: ChecklistSortItem,
+  mode: ChecklistSortMode,
+  options?: {
+    startTodayMs?: number;
+    requestTitleA?: string;
+    requestTitleB?: string;
+    requestIdA?: string;
+    requestIdB?: string;
+  },
+): number {
+  const aDue = dueAtTime(a.dueAt);
+  const bDue = dueAtTime(b.dueAt);
+
+  if (mode === "followUp" || mode === "requestGroup") {
+    const startToday = options?.startTodayMs ?? 0;
+    const aOverdue = aDue !== null && aDue < startToday;
+    const bOverdue = bDue !== null && bDue < startToday;
+    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+  }
+
+  if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
+  if (aDue !== null && bDue === null) return -1;
+  if (aDue === null && bDue !== null) return 1;
+
+  if (mode === "calendar") {
+    const idA = options?.requestIdA ?? "";
+    const idB = options?.requestIdB ?? "";
+    if (idA !== idB) {
+      const titleA = options?.requestTitleA ?? "";
+      const titleB = options?.requestTitleB ?? "";
+      return titleA.localeCompare(titleB, "it");
+    }
+  }
+
+  return a.taskIndex - b.taskIndex;
+}
+
+/** Ordine checklist in Da seguire: ritardo → scadenza → ordine in richiesta. */
 export function sortChecklistTasksForFollowUp(
   tasks: NextActionTask[],
   sourceOrder: NextActionTask[],
   bounds = getFollowUpWindowBounds(),
 ): NextActionTask[] {
-  const startToday = new Date(bounds.startTodayIso).getTime();
+  const startTodayMs = new Date(bounds.startTodayIso).getTime();
 
-  return [...tasks].sort((a, b) => {
-    const aDue = a.dueAt ? new Date(a.dueAt).getTime() : null;
-    const bDue = b.dueAt ? new Date(b.dueAt).getTime() : null;
-    const aOverdue = aDue !== null && aDue < startToday;
-    const bOverdue = bDue !== null && bDue < startToday;
-
-    if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
-    if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
-    if (aDue !== null && bDue === null) return -1;
-    if (aDue === null && bDue !== null) return 1;
-    return (
-      checklistTaskIndex(a, sourceOrder) - checklistTaskIndex(b, sourceOrder)
-    );
-  });
+  return [...tasks].sort((a, b) =>
+    compareChecklistSortItems(
+      {
+        dueAt: a.dueAt,
+        taskIndex: checklistTaskIndex(a, sourceOrder),
+      },
+      {
+        dueAt: b.dueAt,
+        taskIndex: checklistTaskIndex(b, sourceOrder),
+      },
+      "followUp",
+      { startTodayMs },
+    ),
+  );
 }
 
 export function sortChecklistEntriesForRequest(
   entries: CalendarTaskEntry[],
+  bounds = getFollowUpWindowBounds(),
 ): CalendarTaskEntry[] {
-  return [...entries].sort((a, b) => {
-    const aDue = a.task.dueAt ? new Date(a.task.dueAt).getTime() : null;
-    const bDue = b.task.dueAt ? new Date(b.task.dueAt).getTime() : null;
-    if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
-    return a.taskIndex - b.taskIndex;
-  });
+  const startTodayMs = new Date(bounds.startTodayIso).getTime();
+
+  return [...entries].sort((a, b) =>
+    compareChecklistSortItems(
+      { dueAt: a.task.dueAt, taskIndex: a.taskIndex },
+      { dueAt: b.task.dueAt, taskIndex: b.taskIndex },
+      "requestGroup",
+      { startTodayMs },
+    ),
+  );
 }
 
 export function sortCalendarTaskEntries(
   entries: CalendarTaskEntry[],
 ): CalendarTaskEntry[] {
-  return [...entries].sort((a, b) => {
-    const aDue = a.task.dueAt ? new Date(a.task.dueAt).getTime() : 0;
-    const bDue = b.task.dueAt ? new Date(b.task.dueAt).getTime() : 0;
-    if (aDue !== bDue) return aDue - bDue;
-    if (a.requestId !== b.requestId) {
-      return a.requestTitle.localeCompare(b.requestTitle, "it");
-    }
-    return a.taskIndex - b.taskIndex;
-  });
+  return [...entries].sort((a, b) =>
+    compareChecklistSortItems(
+      { dueAt: a.task.dueAt, taskIndex: a.taskIndex },
+      { dueAt: b.task.dueAt, taskIndex: b.taskIndex },
+      "calendar",
+      {
+        requestIdA: a.requestId,
+        requestIdB: b.requestId,
+        requestTitleA: a.requestTitle,
+        requestTitleB: b.requestTitle,
+      },
+    ),
+  );
 }

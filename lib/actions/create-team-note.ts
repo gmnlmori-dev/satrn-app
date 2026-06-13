@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { parseNoteColor, titleFromBody } from "@/lib/team-note-access";
+import { validateSharedNoteUsers } from "@/lib/assignee-actions";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { NoteVisibility } from "@/types/note";
@@ -81,10 +82,28 @@ export async function createTeamNote(
     };
   }
 
+  const supabase = await createSupabaseServerClient();
+
+  if (uniqueShared.length > 0) {
+    const { data: profiles, error: profileErr } = await supabase
+      .from("profiles")
+      .select("user_id, team_id, is_active")
+      .in("user_id", uniqueShared);
+
+    if (profileErr) return { ok: false, message: profileErr.message };
+
+    const check = validateSharedNoteUsers(
+      (profiles ?? []) as { user_id: string; team_id: string; is_active: boolean }[],
+      uniqueShared,
+      me.teamId,
+      me.role,
+    );
+    if (!check.ok) return check;
+  }
+
   const title = titleFromBody(body, titleRaw);
   const colorRaw = String(fd.get("color") ?? "").trim();
   const color = colorRaw ? parseNoteColor(colorRaw) : null;
-  const supabase = await createSupabaseServerClient();
 
   const { data: minSortRow } = await supabase
     .from("team_notes")
