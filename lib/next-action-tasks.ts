@@ -249,6 +249,23 @@ export function earliestOpenChecklistDueAt(nextActionRaw: string): string | null
   return earliestIso;
 }
 
+/** Imposta la stessa scadenza a tutti i task checklist aperti che ne hanno una. */
+export function shiftOpenChecklistDueDatesTo(
+  raw: string,
+  newDueAt: string,
+): string {
+  const content = parseNextAction(raw);
+  let changed = false;
+  const tasks = content.tasks.map((task) => {
+    if (task.done || !task.dueAt) return task;
+    if (task.dueAt === newDueAt) return task;
+    changed = true;
+    return { ...task, dueAt: newDueAt };
+  });
+  if (!changed) return raw;
+  return serializeNextAction({ ...content, tasks });
+}
+
 type RequestDeadlineSource = Pick<Request, "nextActionAt" | "nextAction">;
 
 function earliestDueIso(candidates: (string | null)[]): string | null {

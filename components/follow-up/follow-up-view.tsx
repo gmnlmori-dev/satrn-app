@@ -21,6 +21,15 @@ import { updateInboxItemStatus } from "@/lib/actions/update-inbox-status";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
 import { formatDateTime, isRequestOverdue } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
+import {
+  buildPostponeRequestScopeOptions,
+  buildPostponeRequestUpdate,
+  defaultPostponeRequestScope,
+  previewPostponeOutcome,
+  requestPostponeDrivenBy,
+  shouldShowRequestPostponeScope,
+  type PostponeRequestScope,
+} from "@/lib/postpone-request-deadline";
 import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
 import { RequestChecklistInline } from "@/components/follow-up/request-checklist-inline";
 import { FollowUpChecklistBlock } from "@/components/follow-up/follow-up-checklist-block";
@@ -351,16 +360,66 @@ function RequestBlock({
           currentDueAt={effectiveNextActionAt(postpone.request)}
           anchorRect={postpone.rect}
           onDismiss={() => setPostpone(null)}
-          onApply={async (iso) => {
-            const r = await updateRequestOperational(postpone.request.id, {
-              next_action_at: iso,
+          scopeOptions={
+            shouldShowRequestPostponeScope(postpone.request)
+              ? buildPostponeRequestScopeOptions(postpone.request)
+              : undefined
+          }
+          defaultScope={
+            shouldShowRequestPostponeScope(postpone.request)
+              ? defaultPostponeRequestScope(postpone.request)
+              : undefined
+          }
+          previewOutcome={
+            shouldShowRequestPostponeScope(postpone.request)
+              ? (iso, scope) =>
+                  previewPostponeOutcome(
+                    postpone.request,
+                    iso,
+                    scope as PostponeRequestScope,
+                  )
+              : undefined
+          }
+          contextNote={
+            shouldShowRequestPostponeScope(postpone.request) &&
+            requestPostponeDrivenBy(postpone.request) === "checklist"
+              ? "La data mostrata proviene da un task checklist."
+              : null
+          }
+          onApply={async (iso, scope) => {
+            const request = postpone.request;
+            const useScope = shouldShowRequestPostponeScope(request);
+            const update = useScope
+              ? buildPostponeRequestUpdate(
+                  request,
+                  iso,
+                  (scope as PostponeRequestScope) ??
+                    defaultPostponeRequestScope(request),
+                )
+              : { next_action_at: iso };
+
+            if (
+              useScope &&
+              !update.next_action_at &&
+              !update.next_action
+            ) {
+              return {
+                ok: false as const,
+                message: "Seleziona cosa spostare e una data valida.",
+              };
+            }
+
+            const r = await updateRequestOperational(request.id, {
+              ...update,
               bump_last_interaction: true,
             });
             if (r.ok) {
               pulseTopBar();
               refresh();
             }
-            return r.ok ? { ok: true as const } : { ok: false as const, message: r.message };
+            return r.ok
+              ? { ok: true as const }
+              : { ok: false as const, message: r.message };
           }}
         />
       ) : null}

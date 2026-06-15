@@ -1,15 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   NextActionDeadlineFields,
   nextActionDeadlineDraftFromIso,
@@ -30,6 +22,7 @@ import {
   uiControl,
   uiTransition,
 } from "@/lib/ui-classes";
+import { uiCaption } from "@/lib/typography";
 
 export const followUpPopoverPanel = cn(
   uiTransition,
@@ -106,6 +99,12 @@ export type PostponeDueAtApplyResult =
   | { ok: true }
   | { ok: false; message: string };
 
+export type PostponeScopeOption = {
+  id: string;
+  label: string;
+  description: string;
+};
+
 export function PostponeDueAtPopover({
   idPrefix,
   title,
@@ -113,21 +112,42 @@ export function PostponeDueAtPopover({
   anchorRect,
   onDismiss,
   onApply,
+  scopeOptions,
+  defaultScope,
+  previewOutcome,
+  contextNote,
 }: {
   idPrefix: string;
   title: string;
   currentDueAt: string | null;
   anchorRect: DOMRectReadOnly;
   onDismiss: () => void;
-  onApply: (iso: string) => Promise<PostponeDueAtApplyResult>;
+  onApply: (iso: string, scope?: string) => Promise<PostponeDueAtApplyResult>;
+  scopeOptions?: PostponeScopeOption[];
+  defaultScope?: string;
+  previewOutcome?: (iso: string, scope: string) => string | null;
+  contextNote?: string | null;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const isClient = useIsClient();
   const [dateDraft, setDateDraft] = useState(() => initialPostponeDraft(currentDueAt).date);
   const [timeDraft, setTimeDraft] = useState(() => initialPostponeDraft(currentDueAt).time);
+  const [scope, setScope] = useState(
+    () => defaultScope ?? scopeOptions?.[0]?.id ?? "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const draftIso = useMemo(
+    () => fromDateAndTimeInputs(dateDraft, timeDraft),
+    [dateDraft, timeDraft],
+  );
+
+  const outcomePreview = useMemo(() => {
+    if (!previewOutcome || !draftIso || !scope) return null;
+    return previewOutcome(draftIso, scope);
+  }, [draftIso, previewOutcome, scope]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -187,7 +207,7 @@ export function PostponeDueAtPopover({
     }
     setError(null);
     setSaving(true);
-    const r = await onApply(iso);
+    const r = await onApply(iso, scopeOptions?.length ? scope : undefined);
     setSaving(false);
     if (r.ok) {
       onDismiss();
@@ -206,7 +226,7 @@ export function PostponeDueAtPopover({
       aria-labelledby={titleId}
       className={cn(
         followUpPopoverPanel,
-        "max-h-[min(28rem,calc(100vh-5rem))] overflow-y-auto",
+        "max-h-[min(36rem,calc(100vh-5rem))] overflow-y-auto",
       )}
     >
       <div className="border-b border-line-default px-3.5 py-2.5">
@@ -218,6 +238,9 @@ export function PostponeDueAtPopover({
           <p className="mt-1 text-xs tabular-nums text-fg-secondary">
             Attuale: {formatDateTime(currentDueAt)}
           </p>
+        ) : null}
+        {contextNote ? (
+          <p className={cn(uiCaption, "mt-1 text-fg-tertiary")}>{contextNote}</p>
         ) : null}
       </div>
 
@@ -259,6 +282,52 @@ export function PostponeDueAtPopover({
             setError(null);
           }}
         />
+
+        {scopeOptions?.length ? (
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-medium text-fg-primary">
+              Cosa spostare
+            </legend>
+            {scopeOptions.map((option) => (
+              <label
+                key={option.id}
+                className={cn(
+                  "flex cursor-pointer gap-2 rounded-md border px-3 py-2",
+                  scope === option.id
+                    ? "border-accent/40 bg-accent-muted/40"
+                    : "border-line-default bg-canvas",
+                )}
+              >
+                <input
+                  type="radio"
+                  name={`${idPrefix}-postpone-scope`}
+                  value={option.id}
+                  checked={scope === option.id}
+                  disabled={saving}
+                  onChange={() => {
+                    setScope(option.id);
+                    setError(null);
+                  }}
+                  className="mt-0.5"
+                />
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-fg-primary">
+                    {option.label}
+                  </span>
+                  <span className={cn(uiCaption, "mt-0.5 block text-fg-secondary")}>
+                    {option.description}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        ) : null}
+
+        {outcomePreview ? (
+          <p className={cn(uiCaption, "rounded-md bg-elevated px-3 py-2 text-fg-secondary")}>
+            {outcomePreview}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="text-xs text-danger" role="alert">
