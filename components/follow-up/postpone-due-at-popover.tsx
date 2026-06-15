@@ -37,7 +37,7 @@ const followUpPopoverShortcut = cn(
   "disabled:cursor-not-allowed disabled:opacity-40",
 );
 
-const datetimeInputClass = uiControl;
+const datetimeInputClass = cn(uiControl, "py-1.5 text-sm");
 
 const POSTPONE_SHORTCUTS: {
   label: string;
@@ -149,6 +149,11 @@ export function PostponeDueAtPopover({
     return previewOutcome(draftIso, scope);
   }, [draftIso, previewOutcome, scope]);
 
+  const selectedScopeHint = useMemo(
+    () => scopeOptions?.find((option) => option.id === scope)?.description ?? null,
+    [scope, scopeOptions],
+  );
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onDismiss();
@@ -226,25 +231,27 @@ export function PostponeDueAtPopover({
       aria-labelledby={titleId}
       className={cn(
         followUpPopoverPanel,
-        "max-h-[min(36rem,calc(100vh-5rem))] overflow-y-auto",
+        "max-h-[min(28rem,calc(100vh-5rem))] overflow-y-auto",
       )}
     >
-      <div className="border-b border-line-default px-3.5 py-2.5">
+      <div className="border-b border-line-default px-3 py-2">
         <p id={titleId} className="text-[13px] font-semibold text-fg-primary">
           Sposta scadenza
         </p>
         <p className="mt-0.5 truncate text-xs text-fg-tertiary">{title}</p>
         {currentDueAt ? (
-          <p className="mt-1 text-xs tabular-nums text-fg-secondary">
+          <p className="mt-0.5 text-[11px] tabular-nums text-fg-secondary">
             Attuale: {formatDateTime(currentDueAt)}
+            {contextNote ? (
+              <span className="text-fg-tertiary"> · {contextNote}</span>
+            ) : null}
           </p>
-        ) : null}
-        {contextNote ? (
-          <p className={cn(uiCaption, "mt-1 text-fg-tertiary")}>{contextNote}</p>
+        ) : contextNote ? (
+          <p className={cn(uiCaption, "mt-0.5 text-fg-tertiary")}>{contextNote}</p>
         ) : null}
       </div>
 
-      <div className="space-y-3 p-3">
+      <div className="space-y-2.5 p-2.5">
         <div className="flex flex-wrap gap-1">
           {POSTPONE_SHORTCUTS.map((shortcut) => (
             <button
@@ -284,49 +291,38 @@ export function PostponeDueAtPopover({
         />
 
         {scopeOptions?.length ? (
-          <fieldset className="space-y-2">
-            <legend className="text-xs font-medium text-fg-primary">
+          <fieldset>
+            <legend className="mb-1.5 text-[11px] font-medium text-fg-secondary">
               Cosa spostare
             </legend>
-            {scopeOptions.map((option) => (
-              <label
-                key={option.id}
-                className={cn(
-                  "flex cursor-pointer gap-2 rounded-md border px-3 py-2",
-                  scope === option.id
-                    ? "border-accent/40 bg-accent-muted/40"
-                    : "border-line-default bg-canvas",
-                )}
-              >
-                <input
-                  type="radio"
-                  name={`${idPrefix}-postpone-scope`}
-                  value={option.id}
-                  checked={scope === option.id}
+            <div className="flex flex-wrap gap-1">
+              {scopeOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
                   disabled={saving}
-                  onChange={() => {
+                  aria-pressed={scope === option.id}
+                  onClick={() => {
                     setScope(option.id);
                     setError(null);
                   }}
-                  className="mt-0.5"
-                />
-                <span className="min-w-0">
-                  <span className="block text-xs font-medium text-fg-primary">
-                    {option.label}
-                  </span>
-                  <span className={cn(uiCaption, "mt-0.5 block text-fg-secondary")}>
-                    {option.description}
-                  </span>
-                </span>
-              </label>
-            ))}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                    scope === option.id
+                      ? "border-accent/40 bg-accent-muted text-accent"
+                      : "border-line-default bg-canvas text-fg-secondary hover:bg-elevated",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {selectedScopeHint || outcomePreview ? (
+              <p className={cn(uiCaption, "mt-1.5 text-[11px] leading-snug text-fg-tertiary")}>
+                {[selectedScopeHint, outcomePreview].filter(Boolean).join(" · ")}
+              </p>
+            ) : null}
           </fieldset>
-        ) : null}
-
-        {outcomePreview ? (
-          <p className={cn(uiCaption, "rounded-md bg-elevated px-3 py-2 text-fg-secondary")}>
-            {outcomePreview}
-          </p>
         ) : null}
 
         {error ? (
@@ -335,7 +331,7 @@ export function PostponeDueAtPopover({
           </p>
         ) : null}
 
-        <div className="flex justify-end gap-2 border-t border-line-default pt-3">
+        <div className="flex justify-end gap-2 border-t border-line-default pt-2">
           <button
             type="button"
             disabled={saving}

@@ -76,31 +76,24 @@ export function buildPostponeRequestScopeOptions(
 ): PostponeScopeOption[] {
   const drivenBy = requestPostponeDrivenBy(request);
   const checklistCount = countOpenChecklistDueDates(request.nextAction);
-  const hasNextActionAt = Boolean(request.nextActionAt);
-
   const checklistNote =
-    drivenBy === "checklist"
-      ? " In lista potresti ancora vedere la data della checklist se resta più urgente."
-      : "";
+    drivenBy === "checklist" ? " Checklist può restare più urgente." : "";
 
   const options: PostponeScopeOption[] = [
     {
       id: "next_action",
-      label: "Solo prossima azione",
-      description: hasNextActionAt
-        ? `Aggiorna la scadenza «Prossima azione» della richiesta.${checklistNote}`
-        : `Imposta la scadenza «Prossima azione» della richiesta.${checklistNote}`,
+      label: "Prossima azione",
+      description: `Solo scadenza richiesta.${checklistNote}`,
     },
     {
       id: "checklist",
-      label: "Solo checklist",
-      description: `Sposta la scadenza di ${checklistCount === 1 ? "1 task" : `${checklistCount} task`} checklist apert${checklistCount === 1 ? "o" : "i"} con data. La scadenza della richiesta non cambia.`,
+      label: "Checklist",
+      description: `${checklistCount === 1 ? "1 task" : `${checklistCount} task`} checklist con data.`,
     },
     {
       id: "all",
-      label: "Prossima azione e checklist",
-      description:
-        "Allinea prossima azione e tutte le scadenze checklist aperte alla nuova data. Consigliato se vuoi cambiare la data che vedi in Da seguire.",
+      label: "Entrambe",
+      description: "Richiesta e checklist alla nuova data.",
     },
   ];
 
@@ -132,10 +125,8 @@ export function previewPostponeOutcome(
   scope: PostponeRequestScope,
 ): string {
   const effective = previewEffectiveAfterPostpone(request, newDueAt, scope);
-  if (!effective) {
-    return "Dopo il salvataggio la richiesta non avrà una scadenza operativa.";
-  }
-  return `Dopo il salvataggio la scadenza visibile sarà ${formatDateTime(effective)}.`;
+  if (!effective) return "Nessuna scadenza visibile.";
+  return `Visibile: ${formatDateTime(effective)}`;
 }
 
 export function buildPostponeRequestUpdate(

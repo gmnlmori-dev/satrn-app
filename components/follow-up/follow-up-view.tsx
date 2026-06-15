@@ -19,7 +19,6 @@ import { PriorityBadge } from "@/components/requests/priority-badge";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { updateInboxItemStatus } from "@/lib/actions/update-inbox-status";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
-import { formatDateTime, isRequestOverdue } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
 import {
   buildPostponeRequestScopeOptions,
@@ -32,6 +31,7 @@ import {
 } from "@/lib/postpone-request-deadline";
 import { StandaloneTaskBlock } from "@/components/follow-up/standalone-task-block";
 import { RequestChecklistInline } from "@/components/follow-up/request-checklist-inline";
+import { RequestFollowUpDeadlines } from "@/components/follow-up/request-follow-up-deadlines";
 import { FollowUpChecklistBlock } from "@/components/follow-up/follow-up-checklist-block";
 import {
   orphanChecklistEntriesForRequests,
@@ -383,7 +383,7 @@ function RequestBlock({
           contextNote={
             shouldShowRequestPostponeScope(postpone.request) &&
             requestPostponeDrivenBy(postpone.request) === "checklist"
-              ? "La data mostrata proviene da un task checklist."
+              ? "Data da checklist."
               : null
           }
           onApply={async (iso, scope) => {
@@ -436,9 +436,6 @@ function RequestBlock({
       ) : null}
       <ul className="divide-y divide-line-default">
         {requests.map((r) => {
-          const dueAt = effectiveNextActionAt(r);
-          const overdue = dueAt != null && isRequestOverdue(dueAt, r.status);
-
           return (
             <li
               key={r.id}
@@ -459,25 +456,14 @@ function RequestBlock({
                 </Link>
                 <p className="font-medium leading-snug text-fg-primary">{r.title}</p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  {dueAt ? (
-                    <time
-                      className={cn(
-                        "text-xs tabular-nums",
-                        overdue ? "font-medium text-danger" : "text-fg-tertiary",
-                      )}
-                      dateTime={dueAt}
-                    >
-                      {formatDateTime(dueAt)}
-                    </time>
-                  ) : (
-                    <span className="text-xs text-fg-tertiary">Senza scadenza</span>
-                  )}
+                  <RequestFollowUpDeadlines request={r} status={r.status} />
                   <PriorityBadge priority={r.priority} />
                   <StatusBadge status={r.status} />
                 </div>
                 <RequestChecklistInline
                   requestId={r.id}
                   nextAction={r.nextAction}
+                  nextActionAt={r.nextActionAt}
                   disabled={pending}
                   onChanged={() => {
                     pulseTopBar();

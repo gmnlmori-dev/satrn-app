@@ -9,17 +9,23 @@ import {
   sortChecklistTasksForFollowUp,
   type NextActionTask,
 } from "@/lib/next-action-tasks";
+import {
+  followUpHiddenChecklistDueAts,
+  isChecklistDueHiddenInFollowUp,
+} from "@/lib/follow-up-request-deadline";
 import { cn } from "@/lib/cn";
 import { uiTransition } from "@/lib/ui-classes";
 
 export function RequestChecklistInline({
   requestId,
   nextAction,
+  nextActionAt = null,
   disabled = false,
   onChanged,
 }: {
   requestId: string;
   nextAction: string;
+  nextActionAt?: string | null;
   disabled?: boolean;
   onChanged?: () => void;
 }) {
@@ -31,6 +37,11 @@ export function RequestChecklistInline({
     content.tasks.filter((task) => task.text.trim() && !task.done),
     content.tasks,
   );
+
+  const hiddenDueAts = followUpHiddenChecklistDueAts({
+    nextActionAt,
+    nextAction,
+  });
 
   if (openTasks.length === 0) return null;
 
@@ -113,7 +124,8 @@ export function RequestChecklistInline({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs leading-snug text-fg-primary">{task.text}</p>
-                    {task.dueAt ? (
+                    {task.dueAt &&
+                    !isChecklistDueHiddenInFollowUp(task.dueAt, hiddenDueAts) ? (
                       <p
                         className={cn(
                           "mt-0.5 text-[11px] tabular-nums",
