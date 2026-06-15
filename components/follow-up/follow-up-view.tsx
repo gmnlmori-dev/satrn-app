@@ -455,8 +455,10 @@ function RequestBlock({
                   Apri dettaglio: {r.title}
                 </Link>
                 <p className="font-medium leading-snug text-fg-primary">{r.title}</p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <div className="mt-1.5">
                   <RequestFollowUpDeadlines request={r} status={r.status} />
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <PriorityBadge priority={r.priority} />
                   <StatusBadge status={r.status} />
                 </div>

@@ -22,7 +22,13 @@ describe("followUpRequestDeadlineLines", () => {
         nextActionAt: sameDue,
         nextAction: nextActionWithDue,
       }),
-    ).toEqual([{ iso: sameDue, label: "Prossima azione · Checklist" }]);
+    ).toEqual([
+      {
+        iso: sameDue,
+        label: "Checklist · Prossima azione",
+        kind: "both",
+      },
+    ]);
   });
 
   it("shows separate labeled lines when dates differ", () => {
@@ -32,8 +38,8 @@ describe("followUpRequestDeadlineLines", () => {
         nextAction: nextActionWithDue,
       }),
     ).toEqual([
-      { iso: checklistDue, label: "Checklist" },
-      { iso: requestDue, label: "Prossima azione" },
+      { iso: checklistDue, label: "Checklist", kind: "checklist" },
+      { iso: requestDue, label: "Prossima azione", kind: "next_action" },
     ]);
   });
 
@@ -43,7 +49,7 @@ describe("followUpRequestDeadlineLines", () => {
         nextActionAt: null,
         nextAction: nextActionWithDue,
       }),
-    ).toEqual([{ iso: checklistDue, label: "Checklist" }]);
+    ).toEqual([{ iso: checklistDue, label: "Checklist", kind: "checklist" }]);
   });
 });
 

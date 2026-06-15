@@ -14,6 +14,7 @@ export function dueAtIsoEqual(
 export type FollowUpDeadlineLine = {
   iso: string;
   label: string;
+  kind: "checklist" | "next_action" | "both";
 };
 
 type RequestDeadlineSource = Pick<Request, "nextActionAt" | "nextAction">;
@@ -28,17 +29,35 @@ export function followUpRequestDeadlineLines(
   if (!nextAt && !checklistEarliest) return [];
 
   if (nextAt && checklistEarliest && dueAtIsoEqual(nextAt, checklistEarliest)) {
-    return [{ iso: nextAt, label: "Prossima azione · Checklist" }];
+    return [
+      {
+        iso: nextAt,
+        label: "Checklist · Prossima azione",
+        kind: "both",
+      },
+    ];
   }
 
   const lines: FollowUpDeadlineLine[] = [];
   if (checklistEarliest) {
-    lines.push({ iso: checklistEarliest, label: "Checklist" });
+    lines.push({
+      iso: checklistEarliest,
+      label: "Checklist",
+      kind: "checklist",
+    });
   }
   if (nextAt && !dueAtIsoEqual(nextAt, checklistEarliest)) {
-    lines.push({ iso: nextAt, label: "Prossima azione" });
+    lines.push({
+      iso: nextAt,
+      label: "Prossima azione",
+      kind: "next_action",
+    });
   } else if (nextAt && !checklistEarliest) {
-    lines.push({ iso: nextAt, label: "Prossima azione" });
+    lines.push({
+      iso: nextAt,
+      label: "Prossima azione",
+      kind: "next_action",
+    });
   }
 
   lines.sort(
