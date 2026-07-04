@@ -14,6 +14,7 @@ import {
   isChecklistDueHiddenInFollowUp,
 } from "@/lib/follow-up-request-deadline";
 import { cn } from "@/lib/cn";
+import { ExpandableChecklistTaskText } from "@/components/requests/checklist-task-text";
 import { uiTransition } from "@/lib/ui-classes";
 
 export function RequestChecklistInline({
@@ -123,7 +124,7 @@ export function RequestChecklistInline({
                     className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-line-default accent-accent"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs leading-snug text-fg-primary">{task.text}</p>
+                    <ExpandableChecklistTaskText text={task.text} />
                     {task.dueAt &&
                     !isChecklistDueHiddenInFollowUp(task.dueAt, hiddenDueAts) ? (
                       <p

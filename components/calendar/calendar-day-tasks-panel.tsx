@@ -8,6 +8,7 @@ import { isCalendarTaskOverdue } from "@/lib/next-action-tasks";
 import { toggleNextActionTask } from "@/lib/actions/toggle-next-action-task";
 import { toggleTaskDone } from "@/lib/actions/toggle-task-done";
 import { TaskRecurrenceSummary } from "@/components/tasks/task-recurrence-summary";
+import { ExpandableChecklistTaskText } from "@/components/requests/checklist-task-text";
 import { taskAssigneesLabel } from "@/lib/task-assignees";
 import { isStandaloneTaskOverdue } from "@/lib/task-windows";
 import { applyTaskToggleResult } from "@/lib/task-recurrence";
@@ -283,9 +284,11 @@ export function CalendarDayTasksPanel({
                             className="mt-0.5 h-4 w-4 shrink-0 rounded border-line-default accent-accent"
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm leading-snug text-fg-primary">
-                              {entry.task.text}
-                            </p>
+                            <ExpandableChecklistTaskText
+                              text={entry.task.text}
+                              done={entry.task.done}
+                              size="sm"
+                            />
                             {entry.task.dueAt && hasTime(entry.task.dueAt) ? (
                               <p
                                 className={cn(

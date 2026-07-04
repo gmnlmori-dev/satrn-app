@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { PriorityBadge } from "@/components/requests/priority-badge";
+import { ExpandableChecklistTaskText } from "@/components/requests/checklist-task-text";
 import { toggleNextActionTask } from "@/lib/actions/toggle-next-action-task";
 import { formatDateTime } from "@/lib/date";
 import {
@@ -127,9 +128,7 @@ export function FollowUpChecklistBlock({
                     className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-line-default accent-accent"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs leading-snug text-fg-primary">
-                      {entry.task.text}
-                    </p>
+                    <ExpandableChecklistTaskText text={entry.task.text} />
                     {entry.task.dueAt ? (
                       <p
                         className={cn(

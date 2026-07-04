@@ -19,6 +19,7 @@ import {
   checklistDueAfterNextActionMessage,
   isChecklistDueAllowed,
 } from "@/lib/next-action-deadline-validation";
+import { ExpandableChecklistTaskInput } from "@/components/requests/checklist-task-text";
 
 type Props = {
   value: string;
@@ -204,24 +205,18 @@ export function NextActionField({
                     aria-label={`Segna task ${index + 1} come completato`}
                     className="mt-2.5 h-4 w-4 shrink-0 rounded border-line-default accent-accent"
                   />
-                  <input
-                    type="text"
+                  <ExpandableChecklistTaskInput
+                    id={`${idPrefix}-task-${task.id}`}
                     disabled={disabled}
+                    done={task.done}
                     value={task.text}
-                    onChange={(e) =>
+                    placeholder={`Task ${index + 1}`}
+                    onChange={(text) =>
                       patchContent({
                         ...content,
-                        tasks: updateTask(content.tasks, task.id, {
-                          text: e.target.value,
-                        }),
+                        tasks: updateTask(content.tasks, task.id, { text }),
                       })
                     }
-                    placeholder={`Task ${index + 1}`}
-                    className={cn(
-                      uiControl,
-                      "min-w-0 flex-1 py-2 text-[15px]",
-                      task.done && "text-fg-tertiary line-through",
-                    )}
                   />
                   <button
                     type="button"
