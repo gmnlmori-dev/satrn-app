@@ -1,12 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { cn } from "@/lib/cn";
 import { uiControl, uiTransition } from "@/lib/ui-classes";
 
-export function isLongChecklistText(text: string): boolean {
-  const trimmed = text.trim();
-  return trimmed.length > 88 || trimmed.includes("\n");
+function useOverflowsTwoLines(
+  ref: RefObject<HTMLElement | null>,
+  enabled: boolean,
+  deps: unknown[],
+) {
+  const [overflows, setOverflows] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!enabled) {
+      setOverflows(false);
+      return;
+    }
+
+    const el = ref.current;
+    if (!el) return;
+
+    const check = () => {
+      setOverflows(el.scrollHeight > el.clientHeight + 1);
+    };
+
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [enabled, ref, ...deps]);
+
+  return overflows;
 }
 
 export function ExpandableChecklistTaskText({
@@ -21,27 +45,15 @@ export function ExpandableChecklistTaskText({
   size?: "xs" | "sm";
 }) {
   const [expanded, setExpanded] = useState(false);
-  const long = isLongChecklistText(text);
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const overflows = useOverflowsTwoLines(textRef, !expanded, [text]);
+  const showToggle = overflows || expanded;
   const textClass = size === "sm" ? "text-sm leading-snug" : "text-xs leading-snug";
-
-  if (!long) {
-    return (
-      <p
-        className={cn(
-          textClass,
-          "whitespace-pre-wrap break-words text-fg-primary",
-          done && "text-fg-tertiary line-through",
-          className,
-        )}
-      >
-        {text}
-      </p>
-    );
-  }
 
   return (
     <div className={className}>
       <p
+        ref={textRef}
         className={cn(
           textClass,
           "whitespace-pre-wrap break-words text-fg-primary",
@@ -51,19 +63,21 @@ export function ExpandableChecklistTaskText({
       >
         {text}
       </p>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setExpanded((value) => !value);
-        }}
-        className={cn(
-          uiTransition,
-          "mt-0.5 text-[11px] font-medium text-accent hover:text-accent/80",
-        )}
-      >
-        {expanded ? "Comprimi" : "Espandi"}
-      </button>
+      {showToggle ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpanded((value) => !value);
+          }}
+          className={cn(
+            uiTransition,
+            "mt-0.5 text-[11px] font-medium text-accent hover:text-accent/80",
+          )}
+        >
+          {expanded ? "Comprimi" : "Espandi"}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -84,8 +98,9 @@ export function ExpandableChecklistTaskInput({
   id?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const long = isLongChecklistText(value);
-  const showToggle = long || expanded;
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const overflows = useOverflowsTwoLines(inputRef, !expanded, [value]);
+  const showToggle = overflows || expanded;
   const rows = expanded
     ? Math.min(10, Math.max(4, value.split("\n").length + 1))
     : 2;
@@ -93,6 +108,7 @@ export function ExpandableChecklistTaskInput({
   return (
     <div className="min-w-0 flex-1">
       <textarea
+        ref={inputRef}
         id={id}
         rows={rows}
         disabled={disabled}
@@ -102,7 +118,7 @@ export function ExpandableChecklistTaskInput({
         className={cn(
           uiControl,
           "min-w-0 w-full py-2 text-[15px] leading-snug",
-          expanded ? "resize-y" : "resize-none",
+          expanded ? "resize-y" : "resize-none overflow-hidden",
           done && "text-fg-tertiary line-through",
         )}
       />
