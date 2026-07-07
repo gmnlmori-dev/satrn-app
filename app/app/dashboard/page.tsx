@@ -6,6 +6,8 @@ import { DashboardRecentActivities } from "@/components/dashboard/dashboard-rece
 import { DashboardRecentPanel } from "@/components/dashboard/dashboard-panels";
 import { DashboardSecondaryFeed } from "@/components/dashboard/dashboard-secondary-feed";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
+import { isInboxEnabled } from "@/lib/app-settings";
+import { getAppSettings } from "@/lib/supabase/app-settings-queries";
 import {
   getDashboardMineCounts,
   getDashboardMineTaskCounts,
@@ -27,6 +29,8 @@ const DASHBOARD_FEED_LIMIT = 5;
 
 export default async function DashboardPage() {
   const profile = await getCurrentProfileSummary();
+  const appSettings = await getAppSettings();
+  const inboxEnabled = isInboxEnabled(appSettings);
   const userId = profile?.userId ?? "";
   const teamScope = profile
     ? { role: profile.role, teamId: profile.teamId }
@@ -68,8 +72,12 @@ export default async function DashboardPage() {
       {totalRequests === 0 ? (
         <AppEmptyState
           icon="queue"
-          title="Nessuna richiesta"
-          description="Crea la prima richiesta o usa l'inbox per triage."
+          title="Nessun progetto"
+          description={
+            inboxEnabled
+              ? "Crea il primo progetto o usa l'inbox per triage."
+              : "Crea il primo progetto da Crea → Nuovo progetto."
+          }
         >
           <Link href="/app/follow-up" className={uiLink}>
             Da seguire
@@ -84,6 +92,7 @@ export default async function DashboardPage() {
             teamStandaloneTaskCounts={teamStandaloneTaskCounts}
             queueCounts={counts}
             teamScoped={teamScope.role !== "admin"}
+            inboxEnabled={inboxEnabled}
           />
           <DashboardSecondaryFeed>
             <DashboardRecentActivities items={activities} viewer={viewer} />

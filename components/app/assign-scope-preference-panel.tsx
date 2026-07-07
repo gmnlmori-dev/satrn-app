@@ -11,11 +11,13 @@ import {
 
 type Props = {
   initialScope: DefaultAssignScopePreference;
+  inboxEnabled?: boolean;
   className?: string;
 };
 
 export function AssignScopePreferencePanel({
   initialScope,
+  inboxEnabled = false,
   className,
 }: Props) {
   const [scope, setScope] = useState(initialScope);
@@ -48,7 +50,7 @@ export function AssignScopePreferencePanel({
   return (
     <SettingsGroup
       className={className}
-      title="Richieste, inbox e Da seguire"
+      title={inboxEnabled ? "Progetti, inbox e Da seguire" : "Progetti e Da seguire"}
       footer={
         error ? (
           <span className="text-danger" role="alert">
@@ -57,9 +59,13 @@ export function AssignScopePreferencePanel({
         ) : (
           <>
             Filtro predefinito «Le mie» / «Tutte» su{" "}
-            <span className="text-fg-secondary">Richieste</span>,{" "}
-            <span className="text-fg-secondary">Inbox</span> e{" "}
-            <span className="text-fg-secondary">Da seguire</span>.
+            <span className="text-fg-secondary">Progetti</span>
+            {inboxEnabled ? (
+              <>
+                , <span className="text-fg-secondary">Inbox</span>
+              </>
+            ) : null}{" "}
+            e <span className="text-fg-secondary">Da seguire</span>.
           </>
         )
       }
@@ -68,7 +74,9 @@ export function AssignScopePreferencePanel({
         label="Solo le mie"
         description={
           isMine
-            ? "All’apertura vedi solo richieste e inbox assegnate a te."
+            ? inboxEnabled
+              ? "All’apertura vedi solo progetti e inbox assegnate a te."
+              : "All’apertura vedi solo i progetti assegnati a te."
             : "All’apertura vedi tutta la coda del team."
         }
         disabled={savingScope}
@@ -77,7 +85,7 @@ export function AssignScopePreferencePanel({
             checked={isMine}
             disabled={savingScope}
             onChange={(v) => void onToggleScope(v)}
-            aria-label="Mostra solo le mie richieste"
+            aria-label="Mostra solo i miei progetti"
           />
         }
       />

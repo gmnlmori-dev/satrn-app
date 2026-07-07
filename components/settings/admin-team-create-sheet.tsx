@@ -18,7 +18,7 @@ export function AdminTeamCreateSheet({
       open={open}
       onClose={onClose}
       title="Nuovo team"
-      description="Crea un team per isolare utenti, richieste e inbox."
+      description="Crea un team per isolare utenti, progetti e inbox."
     >
       <AdminTeamCreateForm
         onCancel={onClose}

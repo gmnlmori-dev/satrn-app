@@ -77,7 +77,7 @@ const tableRowInteractive = cn(
   "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring-focus",
 );
 
-/** Stato richiesta. */
+/** Stato progetto. */
 function IconAdjustmentsVertical({ className }: { className?: string }) {
   return (
     <svg
@@ -131,9 +131,11 @@ const HASH_TO_TAB: Record<string, FollowUpTab> = {
   "follow-up-inbox": "inbox",
 };
 
-function tabFromHash(hash: string): FollowUpTab | null {
+function tabFromHash(hash: string, inboxEnabled: boolean): FollowUpTab | null {
   const id = hash.replace(/^#/, "");
-  return HASH_TO_TAB[id] ?? null;
+  const tab = HASH_TO_TAB[id] ?? null;
+  if (tab === "inbox" && !inboxEnabled) return null;
+  return tab;
 }
 
 function defaultFollowUpTab(overdue: number): FollowUpTab {
@@ -709,7 +711,7 @@ function QueuePanel({
           requestAccent === "danger" && "border-l-4 border-l-danger",
         )}
       >
-        <FollowUpColumnHeader title="Richieste" count={requests.length} />
+        <FollowUpColumnHeader title="Progetti" count={requests.length} />
         {hasRequests ? (
           <RequestBlock requests={requests} accent={requestAccent} />
         ) : null}
@@ -717,14 +719,14 @@ function QueuePanel({
           <>
             {hasRequests ? <div className="border-t border-line-default" /> : null}
             <FollowUpSubSectionHeader
-              title="Checklist richieste"
+              title="Checklist progetti"
               count={orphanChecklists.length}
             />
             <FollowUpChecklistBlock entries={orphanChecklists} />
           </>
         ) : null}
         {requestsColumnEmpty ? (
-          <FollowUpColumnEmpty hint="Nessuna richiesta in questa finestra." />
+          <FollowUpColumnEmpty hint="Nessun progetto in questa finestra." />
         ) : null}
       </section>
 
@@ -752,6 +754,7 @@ export function FollowUpView({
   todayChecklists = [],
   upcomingChecklists = [],
   scopeControl = null,
+  inboxEnabled = false,
 }: {
   overdue: Request[];
   today: Request[];
@@ -764,6 +767,7 @@ export function FollowUpView({
   todayChecklists?: CalendarTaskEntry[];
   upcomingChecklists?: CalendarTaskEntry[];
   scopeControl?: ReactNode;
+  inboxEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -783,20 +787,29 @@ export function FollowUpView({
   );
 
   const syncTabFromLocation = useCallback(() => {
-    const fromHash = tabFromHash(window.location.hash);
+    const fromHash = tabFromHash(window.location.hash, inboxEnabled);
     const tab = fromHash ?? defaultFollowUpTab(overdueCount);
     setActiveTab(tab);
     if (!fromHash) {
       const query = search ? `?${search}` : "";
       window.history.replaceState(null, "", `${pathname}${query}#${TAB_HASH[tab]}`);
     }
-  }, [overdueCount, pathname, search]);
+  }, [inboxEnabled, overdueCount, pathname, search]);
 
   useEffect(() => {
     syncTabFromLocation();
     window.addEventListener("hashchange", syncTabFromLocation);
     return () => window.removeEventListener("hashchange", syncTabFromLocation);
   }, [syncTabFromLocation]);
+
+  useEffect(() => {
+    if (!inboxEnabled && activeTab === "inbox") {
+      const tab = defaultFollowUpTab(overdueCount);
+      setActiveTab(tab);
+      const query = search ? `?${search}` : "";
+      window.history.replaceState(null, "", `${pathname}${query}#${TAB_HASH[tab]}`);
+    }
+  }, [activeTab, inboxEnabled, overdueCount, pathname, search]);
 
   function selectTab(tab: FollowUpTab) {
     setActiveTab(tab);
@@ -809,7 +822,9 @@ export function FollowUpView({
     { value: "overdue", label: tabLabel("In ritardo", overdueCount) },
     { value: "today", label: tabLabel("Oggi", todayCount) },
     { value: "upcoming", label: tabLabel("7 giorni", upcomingCount) },
-    { value: "inbox", label: tabLabel("Inbox", inboxCount) },
+    ...(inboxEnabled
+      ? [{ value: "inbox" as const, label: tabLabel("Inbox", inboxCount) }]
+      : []),
   ];
 
   return (
@@ -837,7 +852,7 @@ export function FollowUpView({
             checklistEntries={overdueChecklists}
             requestAccent="danger"
             emptyTitle="Nessun ritardo"
-            emptyHint="Richieste, checklist e task con scadenza passata compariranno qui."
+            emptyHint="Progetti, checklist e task con scadenza passata compariranno qui."
           />
         ) : null}
 
@@ -848,7 +863,7 @@ export function FollowUpView({
             checklistEntries={todayChecklists}
             requestAccent="default"
             emptyTitle="Niente in scadenza oggi"
-            emptyHint="Richieste, checklist e task con scadenza oggi compariranno qui."
+            emptyHint="Progetti, checklist e task con scadenza oggi compariranno qui."
           />
         ) : null}
 
@@ -859,11 +874,11 @@ export function FollowUpView({
             checklistEntries={upcomingChecklists}
             requestAccent="default"
             emptyTitle="Nessuna scadenza nei prossimi 7 giorni"
-            emptyHint="Richieste, checklist e task da domani al settimo giorno compariranno qui."
+            emptyHint="Progetti, checklist e task da domani al settimo giorno compariranno qui."
           />
         ) : null}
 
-        {activeTab === "inbox" ? (
+        {inboxEnabled && activeTab === "inbox" ? (
           inboxCount === 0 ? (
             <div className={cn(uiCard, "overflow-hidden")}>
               <EmptyRow

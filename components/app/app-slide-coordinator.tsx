@@ -64,7 +64,7 @@ export function useAppSlideCoordinator(): AppSlideCoordinatorValue {
   return ctx;
 }
 
-/** Slide booleana registrata nel coordinatore (es. nuova richiesta / nuovo inbox). */
+/** Slide booleana registrata nel coordinatore (es. nuovo progetto / nuovo inbox). */
 export function useExclusiveAppSlide(id: string) {
   const { register, openExclusive } = useAppSlideCoordinator();
   const [open, setOpen] = useState(false);

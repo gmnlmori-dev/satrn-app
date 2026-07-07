@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { FollowUpAssigneeScope } from "@/components/follow-up/follow-up-assignee-scope";
 import { FollowUpHashScroll } from "@/components/follow-up/follow-up-hash-scroll";
+import { isInboxEnabled } from "@/lib/app-settings";
+import { getAppSettings } from "@/lib/supabase/app-settings-queries";
 import {
   getFollowUpChecklistEntries,
   getFollowUpRequestQueues,
@@ -21,7 +23,12 @@ export const metadata = {
 };
 
 export default async function FollowUpPage() {
-  const profile = await getCurrentProfileSummary();
+  const [profile, appSettings] = await Promise.all([
+    getCurrentProfileSummary(),
+    getAppSettings(),
+  ]);
+  const inboxEnabled = isInboxEnabled(appSettings);
+
   const [
     requestQueues,
     inbox,
@@ -33,7 +40,7 @@ export default async function FollowUpPage() {
     upcomingChecklists,
   ] = await Promise.all([
     getFollowUpRequestQueues(),
-    getInboxTriageItems(),
+    inboxEnabled ? getInboxTriageItems() : Promise.resolve([]),
     getOverdueStandaloneTasks(),
     getStandaloneTasksToday(),
     getUpcomingStandaloneTasks(),
@@ -54,8 +61,8 @@ export default async function FollowUpPage() {
       <header className="min-w-0">
         <h1 className={uiPageTitle}>Da seguire</h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
-          La tua coda operativa: scegli la finestra temporale e lavora richieste,
-          task e inbox da un unico punto.
+          La tua coda operativa: scegli la finestra temporale e lavora progetti
+          {inboxEnabled ? ", task e inbox" : " e task"} da un unico punto.
         </p>
       </header>
       <Suspense fallback={null}>
@@ -72,6 +79,7 @@ export default async function FollowUpPage() {
           upcomingChecklists={upcomingChecklists}
           currentUserId={profile?.userId ?? ""}
           defaultScope={defaultScope}
+          inboxEnabled={inboxEnabled}
         />
       </Suspense>
     </div>

@@ -20,6 +20,7 @@ Gli script in questa cartella **non** hanno runner automatico: vanno eseguiti ma
 14. `profile_preferences.sql` — preferenze utente (es. scope default Da seguire)
 15. `app_announcements.sql` — novità app e letture
 16. `app_announcement_reads_update_policy.sql` — solo se prod ha già `app_announcements.sql` senza policy UPDATE
+17. `app_settings.sql` — impostazioni globali (es. abilitazione Inbox)
 
 ## Checklist deploy produzione
 

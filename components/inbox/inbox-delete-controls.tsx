@@ -126,7 +126,7 @@ export function InboxDeleteControls({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-fg-primary">Elimina ingresso</p>
             <p className="mt-0.5 text-sm leading-relaxed text-fg-secondary">
-              Rimuovi questo ingresso se non ti serve più convertirlo in richiesta.
+              Rimuovi questo ingresso se non ti serve più convertirlo in progetto.
             </p>
           </div>
         </div>

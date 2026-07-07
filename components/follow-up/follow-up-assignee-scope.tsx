@@ -33,6 +33,7 @@ type Props = {
   upcomingChecklists: CalendarTaskEntry[];
   currentUserId: string;
   defaultScope: FollowUpAssigneeScope;
+  inboxEnabled?: boolean;
 };
 
 export function FollowUpAssigneeScope({
@@ -48,6 +49,7 @@ export function FollowUpAssigneeScope({
   upcomingChecklists,
   currentUserId,
   defaultScope,
+  inboxEnabled = false,
 }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -144,6 +146,7 @@ export function FollowUpAssigneeScope({
       todayChecklists={filteredTodayChecklists}
       upcomingChecklists={filteredUpcomingChecklists}
       scopeControl={scopeControl}
+      inboxEnabled={inboxEnabled}
     />
   );
 }

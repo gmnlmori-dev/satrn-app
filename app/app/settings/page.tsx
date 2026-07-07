@@ -2,6 +2,8 @@ import { AssignScopePreferencePanel } from "@/components/app/assign-scope-prefer
 import { CalendarPreferencePanel } from "@/components/app/calendar-preference-panel";
 import { DefaultHomePagePreferencePanel } from "@/components/app/default-home-page-preference-panel";
 import { ThemePreferencePanel } from "@/components/app/theme-preference-panel";
+import { isInboxEnabled } from "@/lib/app-settings";
+import { getAppSettings } from "@/lib/supabase/app-settings-queries";
 import {
   resolveDefaultAssignScope,
   resolveDefaultHomePage,
@@ -14,7 +16,11 @@ export const metadata = {
 };
 
 export default async function SettingsPage() {
-  const profile = await getCurrentProfileSummary();
+  const [profile, appSettings] = await Promise.all([
+    getCurrentProfileSummary(),
+    getAppSettings(),
+  ]);
+  const inboxEnabled = isInboxEnabled(appSettings);
   const defaultScope = profile
     ? resolveDefaultAssignScope(profile.preferences, profile.role)
     : "all";
@@ -29,7 +35,10 @@ export default async function SettingsPage() {
     <div className="space-y-8 md:space-y-9">
       <ThemePreferencePanel />
       <DefaultHomePagePreferencePanel initialHomePage={defaultHomePage} />
-      <AssignScopePreferencePanel initialScope={defaultScope} />
+      <AssignScopePreferencePanel
+        initialScope={defaultScope}
+        inboxEnabled={inboxEnabled}
+      />
       <CalendarPreferencePanel initialCalendarLayout={defaultCalendarLayout} />
     </div>
   );

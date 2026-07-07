@@ -28,7 +28,7 @@ export interface Request {
   lastInteractionAt: string;
   createdAt: string;
   updatedAt: string;
-  /** Tutti gli assegnatari della richiesta */
+  /** Tutti gli assegnatari del progetto */
   assignees: RequestAssignee[];
   /** Primo assegnatario (legacy / retrocompatibilità) */
   assignedUserId: string | null;

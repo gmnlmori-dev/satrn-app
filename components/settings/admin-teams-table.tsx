@@ -36,7 +36,7 @@ export function AdminTeamsTable({ teams }: { teams: TeamSummary[] }) {
     <div className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-2xl text-sm leading-relaxed text-fg-secondary">
-          Raggruppa utenti, richieste e inbox. Disattiva un team per escluderlo
+          Raggruppa utenti, progetti e inbox. Disattiva un team per escluderlo
           dalle select di creazione.
         </p>
         <button

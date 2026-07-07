@@ -60,7 +60,7 @@ export function InboxWorkspace({ items, currentUserId, defaultScope }: Props) {
         <h1 className={uiPageTitle}>Inbox</h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
           Raccogli testi grezzi da email, chat o note; ogni ingresso è
-          assegnato a chi lo crea. Dal dettaglio puoi convertirlo in richiesta.
+          assegnato a chi lo crea. Dal dettaglio puoi convertirlo in progetto.
         </p>
       </header>
 
@@ -98,7 +98,7 @@ export function InboxWorkspace({ items, currentUserId, defaultScope }: Props) {
       {items.length === 0 ? (
         <AppEmptyHint
           title="Nessun ingresso registrato"
-          description="Quando arrivano messaggi, email o appunti da sistemare prima di aprire una richiesta, aggiungili con Crea → Nuovo inbox nella barra laterale."
+          description="Quando arrivano messaggi, email o appunti da sistemare prima di aprire un progetto, aggiungili con Crea → Nuovo inbox nella barra laterale."
           className="py-10"
         />
       ) : filtered.length === 0 ? (

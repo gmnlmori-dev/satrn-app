@@ -22,7 +22,7 @@ export type CalendarTaskEntry = {
   teamName: string | null;
   createdByLabel: string | null;
   assigneeUserIds: string[];
-  /** Posizione nella checklist della richiesta (ordine di creazione). */
+  /** Posizione nella checklist del progetto (ordine di creazione). */
   taskIndex: number;
   task: NextActionTask;
 };
@@ -132,7 +132,7 @@ export function patchNextActionTask(
   return serializeNextAction(content);
 }
 
-/** Segna tutti i task checklist come completati (es. chiusura richiesta). */
+/** Segna tutti i task checklist come completati (es. chiusura progetto). */
 export function markAllNextActionTasksDone(raw: string): {
   next: string;
   changed: boolean;
@@ -323,7 +323,7 @@ function requestInFollowUpWindow(
   return dueMs >= startTomorrow && dueMs <= endWeek;
 }
 
-/** Richieste aperte nella finestra temporale di Da seguire (scadenza effettiva). */
+/** Progetti aperti nella finestra temporale di Da seguire (scadenza effettiva). */
 export function filterRequestsByFollowUpWindow(
   requests: Request[],
   window: FollowUpChecklistWindow,
@@ -347,7 +347,7 @@ export function countRequestsInFollowUpWindow(
   return filterRequestsByFollowUpWindow(requests, window, bounds).length;
 }
 
-/** Conteggi task checklist aperti per finestra temporale (richieste assegnate). */
+/** Conteggi task checklist aperti per finestra temporale (progetti assegnati). */
 export function countOpenTasksByWindow(
   nextActionRaws: string[],
   bounds: {
@@ -387,7 +387,7 @@ export type NextActionTaskSummary = {
   overdue: number;
 };
 
-/** Conteggi task checklist su una singola richiesta (solo voci con testo). */
+/** Conteggi task checklist su un singolo progetto (solo voci con testo). */
 export function summarizeNextActionTasks(
   raw: string,
   bounds = getFollowUpWindowBounds(),
@@ -430,7 +430,7 @@ export function filterCalendarTasksByWindow(
   });
 }
 
-/** Checklist la cui richiesta non è già nella coda per scadenza generale. */
+/** Checklist il cui progetto non è già nella coda per scadenza generale. */
 export function orphanChecklistEntriesForRequests(
   entries: CalendarTaskEntry[],
   requestsInQueue: Pick<Request, "id">[],
@@ -460,7 +460,7 @@ function dueAtTime(dueAt: string | null): number | null {
   return Number.isNaN(t) ? null : t;
 }
 
-/** Comparatore unificato: ritardo → scadenza → indice (→ titolo richiesta in modalità calendar). */
+/** Comparatore unificato: ritardo → scadenza → indice (→ titolo progetto in modalità calendar). */
 export function compareChecklistSortItems(
   a: ChecklistSortItem,
   b: ChecklistSortItem,
@@ -500,7 +500,7 @@ export function compareChecklistSortItems(
   return a.taskIndex - b.taskIndex;
 }
 
-/** Ordine checklist in Da seguire: ritardo → scadenza → ordine in richiesta. */
+/** Ordine checklist in Da seguire: ritardo → scadenza → ordine in progetto. */
 export function sortChecklistTasksForFollowUp(
   tasks: NextActionTask[],
   sourceOrder: NextActionTask[],

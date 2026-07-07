@@ -23,7 +23,7 @@ export function InboxUnconvertedActions({
           Gestisci ingresso
         </h2>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-fg-secondary">
-          Converti in richiesta operativa oppure elimina l&apos;ingresso se non ti
+          Converti in progetto operativo oppure elimina l&apos;ingresso se non ti
           serve più.
         </p>
       </div>

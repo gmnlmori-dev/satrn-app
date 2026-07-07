@@ -32,7 +32,7 @@ function formatRequestMeta(group: RequestGroup): string {
   if (group.nextActionAt) {
     parts.push(`Scadenza prossima azione: ${formatDateTime(group.nextActionAt)}`);
   } else {
-    parts.push("Richiesta senza scadenza");
+    parts.push("Progetto senza scadenza");
   }
   return parts.join(" · ");
 }

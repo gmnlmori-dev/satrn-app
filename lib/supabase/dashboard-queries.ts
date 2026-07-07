@@ -119,7 +119,7 @@ export async function getDashboardOperationalCounts(
   };
 }
 
-/** Stesse finestre temporali, solo richieste assegnate all’utente (nel proprio team). */
+/** Stesse finestre temporali, solo progetti assegnati all’utente (nel proprio team). */
 export async function getDashboardMineCounts(
   userId: string,
   scope: TeamQueryScope,
@@ -137,7 +137,7 @@ export async function getDashboardMineCounts(
   };
 }
 
-/** Task checklist aperti sulle richieste assegnate all'utente. */
+/** Task checklist aperti sui progetti assegnati all'utente. */
 export async function getDashboardMineTaskCounts(
   userId: string,
   scope: TeamQueryScope,
@@ -227,7 +227,7 @@ export type DashboardActivityItem = RequestActivity & {
   assignedUserIds: string[];
 };
 
-/** Ultime attività (timeline), con titolo richiesta se disponibile. */
+/** Ultime attività (timeline), con titolo progetto se disponibile. */
 export async function getRecentActivitiesGlobal(
   scope: TeamQueryScope,
   limit = 10,
@@ -298,7 +298,7 @@ export async function getRecentActivitiesGlobal(
   });
 }
 
-/** Richieste aperte ordinate per ultimo aggiornamento. */
+/** Progetti aperti ordinati per ultimo aggiornamento. */
 export async function getRecentlyUpdatedRequests(
   scope: TeamQueryScope,
   limit = 6,
@@ -323,7 +323,7 @@ export async function getRecentlyUpdatedRequests(
   return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
-/** Almeno una richiesta visibile (per empty state). */
+/** Almeno un progetto visibile (per empty state). */
 export async function getRequestsTotalCount(scope: TeamQueryScope): Promise<number> {
   const supabase = await createSupabaseServerClient();
   const teamId = teamIdForScope(scope);

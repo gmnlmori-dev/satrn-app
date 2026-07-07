@@ -173,7 +173,7 @@ export function RequestsWorkspace({
       <div className="space-y-6 md:space-y-7">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0 space-y-1">
-            <h1 className={uiPageTitle}>Scrivania richieste</h1>
+            <h1 className={uiPageTitle}>Scrivania progetti</h1>
             <p className={cn(uiPageLead, "max-w-xl")}>
               Cerca e filtra l’elenco, poi apri una riga per il dettaglio.
             </p>
@@ -197,7 +197,7 @@ export function RequestsWorkspace({
     <div className="space-y-6 md:space-y-7">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="min-w-0 space-y-1">
-          <h1 className={uiPageTitle}>Scrivania richieste</h1>
+          <h1 className={uiPageTitle}>Scrivania progetti</h1>
           <p className={cn(uiPageLead, "max-w-xl")}>
             Cerca e filtra l’elenco, poi apri una riga per il dettaglio.
           </p>
@@ -231,14 +231,14 @@ export function RequestsWorkspace({
       {filtered.length === 0 ? (
         <RequestsEmptyState onReset={resetAll} />
       ) : (
-        <section className="space-y-3" aria-label="Risultati richieste">
+        <section className="space-y-3" aria-label="Risultati progetti">
           <p className="text-sm text-fg-tertiary">
             <span className="tabular-nums font-semibold text-fg-primary">
               {forList.length}
             </span>
             {forList.length === scopedRequests.length
-              ? " richieste"
-              : ` su ${scopedRequests.length} richieste`}
+              ? " progetti"
+              : ` su ${scopedRequests.length} progetti`}
           </p>
           <PriorityLegend />
           <RequestsTable requests={forList} />

@@ -30,7 +30,7 @@ export function DashboardFeedScopeLegend({
           scope: "mine",
           label: "Tu",
           tone: "accent",
-          title: "Tua azione o richiesta assegnata a te",
+          title: "Tua azione o progetto assegnato a te",
         }}
       />
       <DashboardFeedScopeBadge
@@ -47,7 +47,7 @@ export function DashboardFeedScopeLegend({
             scope: "other-team",
             label: "Altro team",
             tone: "warning",
-            title: "Richiesta di un altro team",
+            title: "Progetto di un altro team",
           }}
         />
       ) : null}

@@ -67,14 +67,14 @@ function ChecklistHint({ taskCounts }: { taskCounts: DashboardMineTaskCounts }) 
   if (taskCounts.openTotal === 0) {
     return (
       <p className="text-xs text-fg-tertiary">
-        Nessuna checklist aperta sulle richieste assegnate.
+        Nessuna checklist aperta sui progetti assegnati.
       </p>
     );
   }
 
   return (
     <p className="text-xs text-fg-tertiary">
-      <span className="font-medium text-fg-secondary">Checklist su richieste:</span>{" "}
+      <span className="font-medium text-fg-secondary">Checklist su progetti:</span>{" "}
       {windowCountDetail(taskCounts)}
     </p>
   );
@@ -143,6 +143,7 @@ type Props = {
   teamStandaloneTaskCounts?: DashboardStandaloneTaskCounts | null;
   queueCounts: DashboardOperationalCounts;
   teamScoped?: boolean;
+  inboxEnabled?: boolean;
 };
 
 export function DashboardQueueOverview({
@@ -152,11 +153,16 @@ export function DashboardQueueOverview({
   teamStandaloneTaskCounts = null,
   queueCounts,
   teamScoped = false,
+  inboxEnabled = false,
 }: Props) {
   const queueLabel = teamScoped ? "Coda del team" : "Tutta la coda";
   const queueHint = teamScoped
-    ? "Richieste e inbox del team, escluso il tuo focus personale."
-    : "Panoramica globale di richieste e inbox visibili.";
+    ? inboxEnabled
+      ? "Progetti e inbox del team, escluso il tuo focus personale."
+      : "Progetti del team, escluso il tuo focus personale."
+    : inboxEnabled
+      ? "Panoramica globale di progetti e inbox visibili."
+      : "Panoramica globale dei progetti visibili.";
 
   return (
     <section className="space-y-4" aria-label="Panoramica coda">
@@ -184,7 +190,7 @@ export function DashboardQueueOverview({
                   Il mio lavoro
                 </h3>
                 <p className="mt-1 text-sm text-fg-secondary">
-                  Richieste assegnate a te
+                  Progetti assegnati a te
                 </p>
               </div>
               <Link
@@ -262,7 +268,12 @@ export function DashboardQueueOverview({
             </Link>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <div
+            className={cn(
+              "mt-5 grid grid-cols-2 gap-2 sm:gap-3",
+              inboxEnabled ? "sm:grid-cols-4" : "sm:grid-cols-3",
+            )}
+          >
             <Metric
               label="In ritardo"
               value={queueCounts.overdue}
@@ -279,11 +290,13 @@ export function DashboardQueueOverview({
               value={queueCounts.upcomingWeek}
               href="/app/follow-up#follow-up-upcoming"
             />
-            <Metric
-              label="Inbox triage"
-              value={queueCounts.inboxTriage}
-              href="/app/follow-up#follow-up-inbox"
-            />
+            {inboxEnabled ? (
+              <Metric
+                label="Inbox triage"
+                value={queueCounts.inboxTriage}
+                href="/app/follow-up#follow-up-inbox"
+              />
+            ) : null}
           </div>
           {teamStandaloneTaskCounts &&
           teamStandaloneTaskCounts.openTotal > 0 ? (

@@ -112,7 +112,7 @@ export function RequestsFilters({
             });
           }}
         >
-          <option value="all">Tutte le richieste</option>
+          <option value="all">Tutti i progetti</option>
           <option value="mine">Le mie (assegnate a me)</option>
           <option value="unassigned">Non assegnate</option>
           <option value="user">Utente specifico…</option>

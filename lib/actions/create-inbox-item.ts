@@ -1,5 +1,6 @@
 "use server";
 
+import { assertInboxFeatureEnabled } from "@/lib/actions/inbox-feature-guard";
 import { revalidateInboxViews } from "@/lib/request-revalidate";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -11,6 +12,9 @@ export type CreateInboxItemResult =
 export async function createInboxItem(
   fd: FormData,
 ): Promise<CreateInboxItemResult> {
+  const feature = await assertInboxFeatureEnabled();
+  if (!feature.ok) return feature;
+
   const source = String(fd.get("source") ?? "").trim();
   const subject = String(fd.get("subject") ?? "").trim();
   const sender_name = String(fd.get("senderName") ?? "").trim();

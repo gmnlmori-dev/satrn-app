@@ -40,7 +40,7 @@ export function DashboardRecentActivities({
   return (
     <DashboardFeedCard
       title="Timeline"
-      description="Ultime azioni sulle richieste, con tag di ambito."
+      description="Ultime azioni sui progetti, con tag di ambito."
       items={items.map((item) => toFeedItem(item, viewer))}
       emptyTitle="Vuota"
       emptyDescription="Le attività registrate compariranno qui."

@@ -38,7 +38,7 @@ export async function updateRequestOperational(
     return { ok: false, message: loadError.message };
   }
   if (!before) {
-    return { ok: false, message: "Richiesta non trovata." };
+    return { ok: false, message: "Progetto non trovato." };
   }
 
   const beforeRow = before as {

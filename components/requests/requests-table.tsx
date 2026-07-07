@@ -57,7 +57,7 @@ function Row({
   return (
     <tr
       tabIndex={0}
-      aria-label={`Apri richiesta: ${r.title}`}
+      aria-label={`Apri progetto: ${r.title}`}
       onClick={go}
       onKeyDown={onKeyDown}
       className={cn(
@@ -190,7 +190,7 @@ export function RequestsTable({ requests }: { requests: Request[] }) {
           <thead>
             <tr className={dataTableHeadRowClass}>
               <th scope="col" className={cn("w-[24%] 2xl:w-[19%]", dataTableThClass)}>
-                Richiesta
+                Progetto
               </th>
               <th
                 scope="col"

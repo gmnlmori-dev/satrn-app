@@ -13,7 +13,7 @@ import {
   uiTransition,
 } from "@/lib/ui-classes";
 import { uiMono } from "@/lib/typography";
-import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import { useOptionalCurrentProfile, useInboxEnabled } from "@/components/app/current-user-context";
 import { fetchInboxSubjectForBreadcrumb } from "@/lib/actions/inbox-breadcrumb";
 import { fetchRequestTitleForBreadcrumb } from "@/lib/actions/request-breadcrumb";
 import { CreateRequestProvider } from "@/components/app/create-request-context";
@@ -49,7 +49,7 @@ const nav = [
   { href: "/app/calendar", label: "Calendario", glyph: "calendar" as const },
   { href: "/app/tasks", label: "Task", glyph: "task" as const },
   { href: "/app/inbox", label: "Inbox", glyph: "inbox" as const },
-  { href: "/app/requests", label: "Richieste", glyph: "queue" as const },
+  { href: "/app/requests", label: "Progetti", glyph: "queue" as const },
   { href: "/app/notes", label: "Note", glyph: "note" as const },
 ] as const;
 
@@ -259,7 +259,7 @@ function breadcrumbsForPath(
 
   if (normalized === "/app/dashboard") return [{ label: "Dashboard" }];
   if (normalized === "/app/follow-up") return [{ label: "Da seguire" }];
-  if (normalized === "/app/requests") return [{ label: "Richieste" }];
+  if (normalized === "/app/requests") return [{ label: "Progetti" }];
   if (normalized === "/app/calendar") return [{ label: "Calendario" }];
   if (normalized === "/app/inbox") return [{ label: "Inbox" }];
   if (normalized === "/app/tasks") return [{ label: "Task" }];
@@ -279,8 +279,8 @@ function breadcrumbsForPath(
   }
   if (normalized === "/app/requests/new") {
     return [
-      { label: "Richieste", href: "/app/requests" },
-      { label: "Nuova richiesta" },
+      { label: "Progetti", href: "/app/requests" },
+      { label: "Nuovo progetto" },
     ];
   }
   if (normalized === "/app/settings" || normalized.startsWith("/app/settings/")) {
@@ -317,8 +317,8 @@ function breadcrumbsForPath(
 
   if (isRequestDetail) {
     return [
-      { label: "Richieste", href: "/app/requests" },
-      { label: requestDetailTitle ?? "Richiesta dettaglio" },
+      { label: "Progetti", href: "/app/requests" },
+      { label: requestDetailTitle ?? "Dettaglio progetto" },
     ];
   }
 
@@ -473,6 +473,11 @@ function AppChromeInner({
 }) {
   const pathname = usePathname();
   const me = useOptionalCurrentProfile();
+  const inboxEnabled = useInboxEnabled();
+  const visibleNav = useMemo(
+    () => nav.filter((item) => item.href !== "/app/inbox" || inboxEnabled),
+    [inboxEnabled],
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const newRequestSlide = useExclusiveAppSlide("new-request");
   const newInboxSlide = useExclusiveAppSlide("new-inbox");
@@ -507,7 +512,9 @@ function AppChromeInner({
           <NewRequestQuerySync onOpen={openNewRequest} />
         </Suspense>
         <Suspense fallback={null}>
-          <InboxNewQuerySync onOpen={openNewInbox} />
+          {inboxEnabled ? (
+            <InboxNewQuerySync onOpen={openNewInbox} />
+          ) : null}
         </Suspense>
         <Suspense fallback={null}>
           <NoteNewQuerySync onOpen={openNewNote} />
@@ -517,10 +524,12 @@ function AppChromeInner({
           open={newRequestSlide.open}
           onClose={newRequestSlide.closeSlide}
         />
-        <InboxNewSlideOver
-          open={newInboxSlide.open}
-          onClose={newInboxSlide.closeSlide}
-        />
+        {inboxEnabled ? (
+          <InboxNewSlideOver
+            open={newInboxSlide.open}
+            onClose={newInboxSlide.closeSlide}
+          />
+        ) : null}
         <NewNoteSlideOver
           open={newNoteSlide.open}
           onClose={newNoteSlide.closeSlide}
@@ -637,21 +646,23 @@ function AppChromeInner({
                   >
                     Task
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openNewInbox();
-                    }}
-                    className={cn(
-                      uiTransition,
-                      uiFocusRingInset,
-                      "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
-                      "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
-                    )}
-                  >
-                    Inbox
-                  </button>
+                  {inboxEnabled ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        openNewInbox();
+                      }}
+                      className={cn(
+                        uiTransition,
+                        uiFocusRingInset,
+                        "w-full rounded-md px-2.5 py-1.5 text-left text-sm font-medium leading-snug",
+                        "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
+                      )}
+                    >
+                      Inbox
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
@@ -665,7 +676,7 @@ function AppChromeInner({
                       "text-fg-secondary hover:bg-elevated hover:text-fg-primary",
                     )}
                   >
-                    Richiesta
+                    Progetto
                   </button>
                   <button
                     type="button"
@@ -685,7 +696,7 @@ function AppChromeInner({
                 </div>
               ) : null}
             </div>
-            {nav.map((item) => {
+            {visibleNav.map((item) => {
               const isRequestsSection =
                 pathname === "/app/requests" ||
                 (Boolean(pathname?.startsWith("/app/requests/")) &&

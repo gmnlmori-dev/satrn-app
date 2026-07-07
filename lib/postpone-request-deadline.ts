@@ -83,7 +83,7 @@ export function buildPostponeRequestScopeOptions(
     {
       id: "next_action",
       label: "Prossima azione",
-      description: `Solo scadenza richiesta.${checklistNote}`,
+      description: `Solo scadenza progetto.${checklistNote}`,
     },
     {
       id: "checklist",
@@ -93,7 +93,7 @@ export function buildPostponeRequestScopeOptions(
     {
       id: "all",
       label: "Entrambe",
-      description: "Richiesta e checklist alla nuova data.",
+      description: "Progetto e checklist alla nuova data.",
     },
   ];
 

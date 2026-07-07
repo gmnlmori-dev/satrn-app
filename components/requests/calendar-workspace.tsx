@@ -209,7 +209,7 @@ export function CalendarWorkspace({
           <div className="min-w-0 space-y-1">
             <h1 className={uiPageTitle}>Calendario</h1>
             <p className={cn(uiPageLead, "max-w-xl")}>
-              Scadenze richieste, checklist e task libere, in vista mensile o
+              Scadenze progetti, checklist e task libere, in vista mensile o
               settimanale.
             </p>
           </div>
@@ -220,7 +220,7 @@ export function CalendarWorkspace({
               "inline-flex shrink-0 self-start items-center justify-center rounded-lg px-4 py-2.5 text-sm",
             )}
           >
-            Elenco richieste
+            Elenco progetti
           </Link>
         </header>
         <RequestsDatabaseEmptyState />
@@ -234,7 +234,7 @@ export function CalendarWorkspace({
         <div className="min-w-0 space-y-1">
           <h1 className={uiPageTitle}>Calendario</h1>
           <p className={cn(uiPageLead, "max-w-xl")}>
-            Scadenze richieste, checklist e task libere filtrate. I badge
+            Scadenze progetti, checklist e task libere filtrate. I badge
             tratteggiati indicano task libere; quelli pieni le checklist.
           </p>
         </div>
@@ -245,7 +245,7 @@ export function CalendarWorkspace({
             "inline-flex shrink-0 self-start items-center justify-center rounded-lg px-4 py-2.5 text-sm",
           )}
         >
-          Elenco richieste
+          Elenco progetti
         </Link>
       </header>
 

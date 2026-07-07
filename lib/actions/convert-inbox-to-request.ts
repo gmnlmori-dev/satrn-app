@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertInboxFeatureEnabled } from "@/lib/actions/inbox-feature-guard";
 import { createRequest } from "@/lib/actions/create-request";
 import { insertRequestActivity } from "@/lib/request-activity-log";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -17,6 +18,9 @@ export async function convertInboxToRequest(
   inboxItemId: string,
   fd: FormData,
 ): Promise<ConvertInboxToRequestResult> {
+  const feature = await assertInboxFeatureEnabled();
+  if (!feature.ok) return feature;
+
   const item = await getInboxItemById(inboxItemId);
   if (!item) {
     return { ok: false, message: "Elemento non trovato." };
@@ -24,7 +28,7 @@ export async function convertInboxToRequest(
   if (item.linkedRequestId) {
     return {
       ok: false,
-      message: "Questo elemento è già collegato a una richiesta.",
+      message: "Questo elemento è già collegato a un progetto.",
     };
   }
 
@@ -47,14 +51,14 @@ export async function convertInboxToRequest(
   if (error) {
     return {
       ok: false,
-      message: `Richiesta creata ma aggiornamento inbox fallito: ${error.message}`,
+      message: `Progetto creato ma aggiornamento inbox fallito: ${error.message}`,
     };
   }
 
   await insertRequestActivity(supabase, {
     requestId: result.id,
     type: "converted_from_inbox",
-    body: "Richiesta creata dalla conversione inbox.",
+    body: "Progetto creato dalla conversione inbox.",
     meta: { inbox_item_id: inboxItemId },
   });
 

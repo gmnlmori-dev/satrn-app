@@ -7,7 +7,7 @@ function assertNoError(message: string, error: { message: string } | null) {
   if (error) throw new Error(`${message}: ${error.message}`);
 }
 
-/** Attività della richiesta, più recenti per prime. */
+/** Attività del progetto, più recenti per prime. */
 export async function getRequestActivities(
   requestId: string,
 ): Promise<RequestActivity[]> {

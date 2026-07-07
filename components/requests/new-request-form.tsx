@@ -41,7 +41,7 @@ export type NewRequestFormProps = {
 };
 
 /**
- * Form creazione richiesta — pensato per uso dentro {@link NewRequestSlideOver}.
+ * Form creazione progetto — pensato per uso dentro {@link NewRequestSlideOver}.
  */
 export function NewRequestForm({
   onSuccess,
@@ -93,7 +93,7 @@ export function NewRequestForm({
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col pr-4 sm:pr-5">
         <div className="min-h-0 flex-1 divide-y divide-line-default overflow-y-auto pb-4 pr-3.5 sm:pr-5">
-          <FormSection title="Richiesta">
+          <FormSection title="Progetto">
             <div>
               <label htmlFor={p("title")} className={uiFormLabel}>
                 Titolo <RequiredMark />
@@ -280,7 +280,7 @@ export function NewRequestForm({
               aria-busy={pending}
               className={cn(uiBtnPrimary, pending && "cursor-wait opacity-90")}
             >
-              {pending ? "Creazione…" : "Crea richiesta"}
+              {pending ? "Creazione…" : "Crea progetto"}
             </button>
           </div>
         </div>

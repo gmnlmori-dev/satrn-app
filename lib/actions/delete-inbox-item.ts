@@ -1,5 +1,6 @@
 "use server";
 
+import { assertInboxFeatureEnabled } from "@/lib/actions/inbox-feature-guard";
 import { revalidateInboxViews } from "@/lib/request-revalidate";
 import { canDeleteInboxItem } from "@/lib/inbox-delete";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
@@ -13,6 +14,9 @@ export type DeleteInboxItemResult =
 export async function deleteInboxItem(
   inboxItemId: string,
 ): Promise<DeleteInboxItemResult> {
+  const feature = await assertInboxFeatureEnabled();
+  if (!feature.ok) return feature;
+
   const me = await getCurrentProfileSummary();
   if (!me?.userId || !me.isActive) {
     return { ok: false, message: "Sessione non valida." };
@@ -39,7 +43,7 @@ export async function deleteInboxItem(
     return {
       ok: false,
       message:
-        "Puoi eliminare solo i tuoi ingressi non ancora convertiti in richiesta.",
+        "Puoi eliminare solo i tuoi ingressi non ancora convertiti in progetto.",
     };
   }
 

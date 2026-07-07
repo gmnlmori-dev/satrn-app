@@ -535,7 +535,7 @@ export function RequestsCalendar({
         <span className="tabular-nums font-semibold text-fg-primary">
           {requestDeadlineCount}
         </span>{" "}
-        scadenze richieste
+        scadenze progetti
         {calendarTasks.length > 0 ? (
           <>
             {" "}

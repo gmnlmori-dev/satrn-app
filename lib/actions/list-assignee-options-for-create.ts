@@ -11,7 +11,7 @@ export type ListAssigneeOptionsForCreateResult =
   | { ok: true; options: AssigneeOption[] }
   | { ok: false; message: string };
 
-/** Opzioni assegnazione per creazione richiesta (admin/manager). */
+/** Opzioni assegnazione per creazione progetto (admin/manager). */
 export async function listAssigneeOptionsForCreate(
   teamId: string,
 ): Promise<ListAssigneeOptionsForCreateResult> {

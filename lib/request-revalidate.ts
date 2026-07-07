@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 
-/** Invalida le viste che dipendono da richieste (liste, dashboard, follow-up, calendario). */
+/** Invalida le viste che dipendono da progetti (liste, dashboard, follow-up, calendario). */
 export function revalidateRequestViews(requestId?: string) {
   revalidatePath("/app/requests");
   revalidatePath("/app/dashboard");

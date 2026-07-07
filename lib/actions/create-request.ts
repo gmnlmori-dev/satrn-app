@@ -193,7 +193,7 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
   await insertRequestActivity(supabase, {
     requestId: id,
     type: "request_created",
-    body: `Richiesta creata: ${title}`,
+    body: `Progetto creato: ${title}`,
   });
 
   const assigneeLabels = profiles.map((profile) =>

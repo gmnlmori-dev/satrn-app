@@ -27,7 +27,7 @@ export function CreateRequestAssigneeSelect({
   idPrefix: string;
   disabled?: boolean;
   inputClass?: string;
-  /** Pre-selezione (es. modifica task/richiesta). */
+  /** Pre-selezione (es. modifica task/progetto). */
   initialSelectedIds?: string[];
 }) {
   const me = useOptionalCurrentProfile();

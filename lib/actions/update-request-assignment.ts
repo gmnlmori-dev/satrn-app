@@ -71,7 +71,7 @@ export async function updateRequestAssignment(
     .maybeSingle();
 
   if (loadErr) return { ok: false, message: loadErr.message };
-  if (!current) return { ok: false, message: "Richiesta non trovata." };
+  if (!current) return { ok: false, message: "Progetto non trovato." };
 
   const requestTeamId = current.team_id as string;
 

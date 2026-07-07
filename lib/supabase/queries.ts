@@ -38,7 +38,7 @@ export const REQUEST_SELECT_WITH_ASSIGNEE = `
   )
 `;
 
-/** Tutte le richieste, ultimo aggiornamento per primo. */
+/** Tutti i progetti, ultimo aggiornamento per primo. */
 export async function getRequests(): Promise<Request[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -50,7 +50,7 @@ export async function getRequests(): Promise<Request[]> {
   return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
 }
 
-/** Singola richiesta per id, o `null` se assente. */
+/** Singolo progetto per id, o `null` se assente. */
 export async function getRequestById(id: string): Promise<Request | null> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -64,7 +64,7 @@ export async function getRequestById(id: string): Promise<Request | null> {
   return requestRowToRequest(data as RequestRowWithAssignee);
 }
 
-/** Note collegate a una richiesta (cronologia). */
+/** Note collegate a un progetto (cronologia). */
 export async function getRequestNotes(requestId: string): Promise<RequestNote[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

@@ -238,3 +238,10 @@ export type TaskRowWithAssignee = TaskRow & {
     name: string;
   } | null;
 };
+
+/** Riga singleton `public.app_settings`. */
+export type AppSettingsRow = {
+  id: string;
+  settings: Record<string, unknown>;
+  updated_at: string;
+};

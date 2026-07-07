@@ -83,7 +83,7 @@ export function RequestsCalendarEvent({
           onSelect(request);
         }}
         className={eventShellClass(overdue, compact)}
-        aria-label={`Anteprima richiesta: ${request.title}`}
+        aria-label={`Anteprima progetto: ${request.title}`}
       >
         <EventContent request={request} compact={compact} overdue={overdue} />
       </button>

@@ -11,7 +11,7 @@ import {
 } from "@/lib/user-preferences";
 
 export const metadata = {
-  title: "Richieste",
+  title: "Progetti",
 };
 
 export default async function RequestsPage() {

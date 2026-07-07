@@ -1,16 +1,23 @@
 "use client";
 
+import { useInboxEnabled } from "@/components/app/current-user-context";
 import { cn } from "@/lib/cn";
 import { AppEmptyState } from "@/components/ui/app-empty-state";
 import { uiBtnSecondary } from "@/lib/ui-classes";
 
 /** Nessuna riga in tabella (non dipende dai filtri). */
 export function RequestsDatabaseEmptyState() {
+  const inboxEnabled = useInboxEnabled();
+
   return (
     <AppEmptyState
       icon="queue"
       title="La scrivania è ancora vuota"
-      description="Crea la prima richiesta da Crea → Nuova richiesta nel menu laterale. Per testi grezzi da classificare, usa Crea → Nuovo inbox."
+      description={
+        inboxEnabled
+          ? "Crea il primo progetto da Crea → Nuovo progetto nel menu laterale. Per testi grezzi da classificare, usa Crea → Nuovo inbox."
+          : "Crea il primo progetto da Crea → Nuovo progetto nel menu laterale."
+      }
     />
   );
 }

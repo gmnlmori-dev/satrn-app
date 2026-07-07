@@ -49,7 +49,7 @@ export function resolveDashboardFeedScope(input: {
       tone: "accent",
       title: isMyAction
         ? "Azione eseguita da te"
-        : "Richiesta assegnata a te",
+        : "Progetto assegnato a te",
     };
   }
 
@@ -68,7 +68,7 @@ export function resolveDashboardFeedScope(input: {
     label: teamName || "Altro team",
     tone: "warning",
     title: teamName
-      ? `Richiesta del team ${teamName}`
-      : "Richiesta di un altro team",
+      ? `Progetto del team ${teamName}`
+      : "Progetto di un altro team",
   };
 }

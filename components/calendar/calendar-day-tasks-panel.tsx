@@ -251,7 +251,7 @@ export function CalendarDayTasksPanel({
           {checklistEntries.length > 0 ? (
             <section className="space-y-3">
               <h4 className="text-xs font-semibold uppercase tracking-wide text-fg-tertiary">
-                Checklist su richieste
+                Checklist su progetti
               </h4>
               {grouped.map(([requestId, group]) => (
                 <div key={requestId} className="space-y-2">

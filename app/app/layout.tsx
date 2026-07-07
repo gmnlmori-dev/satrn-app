@@ -1,5 +1,7 @@
 import { AppChrome } from "@/components/app/app-chrome";
 import { CurrentUserProvider } from "@/components/app/current-user-context";
+import { isInboxEnabled } from "@/lib/app-settings";
+import { getAppSettings } from "@/lib/supabase/app-settings-queries";
 import {
   getOldestUnreadActiveAnnouncementForUser,
   getUnreadAnnouncementCountForUser,
@@ -16,6 +18,8 @@ export default async function AppSectionLayout({
   children: React.ReactNode;
 }) {
   const profile = await getCurrentProfileSummary();
+  const appSettings = await getAppSettings();
+  const inboxEnabled = isInboxEnabled(appSettings);
   const teamsForCreate =
     profile?.role === "admin" ? await getTeamsForSelect() : [];
 
@@ -29,7 +33,11 @@ export default async function AppSectionLayout({
     : [null, 0];
 
   return (
-    <CurrentUserProvider profile={profile} teamsForCreate={teamsForCreate}>
+    <CurrentUserProvider
+      profile={profile}
+      teamsForCreate={teamsForCreate}
+      inboxEnabled={inboxEnabled}
+    >
       <AppChrome
         welcomeAnnouncement={welcomeAnnouncement}
         unreadAnnouncementCount={unreadAnnouncementCount}

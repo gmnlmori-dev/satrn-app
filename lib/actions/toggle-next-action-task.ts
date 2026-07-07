@@ -29,7 +29,7 @@ export async function toggleNextActionTask(
     return { ok: false, message: loadError.message };
   }
   if (!row) {
-    return { ok: false, message: "Richiesta non trovata." };
+    return { ok: false, message: "Progetto non trovato." };
   }
 
   const before = (row as { next_action: string }).next_action ?? "";

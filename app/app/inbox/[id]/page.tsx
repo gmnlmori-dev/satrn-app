@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { InboxUnconvertedActions } from "@/components/inbox/inbox-unconverted-actions";
 import { InboxStatusControls } from "@/components/inbox/inbox-status-controls";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { Panel } from "@/components/ui/panel";
 import { formatDateTime } from "@/lib/date";
 import { inboxStatusLabel } from "@/lib/labels";
+import { isInboxEnabledServer } from "@/lib/supabase/app-settings-queries";
 import { getInboxItemById } from "@/lib/supabase/inbox-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { cn } from "@/lib/cn";
@@ -28,6 +29,10 @@ export default async function InboxDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  if (!(await isInboxEnabledServer())) {
+    redirect("/app/dashboard");
+  }
+
   const { id } = await params;
   const [item, profile] = await Promise.all([
     getInboxItemById(id),
@@ -43,7 +48,7 @@ export default async function InboxDetailPage({
         </h1>
         <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
           Ingresso registrato manualmente · stato {inboxStatusLabel[item.status]}
-          {item.linkedRequestId ? " · collegato a una richiesta esistente." : "."}
+          {item.linkedRequestId ? " · collegato a un progetto esistente." : "."}
         </p>
       </header>
 
@@ -97,7 +102,7 @@ export default async function InboxDetailPage({
                 "inline-flex font-semibold text-accent underline-offset-2 hover:underline",
               )}
             >
-              Apri richiesta collegata
+              Apri progetto collegato
             </Link>
           </div>
         ) : null}

@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
+import { AdminInboxTogglePanel } from "@/components/settings/admin-inbox-toggle-panel";
 import { AdminUsersTable } from "@/components/settings/admin-users-table";
 import { canManageUsers } from "@/lib/permissions";
+import { isInboxEnabled } from "@/lib/app-settings";
+import { getAppSettings } from "@/lib/supabase/app-settings-queries";
 import {
   getCurrentProfileSummary,
   getProfilesForAdminList,
@@ -17,13 +20,15 @@ export default async function AdminUsersSettingsPage() {
     redirect("/app/dashboard");
   }
 
-  const [profiles, teams] = await Promise.all([
+  const [profiles, teams, appSettings] = await Promise.all([
     getProfilesForAdminList(),
     getTeamsForSelect(),
+    getAppSettings(),
   ]);
 
   return (
-    <div className="space-y-6 md:space-y-7">
+    <div className="space-y-8 md:space-y-9">
+      <AdminInboxTogglePanel initialEnabled={isInboxEnabled(appSettings)} />
       <AdminUsersTable profiles={profiles} teams={teams} />
     </div>
   );

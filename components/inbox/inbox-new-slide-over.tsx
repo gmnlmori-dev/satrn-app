@@ -18,7 +18,7 @@ export function InboxNewSlideOver({
       open={open}
       onClose={onClose}
       title="Nuovo inbox"
-      description="Registra un messaggio grezzo da convertire in richiesta in un secondo momento."
+      description="Registra un messaggio grezzo da convertire in progetto in un secondo momento."
       slideFrom="left"
       portal
     >

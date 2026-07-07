@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s · Satrn",
   },
   description:
-    "Software operativo per centralizzare richieste, follow-up e processi.",
+    "Software operativo per centralizzare progetti, follow-up e processi.",
   icons: {
     icon: {
       url: "/favicon-dark.svg",

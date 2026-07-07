@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Nuova richiesta",
+  title: "Nuovo progetto",
 };
 
 export default function LegacyNewRequestPage() {

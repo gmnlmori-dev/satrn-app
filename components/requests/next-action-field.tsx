@@ -29,7 +29,7 @@ type Props = {
   idPrefix?: string;
   textRows?: number;
   className?: string;
-  /** Scadenza richiesta già impostata (limita le date checklist). */
+  /** Scadenza progetto già impostata (limita le date checklist). */
   requestNextActionAt?: string | null;
   onValidationError?: (message: string | null) => void;
 };

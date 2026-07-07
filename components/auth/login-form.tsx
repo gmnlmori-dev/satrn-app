@@ -59,7 +59,7 @@ export function LoginForm({ inactive }: { inactive?: boolean }) {
             priority
           />
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-fg-secondary">
-            Software operativo per centralizzare richieste, follow-up e processi.
+            Software operativo per centralizzare progetti, follow-up e processi.
           </p>
         </div>
 

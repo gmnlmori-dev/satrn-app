@@ -19,7 +19,7 @@ export type FollowUpDeadlineLine = {
 
 type RequestDeadlineSource = Pick<Request, "nextActionAt" | "nextAction">;
 
-/** Righe etichettate per la riga richiesta in Da seguire (senza duplicati). */
+/** Righe etichettate per la riga progetto in Da seguire (senza duplicati). */
 export function followUpRequestDeadlineLines(
   request: RequestDeadlineSource,
 ): FollowUpDeadlineLine[] {

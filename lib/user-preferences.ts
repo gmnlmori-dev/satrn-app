@@ -3,7 +3,7 @@ import { defaultFollowUpAssigneeScope } from "@/lib/request-assignee";
 import type { AssignScopeFilter } from "@/lib/requests-query";
 import type { AppRole } from "@/types/profile";
 
-/** Vista predefinita «Le mie» / «Tutte» su Richieste, Inbox e Da seguire. */
+/** Vista predefinita «Le mie» / «Tutte» su Progetti, Inbox e Da seguire. */
 export type DefaultAssignScopePreference = FollowUpAssigneeScope;
 
 /** Layout predefinito della pagina Calendario. */
@@ -28,7 +28,7 @@ export const DEFAULT_HOME_PAGE_LABELS: Record<DefaultHomePagePreference, string>
   {
     dashboard: "Dashboard",
     "follow-up": "Da seguire",
-    requests: "Richieste",
+    requests: "Progetti",
     calendar: "Calendario",
   };
 

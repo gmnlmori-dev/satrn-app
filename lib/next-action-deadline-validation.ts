@@ -14,7 +14,7 @@ export type NextActionDeadlineValidationResult =
   | { ok: false; message: string };
 
 /**
- * Allinea scadenza richiesta e checklist:
+ * Allinea scadenza progetto e checklist:
  * - checklist con due non può essere dopo next_action_at
  * - next_action_at non può essere prima della checklist più in ritardo
  */
@@ -59,7 +59,7 @@ export function checklistDueAfterNextActionMessage(): string {
   return "La scadenza checklist non può essere successiva alla scadenza prossima azione.";
 }
 
-/** Messaggio errore per scadenza richiesta (validazione client). */
+/** Messaggio errore per scadenza progetto (validazione client). */
 export function nextActionBeforeChecklistMessage(): string {
   return "La scadenza prossima azione non può precedere quella della checklist.";
 }

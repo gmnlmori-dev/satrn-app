@@ -13,7 +13,7 @@ export function DashboardHeader() {
             Da seguire
           </Link>
           <Link href="/app/requests" className={uiBtnSecondary}>
-            Richieste
+            Progetti
           </Link>
         </>
       }

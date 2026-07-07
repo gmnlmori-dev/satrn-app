@@ -18,7 +18,7 @@ export function NewTaskSlideOver({
       open={open}
       onClose={onClose}
       title="Nuova task"
-      description="Azione operativa senza legame a una richiesta cliente."
+      description="Azione operativa senza legame a un progetto cliente."
       slideFrom="left"
       portal
     >

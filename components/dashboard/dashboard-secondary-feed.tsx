@@ -32,7 +32,7 @@ export function DashboardSecondaryFeed({
           <p className="mt-0.5 text-sm text-fg-secondary">
             {open
               ? "Nascondi il dettaglio cronologico."
-              : "Apri per consultare timeline e richieste aggiornate."}
+              : "Apri per consultare timeline e progetti aggiornati."}
           </p>
         </div>
         <svg

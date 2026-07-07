@@ -48,7 +48,7 @@ export async function getUpcomingRequests(): Promise<Request[]> {
   return filterRequestsByFollowUpWindow(requests, "upcoming");
 }
 
-/** Coda richieste per tutte le finestre (una sola query DB). */
+/** Coda progetti per tutte le finestre (una sola query DB). */
 export async function getFollowUpRequestQueues(): Promise<{
   overdue: Request[];
   today: Request[];
@@ -77,7 +77,7 @@ export async function getInboxTriageItems(): Promise<InboxItem[]> {
   return ((data ?? []) as InboxItemRowWithAssignee[]).map(inboxItemRowToInboxItem);
 }
 
-/** Checklist con scadenza nella finestra, anche se la richiesta non ha next_action_at. */
+/** Checklist con scadenza nella finestra, anche se il progetto non ha next_action_at. */
 export async function getFollowUpChecklistEntries(
   window: FollowUpChecklistWindow,
 ): Promise<CalendarTaskEntry[]> {
@@ -86,7 +86,7 @@ export async function getFollowUpChecklistEntries(
   return sortCalendarTaskEntries(filterCalendarTasksByWindow(entries, window));
 }
 
-/** Richieste aperte per conteggi dashboard (stessa base di Da seguire). */
+/** Progetti aperti per conteggi dashboard (stessa base di Da seguire). */
 export async function getOpenRequestsForOperationalCounts(): Promise<Request[]> {
   return getOpenRequestsForFollowUp();
 }

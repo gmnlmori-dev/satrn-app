@@ -32,7 +32,7 @@ function FormSection({
 
 function defaultsFromInbox(item: InboxItem) {
   return {
-    title: item.subject.trim() || "Richiesta da inbox",
+    title: item.subject.trim() || "Progetto da inbox",
     companyName: "",
     contactName: item.senderName.trim(),
     contactEmail: item.senderEmail.trim(),
@@ -84,7 +84,7 @@ export function ConvertInboxForm({
   const form = (
     <>
       <p className="text-sm font-semibold text-fg-primary">
-        Converti in richiesta
+        Converti in progetto
       </p>
       <p className="mt-1 text-sm leading-relaxed text-fg-secondary">
         I campi sono precompilati dall&apos;ingresso; completa o modifica prima di salvare.
@@ -94,7 +94,7 @@ export function ConvertInboxForm({
         onSubmit={handleSubmit}
         className="mt-4 divide-y divide-line-default"
       >
-        <FormSection title="Richiesta">
+        <FormSection title="Progetto">
           <div>
             <label htmlFor={p("title")} className={uiFormLabel}>
               Titolo
@@ -271,7 +271,7 @@ export function ConvertInboxForm({
               pending && "cursor-wait opacity-90",
             )}
           >
-            {pending ? "Conversione…" : "Converti in richiesta"}
+            {pending ? "Conversione…" : "Converti in progetto"}
           </button>
         </div>
       </form>

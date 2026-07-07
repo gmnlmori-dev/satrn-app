@@ -12,7 +12,7 @@ export type CreateRequestNoteResult =
   | { ok: false; message: string };
 
 /**
- * Inserisce una riga in `request_notes` e aggiorna timestamp sulla richiesta collegata.
+ * Inserisce una riga in `request_notes` e aggiorna timestamp sul progetto collegato.
  */
 export async function createRequestNote(
   requestId: string,
@@ -57,7 +57,7 @@ export async function createRequestNote(
       ok: false,
       message:
         updateError?.message ??
-        "Impossibile aggiornare la richiesta dopo il salvataggio della nota.",
+        "Impossibile aggiornare il progetto dopo il salvataggio della nota.",
     };
   }
 

@@ -66,7 +66,7 @@ export function TasksWorkspace({
             <h1 className={uiPageTitle}>Task</h1>
             <p className={cn(uiPageLead, "mt-1.5 max-w-2xl")}>
               Azioni operative interne, con scadenza e assegnazione — senza
-              legame a una richiesta cliente.
+              legame a un progetto cliente.
             </p>
           </div>
           <button type="button" className={uiBtnPrimary} onClick={openNewTask}>

@@ -17,8 +17,8 @@ export function NewRequestSlideOver({
     <AppSlideOver
       open={open}
       onClose={onClose}
-      title="Nuova richiesta"
-      description="Apri una richiesta cliente con i dati essenziali; potrai completarla dal dettaglio."
+      title="Nuovo progetto"
+      description="Apri un progetto cliente con i dati essenziali; potrai completarlo dal dettaglio."
       slideFrom="left"
       portal
     >

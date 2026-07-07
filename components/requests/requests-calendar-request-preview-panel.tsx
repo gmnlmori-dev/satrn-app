@@ -55,7 +55,7 @@ export function RequestsCalendarRequestPreviewPanel({
     <>
       <button
         type="button"
-        aria-label="Chiudi anteprima richiesta"
+        aria-label="Chiudi anteprima progetto"
         className="fixed inset-0 z-40 bg-canvas/70"
         onClick={onClose}
       />
@@ -139,7 +139,7 @@ export function RequestsCalendarRequestPreviewPanel({
             href={`/app/requests/${request.id}`}
             className={cn(uiBtnPrimary, uiTransition, "inline-flex")}
           >
-            Apri richiesta
+            Apri progetto
           </Link>
         </div>
       </div>

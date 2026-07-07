@@ -9,12 +9,12 @@ const ITEMS = [
     description: "Arriva qualcosa da valutare; non è ancora un caso strutturato.",
   },
   {
-    title: "Richiesta",
+    title: "Progetto",
     description: "C'è un cliente o un caso con ciclo di vita, stato e priorità.",
   },
   {
-    title: "Checklist in richiesta",
-    description: "Micro-passi operativi dentro una richiesta già aperta.",
+    title: "Checklist in progetto",
+    description: "Micro-passi operativi dentro un progetto già aperto.",
   },
   {
     title: "Task",

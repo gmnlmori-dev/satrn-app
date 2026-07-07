@@ -79,7 +79,7 @@ export const uiLink = cn(
   "text-accent underline-offset-2 hover:underline",
 );
 
-/** Layout condiviso slide-over (Nuova richiesta, Nuovo inbox, Nuovo utente, …). */
+/** Layout condiviso slide-over (Nuovo progetto, Nuovo inbox, Nuovo utente, …). */
 export const slideOverPanel = cn(
   "fixed bottom-0 left-0 flex flex-col overflow-hidden border-r border-line-default bg-surface shadow-[var(--shadow-surface)]",
   "top-12",

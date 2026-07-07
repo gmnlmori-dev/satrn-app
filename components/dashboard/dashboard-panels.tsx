@@ -46,7 +46,7 @@ export function DashboardTodayPanel({ items }: { items: Request[] }) {
   return (
     <PanelShell title="Aggiornate di recente" actionHref="/app/requests" actionLabel="Vedi tutte">
       {items.length === 0 ? (
-        <AppEmptyHint title="Nessun aggiornamento" description="Le richieste modificate di recente compariranno qui." />
+        <AppEmptyHint title="Nessun aggiornamento" description="I progetti modificati di recente compariranno qui." />
       ) : (
         <ul className="divide-y divide-line-default">
           {items.map((r) => (
@@ -103,12 +103,12 @@ export function DashboardRecentPanel({
   return (
     <DashboardFeedCard
       title="Attività recenti"
-      description="Richieste aggiornate di recente, con tag di ambito."
+      description="Progetti aggiornati di recente, con tag di ambito."
       actionHref="/app/requests"
       actionLabel="Scrivania"
       items={feedItems}
       emptyTitle="Nessuna attività"
-      emptyDescription="Le richieste modificate di recente compariranno qui."
+      emptyDescription="I progetti modificati di recente compariranno qui."
       showScopeLegend
       scopeLegendOtherTeam={viewer.role === "admin"}
     />

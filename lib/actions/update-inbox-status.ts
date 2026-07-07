@@ -1,5 +1,6 @@
 "use server";
 
+import { assertInboxFeatureEnabled } from "@/lib/actions/inbox-feature-guard";
 import { revalidateInboxViews } from "@/lib/request-revalidate";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getInboxItemById } from "@/lib/supabase/inbox-queries";
@@ -15,6 +16,9 @@ export async function updateInboxItemStatus(
   id: string,
   next: InboxItemStatus,
 ): Promise<UpdateInboxStatusResult> {
+  const feature = await assertInboxFeatureEnabled();
+  if (!feature.ok) return feature;
+
   if (!MANUAL.includes(next)) {
     return { ok: false, message: "Stato non valido per aggiornamento manuale." };
   }
