@@ -550,7 +550,7 @@ function AppChromeInner({
 
         <aside
           className={cn(
-            "z-50 flex w-52 shrink-0 flex-col border-r border-line-default bg-sidebar transition-transform duration-200 ease-out",
+            "z-50 flex w-52 min-w-52 max-w-52 shrink-0 flex-col border-r border-line-default bg-sidebar transition-transform duration-200 ease-out",
             "fixed inset-y-0 left-0 md:relative md:inset-auto md:translate-x-0",
             "md:h-full md:overflow-hidden",
             menuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"

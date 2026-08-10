@@ -721,7 +721,7 @@ function QueuePanel({
   const requestsColumnEmpty = !hasRequests && !hasChecklists;
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+    <div className="grid min-w-0 w-full grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
       <section
         className={cn(
           uiCard,
@@ -862,15 +862,15 @@ export function FollowUpView({
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="overflow-x-auto pb-0.5">
+    <div id={TAB_HASH[activeTab]} className="scroll-mt-24 space-y-4">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
           <SegmentedControl
             ariaLabel="Finestra temporale"
             value={activeTab}
             options={tabOptions}
             onChange={selectTab}
-            className="min-w-max"
+            className="flex-wrap"
           />
         </div>
         {scopeControl ? (
@@ -885,7 +885,7 @@ export function FollowUpView({
         </p>
       ) : null}
 
-      <div id={TAB_HASH[activeTab]} className="scroll-mt-24">
+      <div className="min-w-0">
         {activeTab === "overdue" ? (
           <QueuePanel
             requests={overdue}
