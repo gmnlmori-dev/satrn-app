@@ -5,6 +5,7 @@ import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   type DefaultAssignScopePreference,
+  type DefaultFollowUpTabPreference,
   type DefaultHomePagePreference,
   type DefaultRequestsCalendarLayoutPreference,
   type UserPreferences,
@@ -36,6 +37,20 @@ function normalizeDefaultHomePage(
     value === "follow-up" ||
     value === "requests" ||
     value === "calendar"
+  ) {
+    return value;
+  }
+  return undefined;
+}
+
+function normalizeDefaultFollowUpTab(
+  value: unknown,
+): DefaultFollowUpTabPreference | undefined {
+  if (
+    value === "overdue" ||
+    value === "today" ||
+    value === "upcoming" ||
+    value === "all"
   ) {
     return value;
   }
@@ -76,6 +91,14 @@ export async function updateMyPreferences(
       return { ok: false, message: "Pagina predefinita non valida." };
     }
     next.defaultHomePage = home;
+  }
+
+  if ("defaultFollowUpTab" in patch) {
+    const tab = normalizeDefaultFollowUpTab(patch.defaultFollowUpTab);
+    if (!tab) {
+      return { ok: false, message: "Tab Da seguire non valida." };
+    }
+    next.defaultFollowUpTab = tab;
   }
 
   const supabase = await createSupabaseServerClient();

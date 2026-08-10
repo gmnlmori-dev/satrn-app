@@ -323,6 +323,31 @@ function requestInFollowUpWindow(
   return dueMs >= startTomorrow && dueMs <= endWeek;
 }
 
+/** Ordina per scadenza crescente; senza scadenza in fondo. */
+export function compareDueMsNullsLast(
+  aMs: number | null,
+  bMs: number | null,
+): number {
+  if (aMs === null && bMs === null) return 0;
+  if (aMs === null) return 1;
+  if (bMs === null) return -1;
+  return aMs - bMs;
+}
+
+/** Tutti i progetti aperti, ordinati per scadenza effettiva (null in fondo). */
+export function sortOpenRequestsForFollowUp(requests: Request[]): Request[] {
+  return [...requests]
+    .filter((request) => request.status !== "closed")
+    .sort((a, b) => {
+      const byDue = compareDueMsNullsLast(
+        effectiveNextActionAtMs(a),
+        effectiveNextActionAtMs(b),
+      );
+      if (byDue !== 0) return byDue;
+      return a.title.localeCompare(b.title, "it");
+    });
+}
+
 /** Progetti aperti nella finestra temporale di Da seguire (scadenza effettiva). */
 export function filterRequestsByFollowUpWindow(
   requests: Request[],
@@ -332,9 +357,11 @@ export function filterRequestsByFollowUpWindow(
   return requests
     .filter((request) => requestInFollowUpWindow(request, window, bounds))
     .sort((a, b) => {
-      const ta = effectiveNextActionAtMs(a) ?? Number.MAX_SAFE_INTEGER;
-      const tb = effectiveNextActionAtMs(b) ?? Number.MAX_SAFE_INTEGER;
-      if (ta !== tb) return ta - tb;
+      const byDue = compareDueMsNullsLast(
+        effectiveNextActionAtMs(a),
+        effectiveNextActionAtMs(b),
+      );
+      if (byDue !== 0) return byDue;
       return a.title.localeCompare(b.title, "it");
     });
 }

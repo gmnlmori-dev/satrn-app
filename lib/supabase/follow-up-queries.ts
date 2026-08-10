@@ -4,6 +4,7 @@ import {
   filterCalendarTasksByWindow,
   filterRequestsByFollowUpWindow,
   sortCalendarTaskEntries,
+  sortOpenRequestsForFollowUp,
   type CalendarTaskEntry,
   type FollowUpChecklistWindow,
 } from "@/lib/next-action-tasks";
@@ -48,11 +49,12 @@ export async function getUpcomingRequests(): Promise<Request[]> {
   return filterRequestsByFollowUpWindow(requests, "upcoming");
 }
 
-/** Coda progetti per tutte le finestre (una sola query DB). */
+/** Coda progetti per tutte le finestre + elenco completo (una sola query DB). */
 export async function getFollowUpRequestQueues(): Promise<{
   overdue: Request[];
   today: Request[];
   upcoming: Request[];
+  all: Request[];
 }> {
   const requests = await getOpenRequestsForFollowUp();
   const bounds = getFollowUpWindowBounds();
@@ -60,6 +62,7 @@ export async function getFollowUpRequestQueues(): Promise<{
     overdue: filterRequestsByFollowUpWindow(requests, "overdue", bounds),
     today: filterRequestsByFollowUpWindow(requests, "today", bounds),
     upcoming: filterRequestsByFollowUpWindow(requests, "upcoming", bounds),
+    all: sortOpenRequestsForFollowUp(requests),
   };
 }
 

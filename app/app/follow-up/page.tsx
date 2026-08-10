@@ -9,12 +9,16 @@ import {
   getInboxTriageItems,
 } from "@/lib/supabase/follow-up-queries";
 import {
+  getOpenStandaloneTasks,
   getOverdueStandaloneTasks,
   getStandaloneTasksToday,
   getUpcomingStandaloneTasks,
 } from "@/lib/supabase/task-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
-import { resolveDefaultAssignScope } from "@/lib/user-preferences";
+import {
+  resolveDefaultAssignScope,
+  resolveDefaultFollowUpTab,
+} from "@/lib/user-preferences";
 import { cn } from "@/lib/cn";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 
@@ -35,6 +39,7 @@ export default async function FollowUpPage() {
     overdueTasks,
     todayTasks,
     upcomingTasks,
+    allTasks,
     overdueChecklists,
     todayChecklists,
     upcomingChecklists,
@@ -44,16 +49,20 @@ export default async function FollowUpPage() {
     getOverdueStandaloneTasks(),
     getStandaloneTasksToday(),
     getUpcomingStandaloneTasks(),
+    getOpenStandaloneTasks(),
     getFollowUpChecklistEntries("overdue"),
     getFollowUpChecklistEntries("today"),
     getFollowUpChecklistEntries("upcoming"),
   ]);
 
-  const { overdue, today, upcoming } = requestQueues;
+  const { overdue, today, upcoming, all } = requestQueues;
 
   const defaultScope = profile
     ? resolveDefaultAssignScope(profile.preferences, profile.role)
     : "all";
+  const preferredFollowUpTab = profile
+    ? resolveDefaultFollowUpTab(profile.preferences)
+    : null;
 
   return (
     <div className="space-y-6 pb-12 md:space-y-8 md:pb-16">
@@ -70,15 +79,18 @@ export default async function FollowUpPage() {
           overdue={overdue}
           today={today}
           upcoming={upcoming}
+          all={all}
           inbox={inbox}
           overdueTasks={overdueTasks}
           todayTasks={todayTasks}
           upcomingTasks={upcomingTasks}
+          allTasks={allTasks}
           overdueChecklists={overdueChecklists}
           todayChecklists={todayChecklists}
           upcomingChecklists={upcomingChecklists}
           currentUserId={profile?.userId ?? ""}
           defaultScope={defaultScope}
+          preferredFollowUpTab={preferredFollowUpTab}
           inboxEnabled={inboxEnabled}
         />
       </Suspense>

@@ -16,6 +16,13 @@ export type DefaultHomePagePreference =
   | "requests"
   | "calendar";
 
+/** Tab predefinita su Da seguire (Inbox esclusa: è condizionale). */
+export type DefaultFollowUpTabPreference =
+  | "overdue"
+  | "today"
+  | "upcoming"
+  | "all";
+
 export const DEFAULT_HOME_PAGE_PATHS: Record<DefaultHomePagePreference, string> =
   {
     dashboard: "/app/dashboard",
@@ -32,10 +39,21 @@ export const DEFAULT_HOME_PAGE_LABELS: Record<DefaultHomePagePreference, string>
     calendar: "Calendario",
   };
 
+export const DEFAULT_FOLLOW_UP_TAB_LABELS: Record<
+  DefaultFollowUpTabPreference,
+  string
+> = {
+  overdue: "In ritardo",
+  today: "Oggi",
+  upcoming: "7 giorni",
+  all: "Tutte",
+};
+
 export type UserPreferences = {
   defaultAssignScope?: DefaultAssignScopePreference;
   defaultRequestsCalendarLayout?: DefaultRequestsCalendarLayoutPreference;
   defaultHomePage?: DefaultHomePagePreference;
+  defaultFollowUpTab?: DefaultFollowUpTabPreference;
 };
 
 export function parseUserPreferences(raw: unknown): UserPreferences {
@@ -58,6 +76,14 @@ export function parseUserPreferences(raw: unknown): UserPreferences {
     o.defaultHomePage === "calendar"
   ) {
     prefs.defaultHomePage = o.defaultHomePage;
+  }
+  if (
+    o.defaultFollowUpTab === "overdue" ||
+    o.defaultFollowUpTab === "today" ||
+    o.defaultFollowUpTab === "upcoming" ||
+    o.defaultFollowUpTab === "all"
+  ) {
+    prefs.defaultFollowUpTab = o.defaultFollowUpTab;
   }
   return prefs;
 }
@@ -82,6 +108,13 @@ export function resolveDefaultHomePage(
   preferences: UserPreferences,
 ): DefaultHomePagePreference {
   return preferences.defaultHomePage ?? "dashboard";
+}
+
+/** Preferenza esplicita, o `null` per usare il fallback smart (ritardo → oggi). */
+export function resolveDefaultFollowUpTab(
+  preferences: UserPreferences,
+): DefaultFollowUpTabPreference | null {
+  return preferences.defaultFollowUpTab ?? null;
 }
 
 export function resolveDefaultHomePath(

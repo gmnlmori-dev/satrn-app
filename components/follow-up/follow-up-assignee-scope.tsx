@@ -14,6 +14,7 @@ import {
   type FollowUpAssigneeScope,
 } from "@/lib/request-assignee";
 import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
+import type { DefaultFollowUpTabPreference } from "@/lib/user-preferences";
 import type { Task } from "@/types/task";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { InboxItem } from "@/types/inbox";
@@ -24,15 +25,18 @@ type Props = {
   overdue: Request[];
   today: Request[];
   upcoming: Request[];
+  all: Request[];
   inbox: InboxItem[];
   overdueTasks: Task[];
   todayTasks: Task[];
   upcomingTasks: Task[];
+  allTasks: Task[];
   overdueChecklists: CalendarTaskEntry[];
   todayChecklists: CalendarTaskEntry[];
   upcomingChecklists: CalendarTaskEntry[];
   currentUserId: string;
   defaultScope: FollowUpAssigneeScope;
+  preferredFollowUpTab?: DefaultFollowUpTabPreference | null;
   inboxEnabled?: boolean;
 };
 
@@ -40,15 +44,18 @@ export function FollowUpAssigneeScope({
   overdue,
   today,
   upcoming,
+  all,
   inbox,
   overdueTasks,
   todayTasks,
   upcomingTasks,
+  allTasks,
   overdueChecklists,
   todayChecklists,
   upcomingChecklists,
   currentUserId,
   defaultScope,
+  preferredFollowUpTab = null,
   inboxEnabled = false,
 }: Props) {
   const pathname = usePathname();
@@ -82,6 +89,10 @@ export function FollowUpAssigneeScope({
     () => (mineOnly ? filterRequestsMine(upcoming, currentUserId) : upcoming),
     [mineOnly, upcoming, currentUserId],
   );
+  const filteredAll = useMemo(
+    () => (mineOnly ? filterRequestsMine(all, currentUserId) : all),
+    [mineOnly, all, currentUserId],
+  );
   const filteredInbox = useMemo(
     () => (mineOnly ? filterInboxMine(inbox, currentUserId) : inbox),
     [mineOnly, inbox, currentUserId],
@@ -98,6 +109,10 @@ export function FollowUpAssigneeScope({
     () =>
       mineOnly ? filterTasksMine(upcomingTasks, currentUserId) : upcomingTasks,
     [mineOnly, upcomingTasks, currentUserId],
+  );
+  const filteredAllTasks = useMemo(
+    () => (mineOnly ? filterTasksMine(allTasks, currentUserId) : allTasks),
+    [mineOnly, allTasks, currentUserId],
   );
   const filteredOverdueChecklists = useMemo(
     () =>
@@ -138,14 +153,17 @@ export function FollowUpAssigneeScope({
       overdue={filteredOverdue}
       today={filteredToday}
       upcoming={filteredUpcoming}
+      all={filteredAll}
       inbox={filteredInbox}
       overdueTasks={filteredOverdueTasks}
       todayTasks={filteredTodayTasks}
       upcomingTasks={filteredUpcomingTasks}
+      allTasks={filteredAllTasks}
       overdueChecklists={filteredOverdueChecklists}
       todayChecklists={filteredTodayChecklists}
       upcomingChecklists={filteredUpcomingChecklists}
       scopeControl={scopeControl}
+      preferredFollowUpTab={preferredFollowUpTab}
       inboxEnabled={inboxEnabled}
     />
   );

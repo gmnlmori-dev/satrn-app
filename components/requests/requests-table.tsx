@@ -5,7 +5,6 @@ import type { Request } from "@/types/request";
 import type { RequestPriority } from "@/types/request";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { formatDate, formatDateTime } from "@/lib/date";
-import { formatNextActionPreview } from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
 import {
   dataTableColSepClass,
@@ -149,23 +148,6 @@ function Row({
       <td
         className={cn(
           requestTableRowHeightClass,
-          "hidden min-w-0 max-w-md overflow-hidden px-4 py-3 align-middle 2xl:table-cell sm:px-5",
-          dataTableColSepClass,
-        )}
-      >
-        <span
-          className={cn(
-            "block text-sm leading-relaxed text-fg-secondary",
-            clampTwoLines
-          )}
-          title={formatNextActionPreview(r.nextAction) || r.nextAction}
-        >
-          {formatNextActionPreview(r.nextAction) || "—"}
-        </span>
-      </td>
-      <td
-        className={cn(
-          requestTableRowHeightClass,
           "overflow-hidden px-4 py-3 align-middle sm:px-5",
           dataTableColSepClass,
         )}
@@ -216,16 +198,6 @@ export function RequestsTable({ requests }: { requests: Request[] }) {
                 )}
               >
                 Assegnatario
-              </th>
-              <th
-                scope="col"
-                className={cn(
-                  "hidden w-[18%] 2xl:w-[16%] 2xl:table-cell",
-                  dataTableThClass,
-                  dataTableColSepClass,
-                )}
-              >
-                Prossima azione
               </th>
               <th
                 scope="col"

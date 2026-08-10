@@ -101,3 +101,28 @@ export async function getUpcomingStandaloneTasks(): Promise<Task[]> {
   assertNoError("getUpcomingStandaloneTasks", error);
   return ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask);
 }
+
+/** Tutte le task libere aperte (con o senza scadenza), ordinate: scadenza ASC, null in fondo. */
+export async function getOpenStandaloneTasks(): Promise<Task[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select(TASK_SELECT_WITH_ASSIGNEE)
+    .eq("done", false);
+
+  assertNoError("getOpenStandaloneTasks", error);
+  const tasks = ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask);
+  return tasks.sort((a, b) => {
+    const aMs = a.dueAt ? new Date(a.dueAt).getTime() : null;
+    const bMs = b.dueAt ? new Date(b.dueAt).getTime() : null;
+    const aValid = aMs !== null && !Number.isNaN(aMs) ? aMs : null;
+    const bValid = bMs !== null && !Number.isNaN(bMs) ? bMs : null;
+    if (aValid === null && bValid === null) {
+      return a.title.localeCompare(b.title, "it");
+    }
+    if (aValid === null) return 1;
+    if (bValid === null) return -1;
+    if (aValid !== bValid) return aValid - bValid;
+    return a.title.localeCompare(b.title, "it");
+  });
+}

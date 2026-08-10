@@ -44,6 +44,7 @@ import {
   PostponeDueAtPopover,
 } from "@/components/follow-up/postpone-due-at-popover";
 import type { Task } from "@/types/task";
+import type { DefaultFollowUpTabPreference } from "@/lib/user-preferences";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { cn } from "@/lib/cn";
 import {
@@ -112,12 +113,13 @@ function IconCheck({ className }: { className?: string }) {
   );
 }
 
-export type FollowUpTab = "overdue" | "today" | "upcoming" | "inbox";
+export type FollowUpTab = "overdue" | "today" | "upcoming" | "all" | "inbox";
 
 const TAB_HASH: Record<FollowUpTab, string> = {
   overdue: "follow-up-overdue",
   today: "follow-up-today",
   upcoming: "follow-up-upcoming",
+  all: "follow-up-all",
   inbox: "follow-up-inbox",
 };
 
@@ -128,6 +130,7 @@ const HASH_TO_TAB: Record<string, FollowUpTab> = {
   "follow-up-tasks-today": "today",
   "follow-up-upcoming": "upcoming",
   "follow-up-tasks-upcoming": "upcoming",
+  "follow-up-all": "all",
   "follow-up-inbox": "inbox",
 };
 
@@ -138,9 +141,24 @@ function tabFromHash(hash: string, inboxEnabled: boolean): FollowUpTab | null {
   return tab;
 }
 
-function defaultFollowUpTab(overdue: number): FollowUpTab {
+function smartDefaultFollowUpTab(overdue: number): FollowUpTab {
   if (overdue > 0) return "overdue";
   return "today";
+}
+
+function resolveInitialFollowUpTab(
+  overdueCount: number,
+  preferred: FollowUpTab | null | undefined,
+): FollowUpTab {
+  if (
+    preferred === "overdue" ||
+    preferred === "today" ||
+    preferred === "upcoming" ||
+    preferred === "all"
+  ) {
+    return preferred;
+  }
+  return smartDefaultFollowUpTab(overdueCount);
 }
 
 function tabLabel(label: string, count: number) {
@@ -746,27 +764,33 @@ export function FollowUpView({
   overdue,
   today,
   upcoming,
+  all = [],
   inbox,
   overdueTasks = [],
   todayTasks = [],
   upcomingTasks = [],
+  allTasks = [],
   overdueChecklists = [],
   todayChecklists = [],
   upcomingChecklists = [],
   scopeControl = null,
+  preferredFollowUpTab = null,
   inboxEnabled = false,
 }: {
   overdue: Request[];
   today: Request[];
   upcoming: Request[];
+  all?: Request[];
   inbox: InboxItem[];
   overdueTasks?: Task[];
   todayTasks?: Task[];
   upcomingTasks?: Task[];
+  allTasks?: Task[];
   overdueChecklists?: CalendarTaskEntry[];
   todayChecklists?: CalendarTaskEntry[];
   upcomingChecklists?: CalendarTaskEntry[];
   scopeControl?: ReactNode;
+  preferredFollowUpTab?: DefaultFollowUpTabPreference | null;
   inboxEnabled?: boolean;
 }) {
   const pathname = usePathname();
@@ -780,21 +804,23 @@ export function FollowUpView({
     upcomingTasks,
     upcomingChecklists,
   );
+  const allCount = countQueueItems(all, allTasks, []);
   const inboxCount = inbox.length;
 
   const [activeTab, setActiveTab] = useState<FollowUpTab>(() =>
-    defaultFollowUpTab(overdueCount),
+    resolveInitialFollowUpTab(overdueCount, preferredFollowUpTab),
   );
 
   const syncTabFromLocation = useCallback(() => {
     const fromHash = tabFromHash(window.location.hash, inboxEnabled);
-    const tab = fromHash ?? defaultFollowUpTab(overdueCount);
+    const tab =
+      fromHash ?? resolveInitialFollowUpTab(overdueCount, preferredFollowUpTab);
     setActiveTab(tab);
     if (!fromHash) {
       const query = search ? `?${search}` : "";
       window.history.replaceState(null, "", `${pathname}${query}#${TAB_HASH[tab]}`);
     }
-  }, [inboxEnabled, overdueCount, pathname, search]);
+  }, [inboxEnabled, overdueCount, pathname, preferredFollowUpTab, search]);
 
   useEffect(() => {
     syncTabFromLocation();
@@ -804,12 +830,19 @@ export function FollowUpView({
 
   useEffect(() => {
     if (!inboxEnabled && activeTab === "inbox") {
-      const tab = defaultFollowUpTab(overdueCount);
+      const tab = resolveInitialFollowUpTab(overdueCount, preferredFollowUpTab);
       setActiveTab(tab);
       const query = search ? `?${search}` : "";
       window.history.replaceState(null, "", `${pathname}${query}#${TAB_HASH[tab]}`);
     }
-  }, [activeTab, inboxEnabled, overdueCount, pathname, search]);
+  }, [
+    activeTab,
+    inboxEnabled,
+    overdueCount,
+    pathname,
+    preferredFollowUpTab,
+    search,
+  ]);
 
   function selectTab(tab: FollowUpTab) {
     setActiveTab(tab);
@@ -822,6 +855,7 @@ export function FollowUpView({
     { value: "overdue", label: tabLabel("In ritardo", overdueCount) },
     { value: "today", label: tabLabel("Oggi", todayCount) },
     { value: "upcoming", label: tabLabel("7 giorni", upcomingCount) },
+    { value: "all", label: tabLabel("Tutte", allCount) },
     ...(inboxEnabled
       ? [{ value: "inbox" as const, label: tabLabel("Inbox", inboxCount) }]
       : []),
@@ -843,6 +877,13 @@ export function FollowUpView({
           <div className="flex shrink-0 justify-end">{scopeControl}</div>
         ) : null}
       </div>
+
+      {activeTab === "all" ? (
+        <p className="text-sm leading-relaxed text-fg-secondary">
+          Include scadenze oltre i prossimi 7 giorni e gli elementi senza
+          scadenza (in fondo all&apos;elenco).
+        </p>
+      ) : null}
 
       <div id={TAB_HASH[activeTab]} className="scroll-mt-24">
         {activeTab === "overdue" ? (
@@ -875,6 +916,17 @@ export function FollowUpView({
             requestAccent="default"
             emptyTitle="Nessuna scadenza nei prossimi 7 giorni"
             emptyHint="Progetti, checklist e task da domani al settimo giorno compariranno qui."
+          />
+        ) : null}
+
+        {activeTab === "all" ? (
+          <QueuePanel
+            requests={all}
+            tasks={allTasks}
+            checklistEntries={[]}
+            requestAccent="default"
+            emptyTitle="Niente da seguire"
+            emptyHint="Progetti e task aperte, con o senza scadenza, compariranno qui."
           />
         ) : null}
 
