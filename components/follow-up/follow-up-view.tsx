@@ -17,6 +17,7 @@ import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-con
 import { InboxStatusBadge } from "@/components/inbox/inbox-status-badge";
 import { PriorityBadge } from "@/components/requests/priority-badge";
 import { StatusBadge } from "@/components/requests/status-badge";
+import { TagChips } from "@/components/tags/tag-chips";
 import { updateInboxItemStatus } from "@/lib/actions/update-inbox-status";
 import { updateRequestOperational } from "@/lib/actions/update-request-operational";
 import { inboxStatusLabel } from "@/lib/labels";
@@ -61,6 +62,7 @@ import { uiCard } from "@/lib/surfaces";
 import { uiSectionTitle } from "@/lib/typography";
 import type { InboxItem } from "@/types/inbox";
 import type { Request, RequestStatus } from "@/types/request";
+import type { TeamTag } from "@/types/tag";
 
 const QUICK_STATUSES: RequestStatus[] = [
   "new",
@@ -291,12 +293,18 @@ function StatusMenuFloating({
   );
 }
 
+type ChecklistTagMap = Record<string, Record<string, string[]>>;
+
 function RequestBlock({
   requests,
   accent,
+  teamTags = [],
+  checklistTagIdsByRequest = {},
 }: {
   requests: Request[];
   accent: "danger" | "default";
+  teamTags?: TeamTag[];
+  checklistTagIdsByRequest?: ChecklistTagMap;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -481,12 +489,22 @@ function RequestBlock({
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <PriorityBadge priority={r.priority} />
                   <StatusBadge status={r.status} />
+                  {teamTags.length > 0 && r.tagIds.length > 0 ? (
+                    <TagChips
+                      tagIds={r.tagIds}
+                      catalog={teamTags}
+                      max={4}
+                      className="ml-0.5"
+                    />
+                  ) : null}
                 </div>
                 <RequestChecklistInline
                   requestId={r.id}
                   nextAction={r.nextAction}
                   nextActionAt={r.nextActionAt}
                   disabled={pending}
+                  teamTags={teamTags}
+                  checklistTagIdsByTask={checklistTagIdsByRequest[r.id]}
                   onChanged={() => {
                     pulseTopBar();
                     refresh();
@@ -549,7 +567,13 @@ function RequestBlock({
   );
 }
 
-function InboxBlock({ items }: { items: InboxItem[] }) {
+function InboxBlock({
+  items,
+  teamTags = [],
+}: {
+  items: InboxItem[];
+  teamTags?: TeamTag[];
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const { pulseTopBar } = useDetailSaveFeedback();
@@ -613,6 +637,14 @@ function InboxBlock({ items }: { items: InboxItem[] }) {
                 <span className="line-clamp-2 font-medium leading-snug text-fg-primary">
                   {r.subject || "(Senza oggetto)"}
                 </span>
+                {teamTags.length > 0 && r.tagIds.length > 0 ? (
+                  <TagChips
+                    tagIds={r.tagIds}
+                    catalog={teamTags}
+                    max={3}
+                    className="mt-1"
+                  />
+                ) : null}
               </td>
               <td className="px-4 py-3.5 align-middle text-fg-secondary">
                 <span className="line-clamp-2 leading-snug">
@@ -694,6 +726,8 @@ function QueuePanel({
   requestAccent,
   emptyTitle,
   emptyHint,
+  teamTags = [],
+  checklistTagIdsByRequest = {},
 }: {
   requests: Request[];
   tasks: Task[];
@@ -701,6 +735,8 @@ function QueuePanel({
   requestAccent: "danger" | "default";
   emptyTitle: string;
   emptyHint: string;
+  teamTags?: TeamTag[];
+  checklistTagIdsByRequest?: ChecklistTagMap;
 }) {
   const orphanChecklists = orphanChecklistEntriesForRequests(
     checklistEntries,
@@ -731,7 +767,12 @@ function QueuePanel({
       >
         <FollowUpColumnHeader title="Progetti" count={requests.length} />
         {hasRequests ? (
-          <RequestBlock requests={requests} accent={requestAccent} />
+          <RequestBlock
+            requests={requests}
+            accent={requestAccent}
+            teamTags={teamTags}
+            checklistTagIdsByRequest={checklistTagIdsByRequest}
+          />
         ) : null}
         {hasChecklists ? (
           <>
@@ -740,7 +781,11 @@ function QueuePanel({
               title="Checklist progetti"
               count={orphanChecklists.length}
             />
-            <FollowUpChecklistBlock entries={orphanChecklists} />
+            <FollowUpChecklistBlock
+              entries={orphanChecklists}
+              teamTags={teamTags}
+              checklistTagIdsByRequest={checklistTagIdsByRequest}
+            />
           </>
         ) : null}
         {requestsColumnEmpty ? (
@@ -751,7 +796,7 @@ function QueuePanel({
       <section className={cn(uiCard, "flex min-w-0 flex-col overflow-hidden")}>
         <FollowUpColumnHeader title="Task libere" count={tasks.length} />
         {hasTasks ? (
-          <StandaloneTaskBlock tasks={tasks} compact />
+          <StandaloneTaskBlock tasks={tasks} compact teamTags={teamTags} />
         ) : (
           <FollowUpColumnEmpty hint="Nessuna task libera in questa finestra." />
         )}
@@ -776,6 +821,8 @@ export function FollowUpView({
   scopeControl = null,
   preferredFollowUpTab = null,
   inboxEnabled = false,
+  teamTags = [],
+  checklistTagIdsByRequest = {},
 }: {
   overdue: Request[];
   today: Request[];
@@ -792,6 +839,10 @@ export function FollowUpView({
   scopeControl?: ReactNode;
   preferredFollowUpTab?: DefaultFollowUpTabPreference | null;
   inboxEnabled?: boolean;
+  /** Catalogo tag del team per mostrare i chip nelle code. */
+  teamTags?: TeamTag[];
+  /** requestId → (checklistTaskId → tagIds) per i chip sulle voci checklist. */
+  checklistTagIdsByRequest?: ChecklistTagMap;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -888,6 +939,8 @@ export function FollowUpView({
       <div className="min-w-0">
         {activeTab === "overdue" ? (
           <QueuePanel
+            teamTags={teamTags}
+            checklistTagIdsByRequest={checklistTagIdsByRequest}
             requests={overdue}
             tasks={overdueTasks}
             checklistEntries={overdueChecklists}
@@ -899,6 +952,8 @@ export function FollowUpView({
 
         {activeTab === "today" ? (
           <QueuePanel
+            teamTags={teamTags}
+            checklistTagIdsByRequest={checklistTagIdsByRequest}
             requests={today}
             tasks={todayTasks}
             checklistEntries={todayChecklists}
@@ -910,6 +965,8 @@ export function FollowUpView({
 
         {activeTab === "upcoming" ? (
           <QueuePanel
+            teamTags={teamTags}
+            checklistTagIdsByRequest={checklistTagIdsByRequest}
             requests={upcoming}
             tasks={upcomingTasks}
             checklistEntries={upcomingChecklists}
@@ -921,6 +978,8 @@ export function FollowUpView({
 
         {activeTab === "all" ? (
           <QueuePanel
+            teamTags={teamTags}
+            checklistTagIdsByRequest={checklistTagIdsByRequest}
             requests={all}
             tasks={allTasks}
             checklistEntries={[]}
@@ -940,7 +999,7 @@ export function FollowUpView({
             </div>
           ) : (
             <div className={cn(uiCard, "overflow-hidden")}>
-              <InboxBlock items={inbox} />
+              <InboxBlock items={inbox} teamTags={teamTags} />
             </div>
           )
         ) : null}

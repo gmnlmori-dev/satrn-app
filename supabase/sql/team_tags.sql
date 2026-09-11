@@ -1,4 +1,5 @@
--- Tag di team (definizioni + assegnazioni) — esegui dopo teams.sql / tasks.sql / team_notes.sql.
+-- Tag di team (definizioni + assegnazioni) — esegui dopo teams.sql / tasks.sql / team_notes.sql / inbox_items.sql.
+-- Rieseguibile: crea le tabelle mancanti (es. inbox_tag_assignments) e riallinea policy/colonne.
 -- CRUD definizioni: admin (qualsiasi team) o manager (solo il proprio team).
 -- SELECT / applicazione assegnazioni: membri dello stesso team.
 
@@ -97,10 +98,12 @@ CREATE TABLE IF NOT EXISTS public.team_note_tag_assignments (
 CREATE INDEX IF NOT EXISTS team_note_tag_assignments_tag_id_idx
   ON public.team_note_tag_assignments (tag_id);
 
+-- Le voci checklist vivono nel JSON `requests.next_action`; l'id è generato
+-- lato client (uuid o fallback testuale), quindi la colonna è `text`.
 CREATE TABLE IF NOT EXISTS public.checklist_tag_assignments (
   request_id uuid NOT NULL
     REFERENCES public.requests (id) ON DELETE CASCADE,
-  checklist_task_id uuid NOT NULL,
+  checklist_task_id text NOT NULL,
   tag_id uuid NOT NULL
     REFERENCES public.team_tags (id) ON DELETE CASCADE,
   applied_by_user_id uuid
@@ -109,17 +112,36 @@ CREATE TABLE IF NOT EXISTS public.checklist_tag_assignments (
   PRIMARY KEY (request_id, checklist_task_id, tag_id)
 );
 
+-- Migrazione da versione precedente (colonna uuid): idempotente.
+ALTER TABLE public.checklist_tag_assignments
+  ALTER COLUMN checklist_task_id TYPE text USING checklist_task_id::text;
+
 CREATE INDEX IF NOT EXISTS checklist_tag_assignments_tag_id_idx
   ON public.checklist_tag_assignments (tag_id);
 
 CREATE INDEX IF NOT EXISTS checklist_tag_assignments_request_id_idx
   ON public.checklist_tag_assignments (request_id);
 
+CREATE TABLE IF NOT EXISTS public.inbox_tag_assignments (
+  inbox_item_id uuid NOT NULL
+    REFERENCES public.inbox_items (id) ON DELETE CASCADE,
+  tag_id uuid NOT NULL
+    REFERENCES public.team_tags (id) ON DELETE CASCADE,
+  applied_by_user_id uuid
+    REFERENCES public.profiles (user_id) ON DELETE SET NULL,
+  applied_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (inbox_item_id, tag_id)
+);
+
+CREATE INDEX IF NOT EXISTS inbox_tag_assignments_tag_id_idx
+  ON public.inbox_tag_assignments (tag_id);
+
 ALTER TABLE public.team_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.request_tag_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task_tag_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.team_note_tag_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.checklist_tag_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inbox_tag_assignments ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "team_tags_select" ON public.team_tags;
 DROP POLICY IF EXISTS "team_tags_insert" ON public.team_tags;
@@ -298,3 +320,44 @@ CREATE POLICY "checklist_tag_assignments_delete"
   FOR DELETE
   TO authenticated
   USING (public.request_in_user_team(request_id));
+
+-- Inbox assignments (stesso team dell'ingresso e del tag)
+DROP POLICY IF EXISTS "inbox_tag_assignments_select" ON public.inbox_tag_assignments;
+DROP POLICY IF EXISTS "inbox_tag_assignments_insert" ON public.inbox_tag_assignments;
+DROP POLICY IF EXISTS "inbox_tag_assignments_delete" ON public.inbox_tag_assignments;
+
+CREATE POLICY "inbox_tag_assignments_select"
+  ON public.inbox_tag_assignments
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.inbox_items i
+      WHERE i.id = inbox_item_id AND public.is_same_team(i.team_id)
+    )
+  );
+
+CREATE POLICY "inbox_tag_assignments_insert"
+  ON public.inbox_tag_assignments
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.inbox_items i
+      JOIN public.team_tags t ON t.id = tag_id AND t.team_id = i.team_id
+      WHERE i.id = inbox_item_id
+        AND public.is_same_team(i.team_id)
+    )
+  );
+
+CREATE POLICY "inbox_tag_assignments_delete"
+  ON public.inbox_tag_assignments
+  FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.inbox_items i
+      WHERE i.id = inbox_item_id AND public.is_same_team(i.team_id)
+    )
+  );

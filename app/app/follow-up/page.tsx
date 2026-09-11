@@ -62,12 +62,15 @@ export default async function FollowUpPage() {
   ]);
 
   const { overdue, today, upcoming, all } = requestQueues;
+  // Tag checklist per tutti i progetti mostrati (code + voci orfane), così le
+  // checklist inline e il filtro tag vedono anche i tag delle singole voci.
   const checklistRequestIds = [
-    ...new Set(
-      [...overdueChecklists, ...todayChecklists, ...upcomingChecklists].map(
+    ...new Set([
+      ...all.map((r) => r.id),
+      ...[...overdueChecklists, ...todayChecklists, ...upcomingChecklists].map(
         (e) => e.requestId,
       ),
-    ),
+    ]),
   ];
   const checklistTagIdsByRequest =
     await getChecklistTagIdsForRequests(checklistRequestIds);

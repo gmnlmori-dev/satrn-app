@@ -119,3 +119,79 @@ export function entityHasTagId(tagIds: string[] | undefined, tagId: string): boo
   if (!tagId || tagId === "all") return true;
   return (tagIds ?? []).includes(tagId);
 }
+
+/** Dedup + rimozione valori vuoti, preservando l'ordine. */
+export function uniqueTagIds(ids: readonly (string | null | undefined)[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of ids) {
+    const id = typeof raw === "string" ? raw.trim() : "";
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+/**
+ * Legge un campo form `tagIds` serializzato come JSON array di stringhe.
+ * Accetta anche valori ripetuti (`getAll`) per compatibilità.
+ */
+export function parseTagIdsFromFormData(fd: FormData, name = "tagIds"): string[] {
+  const values = fd.getAll(name).map((v) => String(v));
+  const out: string[] = [];
+  for (const value of values) {
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        if (Array.isArray(parsed)) {
+          out.push(...parsed.filter((x): x is string => typeof x === "string"));
+        }
+        continue;
+      } catch {
+        continue;
+      }
+    }
+    out.push(trimmed);
+  }
+  return uniqueTagIds(out);
+}
+
+/** Legge una mappa `{ checklistTaskId: tagIds[] }` serializzata JSON. */
+export function parseChecklistTagMapFromFormData(
+  fd: FormData,
+  name = "checklistTagIds",
+): Record<string, string[]> {
+  const raw = String(fd.get(name) ?? "").trim();
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const out: Record<string, string[]> = {};
+    for (const [taskId, ids] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!taskId || !Array.isArray(ids)) continue;
+      const clean = uniqueTagIds(
+        ids.filter((x): x is string => typeof x === "string"),
+      );
+      if (clean.length > 0) out[taskId] = clean;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/** Solo i tag appartenenti al team indicato (per cataloghi multi-team dell'admin). */
+export function tagsForTeam(catalog: TeamTag[], teamId: string | null | undefined): TeamTag[] {
+  if (!teamId) return catalog;
+  return catalog.filter((t) => t.teamId === teamId);
+}
+
+/** Mantiene solo gli id presenti nel catalogo (es. dopo cambio team). */
+export function keepKnownTagIds(tagIds: string[], catalog: TeamTag[]): string[] {
+  if (tagIds.length === 0) return tagIds;
+  const known = new Set(catalog.map((t) => t.id));
+  return tagIds.filter((id) => known.has(id));
+}

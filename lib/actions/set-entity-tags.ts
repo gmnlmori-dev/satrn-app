@@ -3,14 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  replaceTagAssignments,
+  type TagAssignmentEntityColumn,
+  type TagAssignmentTable,
+} from "@/lib/supabase/tag-assignments";
+import { uniqueTagIds } from "@/lib/tags";
 
 export type SetTagsResult =
   | { ok: true }
   | { ok: false; message: string };
-
-function uniqueIds(ids: string[]): string[] {
-  return [...new Set(ids.filter(Boolean))];
-}
 
 async function requireActiveUser() {
   const me = await getCurrentProfileSummary();
@@ -21,34 +23,16 @@ async function requireActiveUser() {
 }
 
 async function replaceAssignments(opts: {
-  table:
-    | "request_tag_assignments"
-    | "task_tag_assignments"
-    | "team_note_tag_assignments";
-  entityColumn: "request_id" | "task_id" | "note_id";
+  table: TagAssignmentTable;
+  entityColumn: TagAssignmentEntityColumn;
   entityId: string;
   tagIds: string[];
   userId: string;
   revalidate: string[];
 }): Promise<SetTagsResult> {
   const supabase = await createSupabaseServerClient();
-  const tagIds = uniqueIds(opts.tagIds);
-
-  const { error: delError } = await supabase
-    .from(opts.table)
-    .delete()
-    .eq(opts.entityColumn, opts.entityId);
-  if (delError) return { ok: false, message: delError.message };
-
-  if (tagIds.length > 0) {
-    const rows = tagIds.map((tag_id) => ({
-      [opts.entityColumn]: opts.entityId,
-      tag_id,
-      applied_by_user_id: opts.userId,
-    }));
-    const { error: insError } = await supabase.from(opts.table).insert(rows);
-    if (insError) return { ok: false, message: insError.message };
-  }
+  const result = await replaceTagAssignments(supabase, opts);
+  if (!result.ok) return result;
 
   for (const path of opts.revalidate) {
     revalidatePath(path);
@@ -113,6 +97,23 @@ export async function setNoteTags(
   });
 }
 
+export async function setInboxTags(
+  inboxItemId: string,
+  tagIds: string[],
+): Promise<SetTagsResult> {
+  const gate = await requireActiveUser();
+  if (!gate.ok || !gate.me) return { ok: false, message: gate.message };
+
+  return replaceAssignments({
+    table: "inbox_tag_assignments",
+    entityColumn: "inbox_item_id",
+    entityId: inboxItemId,
+    tagIds,
+    userId: gate.me.userId,
+    revalidate: ["/app/inbox", `/app/inbox/${inboxItemId}`, "/app/follow-up"],
+  });
+}
+
 export async function setChecklistItemTags(
   requestId: string,
   checklistTaskId: string,
@@ -120,9 +121,12 @@ export async function setChecklistItemTags(
 ): Promise<SetTagsResult> {
   const gate = await requireActiveUser();
   if (!gate.ok || !gate.me) return { ok: false, message: gate.message };
+  if (!checklistTaskId.trim()) {
+    return { ok: false, message: "Voce checklist non valida." };
+  }
 
   const supabase = await createSupabaseServerClient();
-  const ids = uniqueIds(tagIds);
+  const ids = uniqueTagIds(tagIds);
 
   const { error: delError } = await supabase
     .from("checklist_tag_assignments")

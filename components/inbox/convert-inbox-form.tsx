@@ -7,9 +7,12 @@ import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-con
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { NextActionField } from "@/components/requests/next-action-field";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
+import { useTeamTags } from "@/components/app/current-user-context";
 import { Panel } from "@/components/ui/panel";
 import type { InboxItem } from "@/types/inbox";
 import { cn } from "@/lib/cn";
+import { keepKnownTagIds } from "@/lib/tags";
 import { uiBtnPrimary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 
@@ -58,6 +61,12 @@ export function ConvertInboxForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nextAction, setNextAction] = useState(d.nextAction);
+  const [tagIds, setTagIds] = useState<string[]>(item.tagIds);
+  const [checklistTagIdsByTask, setChecklistTagIdsByTask] = useState<
+    Record<string, string[]>
+  >({});
+  const tagCatalog = useTeamTags(item.teamId);
+  const effectiveTagIds = keepKnownTagIds(tagIds, tagCatalog);
   const { pulseTopBar } = useDetailSaveFeedback();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -66,6 +75,8 @@ export function ConvertInboxForm({
     setError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
+    fd.set("tagIds", JSON.stringify(effectiveTagIds));
+    fd.set("checklistTagIds", JSON.stringify(checklistTagIdsByTask));
     setPending(true);
     try {
       const result = await convertInboxToRequest(item.id, fd);
@@ -214,6 +225,18 @@ export function ConvertInboxForm({
           </div>
         </FormSection>
 
+        <FormSection title="Tag">
+          <EntityTagPicker
+            id={p("tags")}
+            label=""
+            catalog={tagCatalog}
+            selectedIds={effectiveTagIds}
+            disabled={pending}
+            hint="Precompilati con i tag dell'ingresso inbox; puoi modificarli prima di creare il progetto."
+            onChange={setTagIds}
+          />
+        </FormSection>
+
         <FormSection title="Dettaglio">
           <div>
             <label htmlFor={p("description")} className={uiFormLabel}>
@@ -242,6 +265,16 @@ export function ConvertInboxForm({
                 disabled={pending}
                 textRows={3}
                 className="mt-1.5"
+                teamTags={tagCatalog}
+                checklistTagIdsByTask={checklistTagIdsByTask}
+                onChecklistTagsChange={(checklistTaskId, ids) => {
+                  setChecklistTagIdsByTask((prev) => {
+                    const next = { ...prev };
+                    if (ids.length === 0) delete next[checklistTaskId];
+                    else next[checklistTaskId] = ids;
+                    return next;
+                  });
+                }}
               />
             </div>
             <NextActionDeadlineFields

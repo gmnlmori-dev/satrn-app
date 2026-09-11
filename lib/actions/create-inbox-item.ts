@@ -4,6 +4,8 @@ import { assertInboxFeatureEnabled } from "@/lib/actions/inbox-feature-guard";
 import { revalidateInboxViews } from "@/lib/request-revalidate";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { insertTagAssignments } from "@/lib/supabase/tag-assignments";
+import { parseTagIdsFromFormData } from "@/lib/tags";
 
 export type CreateInboxItemResult =
   | { ok: true; id: string }
@@ -64,6 +66,24 @@ export async function createInboxItem(
       ok: false,
       message: "Nessun identificativo restituito dal database.",
     };
+  }
+
+  const tagIds = parseTagIdsFromFormData(fd);
+  if (tagIds.length > 0) {
+    const tagResult = await insertTagAssignments(supabase, {
+      table: "inbox_tag_assignments",
+      entityColumn: "inbox_item_id",
+      entityId: id,
+      tagIds,
+      userId: me.userId,
+    });
+    if (!tagResult.ok) {
+      await supabase.from("inbox_items").delete().eq("id", id);
+      return {
+        ok: false,
+        message: `Tag non validi per il team selezionato: ${tagResult.message}`,
+      };
+    }
   }
 
   revalidateInboxViews();

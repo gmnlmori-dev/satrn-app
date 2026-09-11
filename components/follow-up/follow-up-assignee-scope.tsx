@@ -53,6 +53,24 @@ function filterByTagId<T extends { tagIds?: string[] }>(
   return items.filter((item) => (item.tagIds ?? []).includes(tagId));
 }
 
+/**
+ * Progetti: corrisponde se il tag è sul progetto oppure su una delle sue voci
+ * checklist (così un tag messo solo su una voce non "sparisce" dal filtro).
+ */
+function filterRequestsByTag(
+  requests: Request[],
+  tagId: string,
+  checklistTagIdsByRequest: Record<string, Record<string, string[]>>,
+): Request[] {
+  if (tagId === "all") return requests;
+  return requests.filter((r) => {
+    if (r.tagIds.includes(tagId)) return true;
+    const byTask = checklistTagIdsByRequest[r.id];
+    if (!byTask) return false;
+    return Object.values(byTask).some((ids) => ids.includes(tagId));
+  });
+}
+
 function filterChecklistsByTag(
   entries: CalendarTaskEntry[],
   tagId: string,
@@ -108,39 +126,47 @@ export function FollowUpAssigneeScope({
 
   const filteredOverdue = useMemo(
     () =>
-      filterByTagId(
+      filterRequestsByTag(
         mineOnly ? filterRequestsMine(overdue, currentUserId) : overdue,
         tagId,
+        checklistTagIdsByRequest,
       ),
-    [mineOnly, overdue, currentUserId, tagId],
+    [mineOnly, overdue, currentUserId, tagId, checklistTagIdsByRequest],
   );
   const filteredToday = useMemo(
     () =>
-      filterByTagId(
+      filterRequestsByTag(
         mineOnly ? filterRequestsMine(today, currentUserId) : today,
         tagId,
+        checklistTagIdsByRequest,
       ),
-    [mineOnly, today, currentUserId, tagId],
+    [mineOnly, today, currentUserId, tagId, checklistTagIdsByRequest],
   );
   const filteredUpcoming = useMemo(
     () =>
-      filterByTagId(
+      filterRequestsByTag(
         mineOnly ? filterRequestsMine(upcoming, currentUserId) : upcoming,
         tagId,
+        checklistTagIdsByRequest,
       ),
-    [mineOnly, upcoming, currentUserId, tagId],
+    [mineOnly, upcoming, currentUserId, tagId, checklistTagIdsByRequest],
   );
   const filteredAll = useMemo(
     () =>
-      filterByTagId(
+      filterRequestsByTag(
         mineOnly ? filterRequestsMine(all, currentUserId) : all,
         tagId,
+        checklistTagIdsByRequest,
       ),
-    [mineOnly, all, currentUserId, tagId],
+    [mineOnly, all, currentUserId, tagId, checklistTagIdsByRequest],
   );
   const filteredInbox = useMemo(
-    () => (mineOnly ? filterInboxMine(inbox, currentUserId) : inbox),
-    [mineOnly, inbox, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterInboxMine(inbox, currentUserId) : inbox,
+        tagId,
+      ),
+    [mineOnly, inbox, currentUserId, tagId],
   );
   const filteredOverdueTasks = useMemo(
     () =>
@@ -230,25 +256,34 @@ export function FollowUpAssigneeScope({
         />
       ) : null}
       {teamTags.length > 0 ? (
-        <select
-          aria-label="Filtro tag"
-          className={cn(uiControl, "py-1.5 text-sm")}
-          value={tagId}
-          onChange={(e) => setTagId(e.target.value)}
-        >
-          <option value="all">Tutti i tag</option>
-          {teamTags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.name}
-            </option>
-          ))}
-        </select>
+        <label className="flex items-center gap-2 text-xs text-fg-tertiary">
+          <span className="sr-only sm:not-sr-only">Tag</span>
+          <select
+            aria-label="Filtro tag"
+            className={cn(
+              uiControl,
+              "w-auto min-w-[9rem] py-1.5 text-sm",
+              tagId !== "all" && "border-accent/50",
+            )}
+            value={tagId}
+            onChange={(e) => setTagId(e.target.value)}
+          >
+            <option value="all">Tutti i tag</option>
+            {teamTags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : null}
     </div>
   );
 
   return (
     <FollowUpView
+      teamTags={teamTags}
+      checklistTagIdsByRequest={checklistTagIdsByRequest}
       overdue={filteredOverdue}
       today={filteredToday}
       upcoming={filteredUpcoming}

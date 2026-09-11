@@ -11,6 +11,7 @@ import {
   type FollowUpAssigneeScope,
 } from "@/lib/request-assignee";
 import { InboxListTable } from "@/components/inbox/inbox-list-table";
+import { useTeamTags } from "@/components/app/current-user-context";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Panel } from "@/components/ui/panel";
@@ -31,6 +32,8 @@ export function InboxWorkspace({ items, currentUserId, defaultScope }: Props) {
   const [scope, setScope] = useState<FollowUpAssigneeScope>(() =>
     scopeFromSearchParam(urlScope, defaultScope),
   );
+  // Elenco potenzialmente multi-team (admin): catalogo completo.
+  const teamTags = useTeamTags(null);
 
   useEffect(() => {
     setScope(scopeFromSearchParam(urlScope, defaultScope));
@@ -108,7 +111,11 @@ export function InboxWorkspace({ items, currentUserId, defaultScope }: Props) {
           className="py-10"
         />
       ) : (
-        <InboxListTable items={filtered} showAssignee={!mineOnly} />
+        <InboxListTable
+          items={filtered}
+          showAssignee={!mineOnly}
+          teamTags={teamTags}
+        />
       )}
     </div>
   );

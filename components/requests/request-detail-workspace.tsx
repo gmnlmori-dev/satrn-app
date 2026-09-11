@@ -550,7 +550,16 @@ export function RequestDetailWorkspace({
         </div>
 
         <div className="mt-7 border-t border-line-default pt-6">
+          <h2 className={uiSectionHeading}>Tag progetto</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-fg-secondary">
+            Classifica il progetto con uno o più tag del team; il salvataggio è
+            immediato. I tag delle singole voci checklist si impostano nella
+            sezione «Prossima azione».
+          </p>
           <EntityTagPicker
+            id="detail-request-tags"
+            className="mt-4"
+            label=""
             catalog={teamTags}
             selectedIds={request.tagIds}
             disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}

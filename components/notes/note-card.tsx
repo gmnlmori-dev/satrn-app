@@ -215,6 +215,7 @@ export function NoteCard({
   const [colorPending, setColorPending] = useState<NoteColor | null>(null);
   const [colorOpen, setColorOpen] = useState(false);
   const [draftColor, setDraftColor] = useState<NoteColor | null>(null);
+  const [draftTagIds, setDraftTagIds] = useState<string[]>([]);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -231,6 +232,7 @@ export function NoteCard({
     sharedUserIds,
     sharedTeamIds,
     color: localNote?.color ?? draftColor,
+    tagIds: draftTagIds,
     enabled: editable && expanded,
     onCreated: (id, payload) => {
       const created: TeamNote = {
@@ -249,7 +251,7 @@ export function NoteCard({
         sharedTeamIds: payload.sharedTeamIds,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        tagIds: [],
+        tagIds: payload.tagIds,
       };
       setLocalNote(created);
       setVisibility(payload.visibility);
@@ -660,13 +662,26 @@ export function NoteCard({
               </p>
             )}
 
-            {editable && localNote?.id ? (
-              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+            {editable && teamTags.length > 0 ? (
+              <div
+                className="mt-3 flex flex-wrap items-start gap-x-2 gap-y-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="mt-0.5 shrink-0 text-[11px] font-medium uppercase tracking-wide text-fg-tertiary">
+                  Tag
+                </span>
                 <EntityTagPicker
-                  catalog={teamTags}
-                  selectedIds={localNote.tagIds}
+                  className="min-w-0 flex-1"
+                  variant="compact"
                   label=""
+                  catalog={teamTags}
+                  selectedIds={localNote?.tagIds ?? draftTagIds}
                   onChange={async (nextIds) => {
+                    if (!localNote?.id) {
+                      // Bozza non ancora salvata: i tag partono con la creazione.
+                      setDraftTagIds(nextIds);
+                      return;
+                    }
                     const res = await setNoteTags(localNote.id, nextIds);
                     if (!res.ok) throw new Error(res.message);
                     const next = { ...localNote, tagIds: nextIds };

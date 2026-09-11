@@ -11,7 +11,10 @@ import {
 import { inboxItemRowToInboxItem, requestRowToRequest } from "@/lib/supabase/mappers";
 import { INBOX_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/inbox-queries";
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
-import { attachRequestTagIds } from "@/lib/supabase/tag-queries";
+import {
+  attachInboxTagIds,
+  attachRequestTagIds,
+} from "@/lib/supabase/tag-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { InboxItemRowWithAssignee, RequestRowWithAssignee } from "@/types/database";
 import type { InboxItem } from "@/types/inbox";
@@ -80,7 +83,9 @@ export async function getInboxTriageItems(): Promise<InboxItem[]> {
     .order("created_at", { ascending: false });
 
   assertNoError("getInboxTriageItems", error);
-  return ((data ?? []) as InboxItemRowWithAssignee[]).map(inboxItemRowToInboxItem);
+  return attachInboxTagIds(
+    ((data ?? []) as InboxItemRowWithAssignee[]).map(inboxItemRowToInboxItem),
+  );
 }
 
 /** Checklist con scadenza nella finestra, anche se il progetto non ha next_action_at. */

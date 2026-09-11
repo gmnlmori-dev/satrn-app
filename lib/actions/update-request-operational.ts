@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { validateNextActionDeadlineAlignment } from "@/lib/next-action-deadline-validation";
 import { logOperationalChanges } from "@/lib/request-activity-log";
-import { markAllNextActionTasksDone } from "@/lib/next-action-tasks";
+import {
+  markAllNextActionTasksDone,
+  parseNextAction,
+} from "@/lib/next-action-tasks";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { pruneChecklistTagAssignments } from "@/lib/supabase/tag-assignments";
 
 export type UpdateRequestOperationalInput = {
   status?: string;
@@ -110,6 +114,14 @@ export async function updateRequestOperational(
   };
 
   await logOperationalChanges(supabase, id, beforeRow, fields);
+
+  // Pulizia tag di voci checklist rimosse dal nuovo next_action.
+  if (fields.next_action !== undefined) {
+    const keepIds = parseNextAction(String(payload.next_action ?? "")).tasks.map(
+      (t) => t.id,
+    );
+    await pruneChecklistTagAssignments(supabase, id, keepIds);
+  }
 
   revalidatePath("/app/requests");
   revalidatePath(`/app/requests/${id}`);

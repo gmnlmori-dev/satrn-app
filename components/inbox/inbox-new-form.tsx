@@ -3,10 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
+import {
+  useOptionalCurrentProfile,
+  useTeamTags,
+} from "@/components/app/current-user-context";
 import { createInboxItem } from "@/lib/actions/create-inbox-item";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
 import { Panel } from "@/components/ui/panel";
 import { cn } from "@/lib/cn";
+import { keepKnownTagIds } from "@/lib/tags";
 import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 
@@ -45,6 +51,11 @@ export function InboxNewForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { pulseTopBar } = useDetailSaveFeedback();
+  const me = useOptionalCurrentProfile();
+  const [createTeamId, setCreateTeamId] = useState(me?.teamId ?? "");
+  const [tagIds, setTagIds] = useState<string[]>([]);
+  const tagCatalog = useTeamTags(createTeamId || me?.teamId);
+  const effectiveTagIds = keepKnownTagIds(tagIds, tagCatalog);
 
   const isSheet = variant === "sheet";
 
@@ -54,6 +65,7 @@ export function InboxNewForm({
     setError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
+    fd.set("tagIds", JSON.stringify(effectiveTagIds));
     setPending(true);
     try {
       const result = await createInboxItem(fd);
@@ -94,6 +106,8 @@ export function InboxNewForm({
             idPrefix={p("create")}
             disabled={pending}
             inputClass={inputClass}
+            teamId={createTeamId}
+            onTeamChange={setCreateTeamId}
           />
           <div>
             <label htmlFor={p("subject")} className={uiFormLabel}>
@@ -124,6 +138,14 @@ export function InboxNewForm({
               placeholder="Es. email, WhatsApp, voce, note…"
             />
           </div>
+          <EntityTagPicker
+            id={p("tags")}
+            catalog={tagCatalog}
+            selectedIds={effectiveTagIds}
+            disabled={pending}
+            hint="Facoltativo. I tag passano al progetto se converti l'ingresso."
+            onChange={setTagIds}
+          />
         </div>
       </FormSection>
 

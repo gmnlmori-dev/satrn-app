@@ -5,6 +5,8 @@ import { parseNoteColor, titleFromBody } from "@/lib/team-note-access";
 import { validateSharedNoteUsers } from "@/lib/assignee-actions";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { insertTagAssignments } from "@/lib/supabase/tag-assignments";
+import { parseTagIdsFromFormData } from "@/lib/tags";
 import type { NoteVisibility } from "@/types/note";
 
 export type CreateTeamNoteResult =
@@ -168,6 +170,23 @@ export async function createTeamNote(
       );
     if (teamsError) {
       return { ok: false, message: teamsError.message };
+    }
+  }
+
+  const tagIds = parseTagIdsFromFormData(fd);
+  if (tagIds.length > 0) {
+    const tagResult = await insertTagAssignments(supabase, {
+      table: "team_note_tag_assignments",
+      entityColumn: "note_id",
+      entityId: id,
+      tagIds,
+      userId: me.userId,
+    });
+    if (!tagResult.ok) {
+      return {
+        ok: false,
+        message: `Nota creata ma tag non applicati: ${tagResult.message}`,
+      };
     }
   }
 

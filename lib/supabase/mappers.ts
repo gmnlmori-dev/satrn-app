@@ -132,6 +132,7 @@ export function inboxItemRowToInboxItem(row: InboxItemRowWithAssignee): InboxIte
     createdByUserId: row.created_by_user_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    tagIds: [],
   };
 }
 

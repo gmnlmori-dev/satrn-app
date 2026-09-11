@@ -5,6 +5,8 @@ import { nextActionAtFromFormData } from "@/lib/date";
 import { canAssignRequests } from "@/lib/permissions";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { insertTagAssignments } from "@/lib/supabase/tag-assignments";
+import { parseTagIdsFromFormData } from "@/lib/tags";
 import {
   recurrenceFromFormData,
   validateTaskRecurrence,
@@ -128,6 +130,24 @@ export async function createTask(fd: FormData): Promise<CreateTaskResult> {
   if (assignErr) {
     await supabase.from("tasks").delete().eq("id", taskId);
     return { ok: false, message: assignErr.message };
+  }
+
+  const tagIds = parseTagIdsFromFormData(fd);
+  if (tagIds.length > 0) {
+    const tagResult = await insertTagAssignments(supabase, {
+      table: "task_tag_assignments",
+      entityColumn: "task_id",
+      entityId: taskId,
+      tagIds,
+      userId: me.userId,
+    });
+    if (!tagResult.ok) {
+      await supabase.from("tasks").delete().eq("id", taskId);
+      return {
+        ok: false,
+        message: `Tag non validi per il team selezionato: ${tagResult.message}`,
+      };
+    }
   }
 
   revalidateTaskViews();

@@ -7,6 +7,8 @@ import { PostponeDueAtPopover } from "@/components/follow-up/postpone-due-at-pop
 import { PostponeTaskButton } from "@/components/tasks/postpone-task-button";
 import { TaskRecurrenceSummary } from "@/components/tasks/task-recurrence-summary";
 import { TaskEditSlideOver } from "@/components/tasks/task-edit-slide-over";
+import { TagChips } from "@/components/tags/tag-chips";
+import { useTeamTags } from "@/components/app/current-user-context";
 import { toggleTaskDone } from "@/lib/actions/toggle-task-done";
 import { updateTaskDueAt } from "@/lib/actions/update-task";
 import { formatDateTime } from "@/lib/date";
@@ -20,6 +22,7 @@ import {
 } from "@/lib/table-ui";
 import { uiBtnIcon } from "@/lib/ui-classes";
 import type { Task } from "@/types/task";
+import type { TeamTag } from "@/types/tag";
 
 function IconPencil({ className }: { className?: string }) {
   return (
@@ -96,12 +99,17 @@ export function StandaloneTaskBlock({
   tasks,
   onTasksChange,
   compact = false,
+  teamTags,
 }: {
   tasks: Task[];
   onTasksChange?: (tasks: Task[]) => void;
   compact?: boolean;
+  /** Catalogo tag; se omesso usa quello del contesto utente. */
+  teamTags?: TeamTag[];
 }) {
   const router = useRouter();
+  const contextTags = useTeamTags();
+  const tagCatalog = teamTags ?? contextTags;
   const { pulseTopBar } = useDetailSaveFeedback();
   const [pending, startTransition] = useTransition();
   const [postpone, setPostpone] = useState<{
@@ -231,6 +239,14 @@ export function StandaloneTaskBlock({
                     recurrence={task.recurrence}
                     className="mt-1 block"
                   />
+                  {tagCatalog.length > 0 && task.tagIds.length > 0 ? (
+                    <TagChips
+                      tagIds={task.tagIds}
+                      catalog={tagCatalog}
+                      max={4}
+                      className="mt-1.5"
+                    />
+                  ) : null}
                 </div>
                 <TaskRowActions
                   task={task}
@@ -276,6 +292,9 @@ export function StandaloneTaskBlock({
                 <span className="sr-only">Completata</span>
               </th>
               <th className={dataTableThClass}>Task</th>
+              {tagCatalog.length > 0 ? (
+                <th className={dataTableThClass}>Tag</th>
+              ) : null}
               <th className={dataTableThClass}>Scadenza</th>
               <th className={dataTableThClass}>Assegnatari</th>
               <th className={cn(dataTableThClass, "w-20 text-right")}>
@@ -301,6 +320,16 @@ export function StandaloneTaskBlock({
                   <td className="px-3 py-2.5 font-medium text-fg-primary">
                     {task.title}
                   </td>
+                  {tagCatalog.length > 0 ? (
+                    <td className="px-3 py-2.5">
+                      <TagChips
+                        tagIds={task.tagIds}
+                        catalog={tagCatalog}
+                        max={3}
+                        emptyLabel="—"
+                      />
+                    </td>
+                  ) : null}
                   <td className="px-3 py-2.5">
                     {task.dueAt ? (
                       <span

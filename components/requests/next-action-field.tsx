@@ -35,8 +35,13 @@ type Props = {
   /** Scadenza progetto già impostata (limita le date checklist). */
   requestNextActionAt?: string | null;
   onValidationError?: (message: string | null) => void;
-  /** Se impostato, consente tag sulle voci checklist. */
+  /**
+   * Progetto esistente: i tag checklist vengono salvati subito via server action.
+   * Se assente (creazione), la selezione resta locale e va inviata col form
+   * (`checklistTagIds` JSON) tramite `onChecklistTagsChange`.
+   */
   requestId?: string;
+  /** Catalogo tag del team: se vuoto, la sezione tag checklist non compare. */
   teamTags?: TeamTag[];
   checklistTagIdsByTask?: Record<string, string[]>;
   onChecklistTagsChange?: (
@@ -236,12 +241,18 @@ export function NextActionField({
                   <button
                     type="button"
                     disabled={disabled}
-                    onClick={() =>
+                    onClick={() => {
                       patchContent({
                         ...content,
                         tasks: content.tasks.filter((t) => t.id !== task.id),
-                      })
-                    }
+                      });
+                      if (
+                        !requestId &&
+                        (checklistTagIdsByTask[task.id]?.length ?? 0) > 0
+                      ) {
+                        onChecklistTagsChange?.(task.id, []);
+                      }
+                    }}
                     className={cn(
                       uiBtnGhost,
                       uiTransition,
@@ -267,20 +278,27 @@ export function NextActionField({
                       })
                     }
                   />
-                  {requestId && teamTags.length > 0 ? (
-                    <div className="mt-2">
+                  {teamTags.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap items-start gap-x-2 gap-y-1">
+                      <span className="mt-0.5 shrink-0 text-[11px] font-medium uppercase tracking-wide text-fg-tertiary">
+                        Tag
+                      </span>
                       <EntityTagPicker
+                        className="min-w-0 flex-1"
+                        variant="compact"
+                        label=""
                         catalog={teamTags}
                         selectedIds={checklistTagIdsByTask[task.id] ?? []}
                         disabled={disabled}
-                        label="Tag"
                         onChange={async (nextIds) => {
-                          const res = await setChecklistItemTags(
-                            requestId,
-                            task.id,
-                            nextIds,
-                          );
-                          if (!res.ok) throw new Error(res.message);
+                          if (requestId) {
+                            const res = await setChecklistItemTags(
+                              requestId,
+                              task.id,
+                              nextIds,
+                            );
+                            if (!res.ok) throw new Error(res.message);
+                          }
                           onChecklistTagsChange?.(task.id, nextIds);
                         }}
                       />

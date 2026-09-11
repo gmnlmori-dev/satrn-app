@@ -26,7 +26,12 @@ const clampTwoLines =
 const requestTitleBlockClass = "min-h-[2.75rem]";
 
 /** Altezza uniforme riga: 2 righe titolo (+ sottotitolo azienda su mobile). */
-const requestTableRowHeightClass = "h-[5.25rem] sm:h-[4.5rem]";
+const requestTableRowHeightBase = "h-[5.25rem] sm:h-[4.5rem]";
+/**
+ * Con catalogo tag attivo, sotto `lg` i chip stanno nella cella titolo
+ * (la colonna Tag dedicata compare da `lg` in su): riga un po' più alta.
+ */
+const requestTableRowHeightWithTags = "h-[6.25rem] sm:h-[5.5rem] lg:h-[4.5rem]";
 const priorityBarClass: Record<RequestPriority, string> = {
   high: "bg-danger",
   medium: "bg-warning",
@@ -37,12 +42,17 @@ function Row({
   r,
   index,
   teamTags,
+  showTagColumn,
 }: {
   r: Request;
   index: number;
   teamTags: TeamTag[];
+  showTagColumn: boolean;
 }) {
   const router = useRouter();
+  const requestTableRowHeightClass = showTagColumn
+    ? requestTableRowHeightWithTags
+    : requestTableRowHeightBase;
 
   function go() {
     router.push(`/app/requests/${r.id}`, { scroll: true });
@@ -94,14 +104,17 @@ function Row({
         >
           {r.title}
         </span>
-        <TagChips
-          tagIds={r.tagIds}
-          catalog={teamTags}
-          className="mt-1 pl-2"
-        />
         <p className="mt-1 truncate text-xs text-fg-tertiary sm:hidden">
           {r.companyName}
         </p>
+        {showTagColumn && r.tagIds.length > 0 ? (
+          <TagChips
+            tagIds={r.tagIds}
+            catalog={teamTags}
+            max={2}
+            className="mt-1 pl-2 lg:hidden"
+          />
+        ) : null}
       </td>
       <td
         className={cn(
@@ -128,6 +141,22 @@ function Row({
           {r.contactName}
         </div>
       </td>
+      {showTagColumn ? (
+        <td
+          className={cn(
+            requestTableRowHeightClass,
+            "hidden overflow-hidden px-4 py-3 align-middle lg:table-cell sm:px-5",
+            dataTableColSepClass,
+          )}
+        >
+          <TagChips
+            tagIds={r.tagIds}
+            catalog={teamTags}
+            max={3}
+            emptyLabel="—"
+          />
+        </td>
+      ) : null}
       <td
         className={cn(
           requestTableRowHeightClass,
@@ -180,9 +209,10 @@ export function RequestsTable({
   requests: Request[];
   teamTags?: TeamTag[];
 }) {
+  const showTagColumn = teamTags.length > 0;
   return (
     <div className={dataTableShellClass}>
-      <div className="w-full min-w-[760px]">
+      <div className={cn("w-full", showTagColumn ? "min-w-[860px]" : "min-w-[760px]")}>
         <table className="w-full table-fixed border-collapse text-left text-sm">
           <thead>
             <tr className={dataTableHeadRowClass}>
@@ -201,6 +231,18 @@ export function RequestsTable({
               >
                 Contatto
               </th>
+              {showTagColumn ? (
+                <th
+                  scope="col"
+                  className={cn(
+                    "hidden w-[14%] 2xl:w-[13%] lg:table-cell",
+                    dataTableThClass,
+                    dataTableColSepClass,
+                  )}
+                >
+                  Tag
+                </th>
+              ) : null}
               <th scope="col" className={cn("w-[12%] 2xl:w-[10%]", dataTableThClass, dataTableColSepClass)}>
                 Stato
               </th>
@@ -228,7 +270,13 @@ export function RequestsTable({
           </thead>
           <tbody>
             {requests.map((r, i) => (
-              <Row key={r.id} r={r} index={i} teamTags={teamTags} />
+              <Row
+                key={r.id}
+                r={r}
+                index={i}
+                teamTags={teamTags}
+                showTagColumn={showTagColumn}
+              />
             ))}
           </tbody>
         </table>

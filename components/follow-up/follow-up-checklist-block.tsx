@@ -15,6 +15,8 @@ import {
 } from "@/lib/next-action-tasks";
 import { cn } from "@/lib/cn";
 import { uiTransition } from "@/lib/ui-classes";
+import { TagChips } from "@/components/tags/tag-chips";
+import type { TeamTag } from "@/types/tag";
 
 type RequestGroup = {
   requestTitle: string;
@@ -39,8 +41,12 @@ function formatRequestMeta(group: RequestGroup): string {
 
 export function FollowUpChecklistBlock({
   entries,
+  teamTags = [],
+  checklistTagIdsByRequest = {},
 }: {
   entries: CalendarTaskEntry[];
+  teamTags?: TeamTag[];
+  checklistTagIdsByRequest?: Record<string, Record<string, string[]>>;
 }) {
   const router = useRouter();
   const { pulseTopBar } = useDetailSaveFeedback();
@@ -114,6 +120,8 @@ export function FollowUpChecklistBlock({
             {group.tasks.map((entry) => {
               const overdue = isCalendarTaskOverdue(entry.task);
               const busy = pending && pendingTaskId === entry.task.id;
+              const itemTagIds =
+                checklistTagIdsByRequest[requestId]?.[entry.task.id] ?? [];
               return (
                 <li
                   key={entry.task.id}
@@ -129,6 +137,14 @@ export function FollowUpChecklistBlock({
                   />
                   <div className="min-w-0 flex-1">
                     <ExpandableChecklistTaskText text={entry.task.text} />
+                    {teamTags.length > 0 && itemTagIds.length > 0 ? (
+                      <TagChips
+                        tagIds={itemTagIds}
+                        catalog={teamTags}
+                        max={3}
+                        className="mt-1"
+                      />
+                    ) : null}
                     {entry.task.dueAt ? (
                       <p
                         className={cn(

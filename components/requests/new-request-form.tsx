@@ -2,13 +2,18 @@
 
 import { useEffect, useId, useState } from "react";
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
-import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import {
+  useOptionalCurrentProfile,
+  useTeamTags,
+} from "@/components/app/current-user-context";
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { createRequest } from "@/lib/actions/create-request";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { NextActionField } from "@/components/requests/next-action-field";
 import { NextActionDeadlineFields } from "@/components/requests/next-action-deadline-fields";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
 import { cn } from "@/lib/cn";
+import { keepKnownTagIds } from "@/lib/tags";
 import { uiBtnPrimary, uiBtnSecondary, uiControl, uiTransition } from "@/lib/ui-classes";
 import { uiFormLabel, uiSectionHeading } from "@/lib/typography";
 
@@ -55,6 +60,10 @@ export function NewRequestForm({
   const [error, setError] = useState<string | null>(null);
   const [createTeamId, setCreateTeamId] = useState(me?.teamId ?? "");
   const [nextAction, setNextAction] = useState("");
+  const [tagIds, setTagIds] = useState<string[]>([]);
+  const [checklistTagIdsByTask, setChecklistTagIdsByTask] = useState<
+    Record<string, string[]>
+  >({});
   const { pulseTopBar } = useDetailSaveFeedback();
 
   useEffect(() => {
@@ -63,6 +72,17 @@ export function NewRequestForm({
 
   const assigneeTeamId =
     me?.role === "admin" ? createTeamId : (me?.teamId ?? "");
+  const tagCatalog = useTeamTags(assigneeTeamId || me?.teamId);
+  const effectiveTagIds = keepKnownTagIds(tagIds, tagCatalog);
+
+  function effectiveChecklistTagMap(): Record<string, string[]> {
+    const out: Record<string, string[]> = {};
+    for (const [taskId, ids] of Object.entries(checklistTagIdsByTask)) {
+      const clean = keepKnownTagIds(ids, tagCatalog);
+      if (clean.length > 0) out[taskId] = clean;
+    }
+    return out;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -70,6 +90,8 @@ export function NewRequestForm({
     setError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
+    fd.set("tagIds", JSON.stringify(effectiveTagIds));
+    fd.set("checklistTagIds", JSON.stringify(effectiveChecklistTagMap()));
     setPending(true);
     try {
       const result = await createRequest(fd);
@@ -80,6 +102,8 @@ export function NewRequestForm({
       pulseTopBar();
       form.reset();
       setNextAction("");
+      setTagIds([]);
+      setChecklistTagIdsByTask({});
       onSuccess(result.id);
     } finally {
       setPending(false);
@@ -217,6 +241,18 @@ export function NewRequestForm({
             </div>
           </FormSection>
 
+          <FormSection title="Tag">
+            <EntityTagPicker
+              id={p("tags")}
+              label=""
+              catalog={tagCatalog}
+              selectedIds={effectiveTagIds}
+              disabled={pending}
+              hint="Facoltativo. Puoi selezionare più tag del team; le singole voci checklist possono avere tag propri nella sezione «Prossimo passo»."
+              onChange={setTagIds}
+            />
+          </FormSection>
+
           <FormSection title="Dettaglio">
             <div>
               <label htmlFor={p("description")} className={uiFormLabel}>
@@ -245,6 +281,16 @@ export function NewRequestForm({
                   disabled={pending}
                   textRows={3}
                   className="mt-1.5"
+                  teamTags={tagCatalog}
+                  checklistTagIdsByTask={checklistTagIdsByTask}
+                  onChecklistTagsChange={(checklistTaskId, ids) => {
+                    setChecklistTagIdsByTask((prev) => {
+                      const next = { ...prev };
+                      if (ids.length === 0) delete next[checklistTaskId];
+                      else next[checklistTaskId] = ids;
+                      return next;
+                    });
+                  }}
                 />
               </div>
               <NextActionDeadlineFields

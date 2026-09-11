@@ -12,10 +12,14 @@ export type TagActionResult =
   | { ok: false; message: string };
 
 function revalidateTagSurfaces() {
+  // Il catalogo tag è caricato nel layout /app (contesto client per i form di
+  // creazione): invalidare il layout aggiorna tutte le pagine sotto /app.
+  revalidatePath("/app", "layout");
   revalidatePath("/app/settings");
   revalidatePath("/app/requests");
   revalidatePath("/app/tasks");
   revalidatePath("/app/notes");
+  revalidatePath("/app/inbox");
   revalidatePath("/app/follow-up");
   revalidatePath("/app/calendar");
   revalidatePath("/app/dashboard");

@@ -7,6 +7,7 @@ import {
   getUnreadAnnouncementCountForUser,
 } from "@/lib/supabase/announcement-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
+import { getTeamTags } from "@/lib/supabase/tag-queries";
 import { getTeamsForSelect } from "@/lib/supabase/team-queries";
 
 /** Sessione/profilo via cookie: il segmento non è staticamente generabile in build. */
@@ -22,6 +23,11 @@ export default async function AppSectionLayout({
   const inboxEnabled = isInboxEnabled(appSettings);
   const teamsForCreate =
     profile?.role === "admin" ? await getTeamsForSelect() : [];
+  const teamTags = profile?.userId
+    ? await getTeamTags(
+        profile.role === "admin" ? undefined : profile.teamId,
+      ).catch(() => [])
+    : [];
 
   const [welcomeAnnouncement, unreadAnnouncementCount] = profile?.userId
     ? await Promise.all([
@@ -37,6 +43,7 @@ export default async function AppSectionLayout({
       profile={profile}
       teamsForCreate={teamsForCreate}
       inboxEnabled={inboxEnabled}
+      teamTags={teamTags}
     >
       <AppChrome
         welcomeAnnouncement={welcomeAnnouncement}

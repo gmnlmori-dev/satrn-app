@@ -9,6 +9,15 @@ import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { nextActionAtFromFormData } from "@/lib/date";
 import { validateNextActionDeadlineAlignment } from "@/lib/next-action-deadline-validation";
+import { parseNextAction } from "@/lib/next-action-tasks";
+import {
+  insertChecklistTagAssignments,
+  insertTagAssignments,
+} from "@/lib/supabase/tag-assignments";
+import {
+  parseChecklistTagMapFromFormData,
+  parseTagIdsFromFormData,
+} from "@/lib/tags";
 import type { RequestPriority, RequestStatus } from "@/types/request";
 
 const STATUSES: RequestStatus[] = [
@@ -187,6 +196,42 @@ export async function createRequest(fd: FormData): Promise<CreateRequestResult> 
 
     if (assigneeInsertErr) {
       return { ok: false, message: assigneeInsertErr.message };
+    }
+  }
+
+  const tagIds = parseTagIdsFromFormData(fd);
+  if (tagIds.length > 0) {
+    const tagResult = await insertTagAssignments(supabase, {
+      table: "request_tag_assignments",
+      entityColumn: "request_id",
+      entityId: id,
+      tagIds,
+      userId: me.userId,
+    });
+    if (!tagResult.ok) {
+      return {
+        ok: false,
+        message: `Progetto creato ma tag non applicati: ${tagResult.message}`,
+      };
+    }
+  }
+
+  const checklistTagIds = parseChecklistTagMapFromFormData(fd);
+  if (Object.keys(checklistTagIds).length > 0) {
+    const allowedTaskIds = new Set(
+      parseNextAction(next_action).tasks.map((t) => t.id),
+    );
+    const checklistResult = await insertChecklistTagAssignments(supabase, {
+      requestId: id,
+      tagIdsByTask: checklistTagIds,
+      allowedTaskIds,
+      userId: me.userId,
+    });
+    if (!checklistResult.ok) {
+      return {
+        ok: false,
+        message: `Progetto creato ma tag checklist non applicati: ${checklistResult.message}`,
+      };
     }
   }
 

@@ -7,12 +7,13 @@ import type { TeamTag } from "@/types/tag";
 
 export function TaskEditSlideOver({
   task,
-  teamTags = [],
+  teamTags,
   onClose,
   onUpdated,
   onDeleted,
 }: {
   task: Task | null;
+  /** Catalogo tag; se omesso il form usa quello del contesto utente. */
   teamTags?: TeamTag[];
   onClose: () => void;
   onUpdated: (task: Task) => void;

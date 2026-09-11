@@ -4,10 +4,15 @@ import { useId, useState, useTransition } from "react";
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { TaskScheduleFields } from "@/components/tasks/task-recurrence-fields";
-import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import {
+  useOptionalCurrentProfile,
+  useTeamTags,
+} from "@/components/app/current-user-context";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
 import { createTask } from "@/lib/actions/create-task";
 import { fromDateAndTimeInputs } from "@/lib/date";
 import { cn } from "@/lib/cn";
+import { keepKnownTagIds } from "@/lib/tags";
 import { uiBtnPrimary, uiControl } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
 
@@ -27,6 +32,10 @@ export function NewTaskForm({
   const [dueTime, setDueTime] = useState("");
   const assigneeTeamId =
     me?.role === "admin" ? createTeamId : (me?.teamId ?? "");
+  const tagCatalog = useTeamTags(assigneeTeamId || me?.teamId);
+  const [tagIds, setTagIds] = useState<string[]>([]);
+  // Tag selezionati ma non più validi (es. admin che cambia team) vengono scartati.
+  const effectiveTagIds = keepKnownTagIds(tagIds, tagCatalog);
 
   return (
     <form
@@ -40,6 +49,7 @@ export function NewTaskForm({
         const dueIso = fromDateAndTimeInputs(dueDate, dueTime);
         if (dueIso) fd.set("nextActionAtIso", dueIso);
         else fd.delete("nextActionAtIso");
+        fd.set("tagIds", JSON.stringify(effectiveTagIds));
         startTransition(async () => {
           const result = await createTask(fd);
           if (!result.ok) {
@@ -89,6 +99,15 @@ export function NewTaskForm({
           />
         </div>
       ) : null}
+
+      <EntityTagPicker
+        id={`${idPrefix}-tags`}
+        catalog={tagCatalog}
+        selectedIds={effectiveTagIds}
+        disabled={pending}
+        hint="Facoltativo. Puoi selezionare più tag del team."
+        onChange={setTagIds}
+      />
 
       {error ? (
         <p className="text-sm text-danger" role="alert">

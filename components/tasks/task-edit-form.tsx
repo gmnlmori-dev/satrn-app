@@ -2,7 +2,10 @@
 
 import { useId, useState, useTransition } from "react";
 import { AdminCreateTeamSelect } from "@/components/app/admin-create-team-select";
-import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import {
+  useOptionalCurrentProfile,
+  useTeamTags,
+} from "@/components/app/current-user-context";
 import { CreateRequestAssigneeSelect } from "@/components/requests/create-request-assignee-select";
 import { nextActionDeadlineDraftFromIso } from "@/components/requests/next-action-deadline-fields";
 import { TaskScheduleFields } from "@/components/tasks/task-recurrence-fields";
@@ -32,25 +35,34 @@ function parseAssigneeIds(fd: FormData): string[] {
   ];
 }
 
+function sameIdSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+}
+
 export function TaskEditForm({
   task,
-  teamTags = [],
+  teamTags,
   onSuccess,
   onCancel,
   onDeleted,
 }: {
   task: Task;
+  /** Catalogo tag; se omesso usa quello del contesto utente (team della task). */
   teamTags?: TeamTag[];
   onSuccess: (updated: Task) => void;
   onCancel: () => void;
   onDeleted: (taskId: string) => void;
 }) {
   const me = useOptionalCurrentProfile();
+  const contextTags = useTeamTags(task.teamId);
+  const tagCatalog = teamTags ?? contextTags;
   const idPrefix = useId();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [assigneeTeamId, setAssigneeTeamId] = useState(task.teamId);
-  const [tagIds, setTagIds] = useState(task.tagIds);
+  const [tagIds, setTagIds] = useState<string[]>(task.tagIds);
   const initialDue = nextActionDeadlineDraftFromIso(task.dueAt);
   const [dueDate, setDueDate] = useState(initialDue.date);
   const [dueTime, setDueTime] = useState(initialDue.time);
@@ -75,6 +87,14 @@ export function TaskEditForm({
       if (!updateResult.ok) {
         setError(updateResult.message);
         return;
+      }
+
+      if (!sameIdSet(tagIds, task.tagIds)) {
+        const tagResult = await setTaskTags(task.id, tagIds);
+        if (!tagResult.ok) {
+          setError(`Task salvata ma tag non aggiornati: ${tagResult.message}`);
+          return;
+        }
       }
 
       const nextDueAt = fromDateAndTimeInputs(dueDate, dueTime);
@@ -168,14 +188,12 @@ export function TaskEditForm({
       ) : null}
 
       <EntityTagPicker
-        catalog={teamTags}
+        id={`${idPrefix}-tags`}
+        catalog={tagCatalog}
         selectedIds={tagIds}
         disabled={pending}
-        onChange={async (nextIds) => {
-          const res = await setTaskTags(task.id, nextIds);
-          if (!res.ok) throw new Error(res.message);
-          setTagIds(nextIds);
-        }}
+        hint="Puoi selezionare più tag. Le modifiche vengono salvate con «Salva»."
+        onChange={setTagIds}
       />
 
       {error ? (

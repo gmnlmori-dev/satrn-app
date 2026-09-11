@@ -1,5 +1,6 @@
 import { inboxItemRowToInboxItem } from "@/lib/supabase/mappers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { attachInboxTagIds } from "@/lib/supabase/tag-queries";
 import type { InboxItemRowWithAssignee } from "@/types/database";
 import type { InboxItem } from "@/types/inbox";
 
@@ -25,7 +26,9 @@ export async function getInboxItems(): Promise<InboxItem[]> {
     .order("created_at", { ascending: false });
 
   assertNoError("getInboxItems", error);
-  return ((data ?? []) as InboxItemRowWithAssignee[]).map(inboxItemRowToInboxItem);
+  return attachInboxTagIds(
+    ((data ?? []) as InboxItemRowWithAssignee[]).map(inboxItemRowToInboxItem),
+  );
 }
 
 /** Dettaglio inbox per id, o `null` se assente. */
@@ -39,5 +42,8 @@ export async function getInboxItemById(id: string): Promise<InboxItem | null> {
 
   assertNoError("getInboxItemById", error);
   if (!data) return null;
-  return inboxItemRowToInboxItem(data as InboxItemRowWithAssignee);
+  const [item] = await attachInboxTagIds([
+    inboxItemRowToInboxItem(data as InboxItemRowWithAssignee),
+  ]);
+  return item ?? null;
 }

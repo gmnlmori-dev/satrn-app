@@ -19,6 +19,7 @@ export function useTeamNoteAutosave({
   sharedUserIds = [],
   sharedTeamIds = [],
   color = null,
+  tagIds = [],
   enabled = true,
   onCreated,
 }: {
@@ -29,6 +30,8 @@ export function useTeamNoteAutosave({
   sharedUserIds?: string[];
   sharedTeamIds?: string[];
   color?: NoteColor | null;
+  /** Tag scelti in bozza: applicati alla creazione della nota. */
+  tagIds?: string[];
   enabled?: boolean;
   onCreated?: (
     id: string,
@@ -39,6 +42,7 @@ export function useTeamNoteAutosave({
       sharedUserIds: string[];
       sharedTeamIds: string[];
       color: NoteColor | null;
+      tagIds: string[];
     },
   ) => void;
 }) {
@@ -56,10 +60,15 @@ export function useTeamNoteAutosave({
   const sharedUserIdsRef = useRef(sharedUserIds);
   const sharedTeamIdsRef = useRef(sharedTeamIds);
   const colorRef = useRef(color);
+  const tagIdsRef = useRef(tagIds);
 
   useEffect(() => {
     visibilityRef.current = visibility;
   }, [visibility]);
+
+  useEffect(() => {
+    tagIdsRef.current = tagIds;
+  }, [tagIds]);
 
   useEffect(() => {
     sharedUserIdsRef.current = sharedUserIds;
@@ -137,6 +146,7 @@ export function useTeamNoteAutosave({
         const currentShared = sharedUserIdsRef.current;
         const currentTeams = sharedTeamIdsRef.current;
         const currentColor = colorRef.current;
+        const currentTagIds = tagIdsRef.current;
         if (
           currentVisibility === "shared" &&
           currentShared.length === 0 &&
@@ -154,6 +164,9 @@ export function useTeamNoteAutosave({
         if (currentColor && currentColor !== "default") {
           fd.set("color", currentColor);
         }
+        if (currentTagIds.length > 0) {
+          fd.set("tagIds", JSON.stringify(currentTagIds));
+        }
         const result = await createTeamNote(fd);
         if (!result.ok) {
           setStatus("error");
@@ -170,6 +183,7 @@ export function useTeamNoteAutosave({
           sharedTeamIds: currentTeams,
           color:
             currentColor && currentColor !== "default" ? currentColor : null,
+          tagIds: currentTagIds,
         });
       } else {
         const result = await updateTeamNote(noteIdRef.current, {

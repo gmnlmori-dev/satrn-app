@@ -71,6 +71,8 @@ export function TasksTable({
     setPostpone((p) => (p?.task.id === task.id ? null : { task, rect }));
   }
 
+  const showTagColumn = teamTags.length > 0;
+
   return (
     <>
       {postpone ? (
@@ -94,13 +96,21 @@ export function TasksTable({
         />
       ) : null}
       <div className="overflow-x-auto rounded-lg border border-line-default">
-        <table className="w-full min-w-[40rem] text-left text-sm">
+        <table
+          className={cn(
+            "w-full text-left text-sm",
+            showTagColumn ? "min-w-[48rem]" : "min-w-[40rem]",
+          )}
+        >
           <thead>
             <tr className="border-b border-line-default bg-elevated/50">
               <th className={cn(dataTableThClass, "w-10")}>
                 <span className="sr-only">Completata</span>
               </th>
               <th className={dataTableThClass}>Titolo</th>
+              {showTagColumn ? (
+                <th className={cn(dataTableThClass, "w-[12rem]")}>Tag</th>
+              ) : null}
               <th className={dataTableThClass}>Scadenza</th>
               <th className={dataTableThClass}>Assegnatari</th>
               <th className={cn(dataTableThClass, "w-20 text-right")}>
@@ -139,13 +149,18 @@ export function TasksTable({
                         recurrence={task.recurrence}
                         className="mt-0.5 block"
                       />
+                    </div>
+                  </td>
+                  {showTagColumn ? (
+                    <td className="px-3 py-2.5 align-middle">
                       <TagChips
                         tagIds={task.tagIds}
                         catalog={teamTags}
-                        className="mt-1"
+                        max={3}
+                        emptyLabel="—"
                       />
-                    </div>
-                  </td>
+                    </td>
+                  ) : null}
                   <td className="px-3 py-2.5">
                     {task.dueAt ? (
                       <span

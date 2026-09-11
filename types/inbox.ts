@@ -20,4 +20,6 @@ export interface InboxItem {
   createdByUserId: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Tag di team assegnati (ids `team_tags`). */
+  tagIds: string[];
 }

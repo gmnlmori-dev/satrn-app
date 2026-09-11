@@ -6,8 +6,12 @@ import {
   listNoteSharingTeams,
   type NoteSharingTeamOption,
 } from "@/lib/actions/list-note-sharing-teams";
-import { useOptionalCurrentProfile } from "@/components/app/current-user-context";
+import {
+  useOptionalCurrentProfile,
+  useTeamTags,
+} from "@/components/app/current-user-context";
 import { NoteSharingFields } from "@/components/notes/note-sharing-fields";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { cn } from "@/lib/cn";
 import { titleFromBody } from "@/lib/team-note-access";
@@ -36,7 +40,9 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
     NoteSharingTeamOption[]
   >([]);
   const [userFilterTeamId, setUserFilterTeamId] = useState("");
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const me = useOptionalCurrentProfile();
+  const tagCatalog = useTeamTags(me?.teamId);
   const { pulseTopBar } = useDetailSaveFeedback();
   const resolvedUserFilterTeamId = userFilterTeamId || me?.teamId || "";
 
@@ -97,6 +103,7 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
     fd.set("visibility", visibility);
     fd.set("sharedUserIds", JSON.stringify(sharedUserIds));
     fd.set("sharedTeamIds", JSON.stringify(sharedTeamIds));
+    fd.set("tagIds", JSON.stringify(tagIds));
 
     setPending(true);
     try {
@@ -111,6 +118,7 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
       setVisibility("private");
       setSharedUserIds([]);
       setSharedTeamIds([]);
+      setTagIds([]);
       onSuccess(result.id);
     } finally {
       setPending(false);
@@ -155,6 +163,14 @@ export function NewNoteForm({ onSuccess, onCancel, className }: NewNoteFormProps
               placeholder="Scrivi il contenuto della nota…"
             />
           </div>
+          <EntityTagPicker
+            id={p("tags")}
+            catalog={tagCatalog}
+            selectedIds={tagIds}
+            disabled={pending}
+            hint="Facoltativo. Puoi selezionare più tag del team."
+            onChange={setTagIds}
+          />
           <NoteSharingFields
             idPrefix={p("sharing")}
             visibility={visibility}

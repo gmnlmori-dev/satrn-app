@@ -33,6 +33,10 @@ export async function convertInboxToRequest(
   }
 
   fd.set("teamId", item.teamId);
+  // I tag dell'ingresso inbox vengono ereditati dal progetto, salvo scelta esplicita nel form.
+  if (!fd.has("tagIds") && item.tagIds.length > 0) {
+    fd.set("tagIds", JSON.stringify(item.tagIds));
+  }
 
   const result = await createRequest(fd);
   if (!result.ok) {

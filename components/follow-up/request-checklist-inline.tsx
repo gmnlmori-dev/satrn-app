@@ -15,19 +15,26 @@ import {
 } from "@/lib/follow-up-request-deadline";
 import { cn } from "@/lib/cn";
 import { ExpandableChecklistTaskText } from "@/components/requests/checklist-task-text";
+import { TagChips } from "@/components/tags/tag-chips";
 import { uiTransition } from "@/lib/ui-classes";
+import type { TeamTag } from "@/types/tag";
 
 export function RequestChecklistInline({
   requestId,
   nextAction,
   nextActionAt = null,
   disabled = false,
+  teamTags = [],
+  checklistTagIdsByTask = {},
   onChanged,
 }: {
   requestId: string;
   nextAction: string;
   nextActionAt?: string | null;
   disabled?: boolean;
+  teamTags?: TeamTag[];
+  /** checklistTaskId → tagIds delle voci di questo progetto. */
+  checklistTagIdsByTask?: Record<string, string[]>;
   onChanged?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -125,6 +132,15 @@ export function RequestChecklistInline({
                   />
                   <div className="min-w-0 flex-1">
                     <ExpandableChecklistTaskText text={task.text} />
+                    {teamTags.length > 0 &&
+                    (checklistTagIdsByTask[task.id]?.length ?? 0) > 0 ? (
+                      <TagChips
+                        tagIds={checklistTagIdsByTask[task.id] ?? []}
+                        catalog={teamTags}
+                        max={3}
+                        className="mt-1"
+                      />
+                    ) : null}
                     {task.dueAt &&
                     !isChecklistDueHiddenInFollowUp(task.dueAt, hiddenDueAts) ? (
                       <p

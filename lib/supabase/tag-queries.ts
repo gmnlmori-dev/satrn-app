@@ -4,6 +4,7 @@ import type { TeamTag, TeamTagRow } from "@/types/tag";
 import type { Request } from "@/types/request";
 import type { Task } from "@/types/task";
 import type { TeamNote } from "@/types/note";
+import type { InboxItem } from "@/types/inbox";
 
 function assertNoError(message: string, error: { message: string } | null) {
   if (error) throw new Error(`${message}: ${error.message}`);
@@ -101,6 +102,28 @@ export async function attachNoteTagIds(notes: TeamNote[]): Promise<TeamNote[]> {
   return notes.map((n) => ({
     ...n,
     tagIds: grouped.get(n.id) ?? [],
+  }));
+}
+
+export async function attachInboxTagIds(
+  items: InboxItem[],
+): Promise<InboxItem[]> {
+  if (items.length === 0) return items;
+  const supabase = await createSupabaseServerClient();
+  const ids = items.map((i) => i.id);
+  const { data, error } = await supabase
+    .from("inbox_tag_assignments")
+    .select("inbox_item_id, tag_id")
+    .in("inbox_item_id", ids);
+  assertNoError("attachInboxTagIds", error);
+  const grouped = groupIdsByKey(
+    ((data ?? []) as { inbox_item_id: string; tag_id: string }[]).map(
+      (r) => ({ key: r.inbox_item_id, tag_id: r.tag_id }),
+    ),
+  );
+  return items.map((i) => ({
+    ...i,
+    tagIds: grouped.get(i.id) ?? [],
   }));
 }
 

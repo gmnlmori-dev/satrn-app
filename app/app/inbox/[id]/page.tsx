@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { InboxUnconvertedActions } from "@/components/inbox/inbox-unconverted-actions";
 import { InboxStatusControls } from "@/components/inbox/inbox-status-controls";
+import { InboxTagsPanel } from "@/components/inbox/inbox-tags-panel";
 import { AppEmptyHint } from "@/components/ui/app-empty-state";
 import { Panel } from "@/components/ui/panel";
 import { formatDateTime } from "@/lib/date";
@@ -90,6 +91,11 @@ export default async function InboxDetailPage({
             <p className={`${uiFormLabel} mb-2`}>Stato</p>
             <InboxStatusControls item={item} />
           </div>
+        </div>
+
+        <div className="mt-5 border-t border-line-default pt-5">
+          <p className={`${uiFormLabel} mb-2`}>Tag</p>
+          <InboxTagsPanel item={item} />
         </div>
 
         {item.linkedRequestId ? (
