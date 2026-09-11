@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Encelado">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#eaf6fb"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 40 C 16 32 40 48 64 40 S 112 32 136 40 L136 56 C 112 64 88 48 64 56 S 16 64 -8 56 Z" fill="#d4ebf4"/>
+    <path d="M-8 92 C 16 84 40 100 64 92 S 112 84 136 92 L136 130 L-8 130 Z" fill="#c2e1ee"/>
+    <g fill="none" stroke="#6fb9d6" stroke-width="3" stroke-linecap="round">
+      <path d="M18 96 C 36 90 54 100 72 94 S 100 86 114 92"/>
+      <path d="M26 106 C 44 100 60 110 80 104 S 100 98 110 104"/>
+      <path d="M34 116 C 52 110 70 118 92 112"/>
+    </g>
+    <circle cx="40" cy="30" r="6" fill="#d4ebf4"/>
+    <circle cx="40" cy="30" r="3.5" fill="#bcdcea"/>
+    <circle cx="88" cy="22" r="4" fill="#bcdcea"/>
+    <circle cx="72" cy="70" r="5" fill="#bcdcea"/>
+    <circle cx="100" cy="66" r="3" fill="#bcdcea"/>
+    <circle cx="22" cy="72" r="3" fill="#bcdcea"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".12" mask="url(#s)"/>
+</svg>

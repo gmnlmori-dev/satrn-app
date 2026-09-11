@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Marte">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#e0603a"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 44 C 16 36 40 52 64 44 S 112 36 136 44 L136 62 C 112 70 88 54 64 62 S 16 70 -8 62 Z" fill="#c94a2d"/>
+    <path d="M-8 90 C 16 82 40 98 64 90 S 112 82 136 90 L136 130 L-8 130 Z" fill="#c94a2d"/>
+    <path d="M-8 6 C 16 0 40 10 64 6 S 112 0 136 6 L136 14 C 112 20 88 10 64 14 S 16 20 -8 14 Z" fill="#fbe9e0"/>
+    <circle cx="36" cy="34" r="6" fill="#a83a22"/>
+    <circle cx="80" cy="30" r="9" fill="#a83a22"/>
+    <circle cx="52" cy="76" r="7" fill="#a83a22"/>
+    <circle cx="94" cy="70" r="5" fill="#a83a22"/>
+    <circle cx="24" cy="66" r="4" fill="#a83a22"/>
+    <circle cx="68" cy="104" r="5" fill="#a83a22"/>
+    <circle cx="82" cy="32" r="4" fill="#8f2f1b"/>
+    <circle cx="50" cy="52" r="3" fill="#8f2f1b"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".18" mask="url(#s)"/>
+</svg>

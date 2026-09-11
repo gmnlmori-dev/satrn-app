@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Venere">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#f4c04a"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 22 C 16 14 40 30 64 22 S 112 14 136 22 L136 40 C 112 48 88 32 64 40 S 16 48 -8 40 Z" fill="#f9d878"/>
+    <path d="M-8 52 C 16 44 40 60 64 52 S 112 44 136 52 L136 66 C 112 74 88 58 64 66 S 16 74 -8 66 Z" fill="#ea9f36"/>
+    <path d="M-8 78 C 16 70 40 86 64 78 S 112 70 136 78 L136 96 C 112 104 88 88 64 96 S 16 104 -8 96 Z" fill="#f9d878"/>
+    <path d="M-8 108 C 16 100 40 116 64 108 S 112 100 136 108 L136 130 L-8 130 Z" fill="#e6952d"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".16" mask="url(#s)"/>
+</svg>

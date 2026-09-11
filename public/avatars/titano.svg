@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Titano">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#f0a24a"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 18 C 16 10 40 26 64 18 S 112 10 136 18 L136 34 C 112 42 88 26 64 34 S 16 42 -8 34 Z" fill="#f6bd76"/>
+    <path d="M-8 50 C 16 42 40 58 64 50 S 112 42 136 50 L136 60 C 112 68 88 52 64 60 S 16 68 -8 60 Z" fill="#dd8434"/>
+    <path d="M-8 76 C 16 68 40 84 64 76 S 112 68 136 76 L136 92 C 112 100 88 84 64 92 S 16 100 -8 92 Z" fill="#f6bd76"/>
+    <path d="M-8 108 C 16 102 40 114 64 108 S 112 102 136 108 L136 130 L-8 130 Z" fill="#dd8434"/>
+    <path d="M-8 4 C 16 0 40 8 64 4 S 112 0 136 4 L136 10 C 112 14 88 6 64 10 S 16 14 -8 10 Z" fill="#7fb8d8" opacity=".8"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".16" mask="url(#s)"/>
+</svg>

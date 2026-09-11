@@ -14,6 +14,7 @@ import {
   titleFromBody,
 } from "@/lib/team-note-access";
 import { useTeamNoteAutosave } from "@/lib/use-team-note-autosave";
+import { MemberAvatar } from "@/components/app/user-avatar";
 import { NoteSharingFields } from "@/components/notes/note-sharing-fields";
 import {
   uiBtnIcon,
@@ -610,8 +611,15 @@ export function NoteCard({
                 {noteVisibilityLabel(localNote?.visibility ?? "private")}
               </span>
               {localNote?.createdByLabel && localNote.createdByUserId !== currentUserId ? (
-                <span className="truncate text-[11px] text-fg-tertiary">
-                  {localNote.createdByLabel}
+                <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-fg-tertiary">
+                  <MemberAvatar
+                    userId={localNote.createdByUserId}
+                    name={localNote.createdByLabel}
+                    size="xs"
+                    title=""
+                    decorative
+                  />
+                  <span className="truncate">{localNote.createdByLabel}</span>
                 </span>
               ) : null}
             </div>

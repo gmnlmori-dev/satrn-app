@@ -8,14 +8,7 @@ import { appRoleLabel } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 import { uiFocusRingInset, uiTransition } from "@/lib/ui-classes";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-
-function userInitial(fullName: string, email: string): string {
-  const name = fullName.trim();
-  if (name) return name.charAt(0).toUpperCase();
-  const mail = email.trim();
-  if (mail) return mail.charAt(0).toUpperCase();
-  return "?";
-}
+import { UserAvatar } from "@/components/app/user-avatar";
 
 function SettingsGlyph({ active }: { active: boolean }) {
   return (
@@ -95,12 +88,13 @@ export function SidebarUserPanel({ onNavigate }: { onNavigate?: () => void }) {
     <div className="shrink-0 border-t border-line-default p-2.5">
       <div className="rounded-lg border border-line-default bg-elevated/40">
         <div className="flex items-center gap-2.5 px-2.5 py-2.5">
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent"
-            aria-hidden
-          >
-            {userInitial(me.fullName, me.email)}
-          </div>
+          <UserAvatar
+            avatarKey={me.avatarKey}
+            name={displayName}
+            size="lg"
+            title=""
+            decorative
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium leading-snug text-fg-primary">
               {displayName}

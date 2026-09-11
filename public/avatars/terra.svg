@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Terra">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#2f9fd6"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 74 C 16 66 40 82 64 74 S 112 66 136 74 L136 92 C 112 100 88 84 64 92 S 16 100 -8 92 Z" fill="#4db8e6"/>
+    <path d="M24 26 C 34 16 52 14 60 22 C 66 28 58 34 62 40 C 66 46 78 42 76 52 C 74 60 62 58 56 64 C 48 72 34 66 30 56 C 26 46 18 36 24 26 Z" fill="#3fbf72"/>
+    <path d="M84 20 C 94 16 106 22 110 32 C 112 40 104 44 98 40 C 92 36 86 38 84 32 C 82 28 80 22 84 20 Z" fill="#3fbf72"/>
+    <path d="M72 76 C 82 70 96 74 102 84 C 106 92 100 102 92 106 C 84 110 76 102 74 94 C 72 88 66 80 72 76 Z" fill="#3fbf72"/>
+    <path d="M30 92 C 36 88 44 92 46 98 C 48 104 40 108 34 106 C 28 104 26 96 30 92 Z" fill="#3fbf72"/>
+    <path d="M28 30 C 36 24 46 26 50 32 C 52 36 46 40 42 38 C 36 36 30 38 28 30 Z" fill="#2ea35c"/>
+    <path d="M80 82 C 88 80 96 86 96 92 C 96 98 88 100 84 96 C 80 92 76 86 80 82 Z" fill="#2ea35c"/>
+    <path d="M-8 6 C 16 2 40 12 64 6 S 112 0 136 6 L136 16 C 112 22 88 12 64 16 S 16 22 -8 16 Z" fill="#e9f7ff" opacity=".85"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".16" mask="url(#s)"/>
+</svg>

@@ -22,6 +22,7 @@ Gli script in questa cartella **non** hanno runner automatico: vanno eseguiti ma
 16. `app_announcement_reads_update_policy.sql` — solo se prod ha già `app_announcements.sql` senza policy UPDATE
 17. `app_settings.sql` — impostazioni globali (es. abilitazione Inbox)
 18. `team_tags.sql` — tag di team + assegnazioni su progetti/task/note/checklist/inbox (rieseguibile: aggiunge `inbox_tag_assignments` e converte `checklist_task_id` a `text`)
+19. `profile_avatar.sql` — colonna `profiles.avatar_key` + RPC `update_my_avatar` (immagine profilo dal set integrato)
 
 ## Checklist deploy produzione
 
@@ -35,6 +36,7 @@ Confrontare lo schema Supabase prod con le dipendenze del codice:
 | `app_announcement_reads_update_policy.sql` | Upsert letture novità (`markAnnouncementRead`) |
 | `app_settings.sql` | Impostazioni globali (es. Inbox) |
 | `team_tags.sql` | Tabella `team_tags` + assegnazioni tag (progetti, task, note, checklist, inbox) |
+| `profile_avatar.sql` | Colonna `profiles.avatar_key` + RPC `update_my_avatar` (pannello Immagine profilo) |
 
 ## Gap RLS noti (mitigati lato app)
 

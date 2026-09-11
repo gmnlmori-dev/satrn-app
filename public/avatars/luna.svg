@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Luna">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#e6e6ee"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 60 C 16 52 40 68 64 60 S 112 52 136 60 L136 80 C 112 88 88 72 64 80 S 16 88 -8 80 Z" fill="#d4d4de"/>
+    <circle cx="42" cy="40" r="11" fill="#c2c2cf"/>
+    <circle cx="42" cy="40" r="7" fill="#b1b1c0"/>
+    <circle cx="84" cy="52" r="7" fill="#c2c2cf"/>
+    <circle cx="84" cy="52" r="4" fill="#b1b1c0"/>
+    <circle cx="62" cy="86" r="9" fill="#c2c2cf"/>
+    <circle cx="62" cy="86" r="5" fill="#b1b1c0"/>
+    <circle cx="94" cy="88" r="5" fill="#c2c2cf"/>
+    <circle cx="28" cy="80" r="4" fill="#c2c2cf"/>
+    <circle cx="70" cy="24" r="4" fill="#c2c2cf"/>
+    <circle cx="100" cy="30" r="3" fill="#c2c2cf"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".14" mask="url(#s)"/>
+</svg>

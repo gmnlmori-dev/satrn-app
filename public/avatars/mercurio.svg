@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Mercurio">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#9a9aa6"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 30 C 16 22 40 38 64 30 S 112 22 136 30 L136 52 C 112 60 88 44 64 52 S 16 60 -8 52 Z" fill="#aeaeba"/>
+    <path d="M-8 86 C 16 78 40 94 64 86 S 112 78 136 86 L136 104 C 112 112 88 96 64 104 S 16 112 -8 104 Z" fill="#8a8a97"/>
+    <circle cx="40" cy="44" r="8" fill="#787887"/>
+    <circle cx="86" cy="36" r="5" fill="#787887"/>
+    <circle cx="72" cy="66" r="10" fill="#787887"/>
+    <circle cx="30" cy="76" r="5" fill="#787887"/>
+    <circle cx="98" cy="72" r="6" fill="#787887"/>
+    <circle cx="56" cy="98" r="6" fill="#6d6d7c"/>
+    <circle cx="84" cy="96" r="4" fill="#6d6d7c"/>
+    <circle cx="70" cy="64" r="5" fill="#66667a"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".18" mask="url(#s)"/>
+</svg>

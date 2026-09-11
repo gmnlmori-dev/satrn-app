@@ -1,4 +1,5 @@
 import { AssignScopePreferencePanel } from "@/components/app/assign-scope-preference-panel";
+import { AvatarPreferencePanel } from "@/components/app/avatar-preference-panel";
 import { CalendarPreferencePanel } from "@/components/app/calendar-preference-panel";
 import { DefaultHomePagePreferencePanel } from "@/components/app/default-home-page-preference-panel";
 import { FollowUpTabPreferencePanel } from "@/components/app/follow-up-tab-preference-panel";
@@ -52,6 +53,14 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-8 md:space-y-9">
+      {profile ? (
+        <AvatarPreferencePanel
+          initialAvatarKey={profile.avatarKey}
+          displayName={
+            profile.fullName.trim() || profile.email.trim() || "Utente"
+          }
+        />
+      ) : null}
       <ThemePreferencePanel />
       <DefaultHomePagePreferencePanel initialHomePage={defaultHomePage} />
       <FollowUpTabPreferencePanel initialTab={defaultFollowUpTab} />

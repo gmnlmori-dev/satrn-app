@@ -6,7 +6,10 @@ import {
   getOldestUnreadActiveAnnouncementForUser,
   getUnreadAnnouncementCountForUser,
 } from "@/lib/supabase/announcement-queries";
-import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
+import {
+  getCurrentProfileSummary,
+  getMemberAvatarMap,
+} from "@/lib/supabase/profile-queries";
 import { getTeamTags } from "@/lib/supabase/tag-queries";
 import { getTeamsForSelect } from "@/lib/supabase/team-queries";
 
@@ -28,6 +31,9 @@ export default async function AppSectionLayout({
         profile.role === "admin" ? undefined : profile.teamId,
       ).catch(() => [])
     : [];
+  const memberAvatars = profile?.userId
+    ? await getMemberAvatarMap().catch(() => ({}))
+    : {};
 
   const [welcomeAnnouncement, unreadAnnouncementCount] = profile?.userId
     ? await Promise.all([
@@ -44,6 +50,7 @@ export default async function AppSectionLayout({
       teamsForCreate={teamsForCreate}
       inboxEnabled={inboxEnabled}
       teamTags={teamTags}
+      memberAvatars={memberAvatars}
     >
       <AppChrome
         welcomeAnnouncement={welcomeAnnouncement}

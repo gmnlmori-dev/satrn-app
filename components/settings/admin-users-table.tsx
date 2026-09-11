@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { UserAvatar } from "@/components/app/user-avatar";
 import { AdminUserCreateSheet } from "@/components/settings/admin-user-create-sheet";
 import { AdminUserEditSheet } from "@/components/settings/admin-user-edit-sheet";
 import {
@@ -113,7 +114,18 @@ export function AdminUsersTable({
                 profiles.map((u) => (
                   <tr key={u.userId}>
                     <td className={cn(dataTableTdClass, "font-medium")}>
-                      {u.fullName?.trim() || "—"}
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <UserAvatar
+                          avatarKey={u.avatarKey}
+                          name={u.fullName?.trim() || u.email}
+                          size="md"
+                          title=""
+                          decorative
+                        />
+                        <span className="min-w-0 truncate">
+                          {u.fullName?.trim() || "—"}
+                        </span>
+                      </span>
                     </td>
                     <td
                       className={cn(

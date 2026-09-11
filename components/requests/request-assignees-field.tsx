@@ -1,5 +1,6 @@
 "use client";
 
+import { MemberAvatar } from "@/components/app/user-avatar";
 import { cn } from "@/lib/cn";
 import { uiFormLabel } from "@/lib/typography";
 import type { AssigneeOption } from "@/types/profile";
@@ -60,6 +61,13 @@ export function RequestAssigneesField({
               checked={checked}
               disabled={disabled}
               onChange={() => toggle(option.userId)}
+            />
+            <MemberAvatar
+              userId={option.userId}
+              name={option.label}
+              size="sm"
+              title=""
+              decorative
             />
             <span className="min-w-0 truncate">{option.label}</span>
           </label>

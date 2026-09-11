@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Giove">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#e9c79a"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 14 C 16 8 40 18 64 14 S 112 8 136 14 L136 26 C 112 32 88 22 64 26 S 16 32 -8 26 Z" fill="#c98a5b"/>
+    <path d="M-8 36 C 16 30 40 42 64 36 S 112 30 136 36 L136 50 C 112 56 88 44 64 50 S 16 56 -8 50 Z" fill="#d9a276"/>
+    <path d="M-8 60 C 16 54 40 66 64 60 S 112 54 136 60 L136 74 C 112 80 88 68 64 74 S 16 80 -8 74 Z" fill="#b8703f"/>
+    <path d="M-8 84 C 16 78 40 90 64 84 S 112 78 136 84 L136 94 C 112 100 88 88 64 94 S 16 100 -8 94 Z" fill="#d9a276"/>
+    <path d="M-8 104 C 16 98 40 110 64 104 S 112 98 136 104 L136 130 L-8 130 Z" fill="#c98a5b"/>
+    <ellipse cx="84" cy="76" rx="14" ry="8" fill="#d5573b"/>
+    <ellipse cx="84" cy="76" rx="8" ry="4" fill="#e77a5b"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".16" mask="url(#s)"/>
+</svg>

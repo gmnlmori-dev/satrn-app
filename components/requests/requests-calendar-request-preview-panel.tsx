@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import type { Request } from "@/types/request";
+import { AssigneeAvatarGroup, MemberAvatar } from "@/components/app/user-avatar";
 import { PriorityBadge } from "@/components/requests/priority-badge";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { formatNextActionPreview, effectiveNextActionAt } from "@/lib/next-action-tasks";
@@ -96,7 +97,18 @@ export function RequestsCalendarRequestPreviewPanel({
           <dl className="space-y-3">
             <PreviewRow label="Contatto">{request.contactName || "—"}</PreviewRow>
             <PreviewRow label="Assegnata a">
-              {request.assignedToLabel ?? "Non assegnata"}
+              {request.assignedToLabel ? (
+                <span className="flex min-w-0 items-center gap-2">
+                  <AssigneeAvatarGroup
+                    assignees={request.assignees}
+                    max={3}
+                    size="sm"
+                  />
+                  <span className="min-w-0">{request.assignedToLabel}</span>
+                </span>
+              ) : (
+                "Non assegnata"
+              )}
             </PreviewRow>
             {dueAt ? (
               <PreviewRow label="Scadenza">
@@ -123,7 +135,16 @@ export function RequestsCalendarRequestPreviewPanel({
                 ) : null}
                 {request.createdByLabel ? (
                   <PreviewRow label="Creata da">
-                    {request.createdByLabel}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <MemberAvatar
+                        userId={request.createdByUserId}
+                        name={request.createdByLabel}
+                        size="sm"
+                        title=""
+                        decorative
+                      />
+                      <span className="min-w-0">{request.createdByLabel}</span>
+                    </span>
                   </PreviewRow>
                 ) : null}
               </>

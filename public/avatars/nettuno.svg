@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Nettuno">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#3b6fd8"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 22 C 16 14 40 30 64 22 S 112 14 136 22 L136 38 C 112 46 88 30 64 38 S 16 46 -8 38 Z" fill="#5a8ce8"/>
+    <path d="M-8 54 C 16 46 40 62 64 54 S 112 46 136 54 L136 66 C 112 74 88 58 64 66 S 16 74 -8 66 Z" fill="#2c55b8"/>
+    <path d="M-8 82 C 16 74 40 90 64 82 S 112 74 136 82 L136 100 C 112 108 88 92 64 100 S 16 108 -8 100 Z" fill="#5a8ce8"/>
+    <path d="M-8 112 C 16 106 40 118 64 112 S 112 106 136 112 L136 130 L-8 130 Z" fill="#2c55b8"/>
+    <ellipse cx="44" cy="60" rx="11" ry="6" fill="#1f3f95"/>
+    <ellipse cx="92" cy="36" rx="7" ry="3" fill="#cfe0ff"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".18" mask="url(#s)"/>
+</svg>

@@ -12,6 +12,8 @@ export type ProfileSummary = {
   teamId: string;
   teamName?: string;
   preferences: UserPreferences;
+  /** Immagine profilo scelta dal set integrato; null = iniziale del nome. */
+  avatarKey: string | null;
 };
 
 /** Per select / combobox assegnazione. */

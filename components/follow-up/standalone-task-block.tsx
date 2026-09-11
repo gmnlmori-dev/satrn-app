@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
+import { AssigneeAvatarGroup } from "@/components/app/user-avatar";
 import { PostponeDueAtPopover } from "@/components/follow-up/postpone-due-at-popover";
 import { PostponeTaskButton } from "@/components/tasks/postpone-task-button";
 import { TaskRecurrenceSummary } from "@/components/tasks/task-recurrence-summary";
@@ -232,7 +233,16 @@ export function StandaloneTaskBlock({
                       <span>Senza scadenza</span>
                     )}
                     {taskAssigneesLabel(task) ? (
-                      <span>{` · ${taskAssigneesLabel(task)}`}</span>
+                      <>
+                        <span>{" · "}</span>
+                        <AssigneeAvatarGroup
+                          assignees={task.assignees}
+                          max={3}
+                          size="xs"
+                          className="mr-1 align-middle"
+                        />
+                        <span>{taskAssigneesLabel(task)}</span>
+                      </>
                     ) : null}
                   </p>
                   <TaskRecurrenceSummary
@@ -345,7 +355,18 @@ export function StandaloneTaskBlock({
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-fg-secondary">
-                    {taskAssigneesLabel(task) ?? (
+                    {taskAssigneesLabel(task) ? (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <AssigneeAvatarGroup
+                          assignees={task.assignees}
+                          max={3}
+                          size="sm"
+                        />
+                        <span className="min-w-0 truncate">
+                          {taskAssigneesLabel(task)}
+                        </span>
+                      </span>
+                    ) : (
                       <span className="text-fg-tertiary">—</span>
                     )}
                   </td>

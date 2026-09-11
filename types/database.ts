@@ -22,6 +22,8 @@ export type ProfileRow = {
   is_active: boolean;
   team_id: string;
   preferences?: Record<string, unknown> | null;
+  /** Chiave immagine profilo del set integrato (lib/avatars.ts); null = iniziale. */
+  avatar_key?: string | null;
   created_at: string;
   updated_at: string;
 };

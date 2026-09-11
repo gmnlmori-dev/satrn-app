@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Io">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#f2d65a"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 34 C 16 26 40 42 64 34 S 112 26 136 34 L136 48 C 112 56 88 40 64 48 S 16 56 -8 48 Z" fill="#f7e48a"/>
+    <path d="M-8 84 C 16 76 40 92 64 84 S 112 76 136 84 L136 100 C 112 108 88 92 64 100 S 16 108 -8 100 Z" fill="#e9b93c"/>
+    <circle cx="40" cy="60" r="10" fill="#ef8a3a"/>
+    <circle cx="40" cy="60" r="5" fill="#3a2a2a"/>
+    <circle cx="90" cy="40" r="7" fill="#ef8a3a"/>
+    <circle cx="90" cy="40" r="3" fill="#3a2a2a"/>
+    <circle cx="78" cy="94" r="6" fill="#ef8a3a"/>
+    <circle cx="78" cy="94" r="2.5" fill="#3a2a2a"/>
+    <circle cx="60" cy="26" r="3" fill="#3a2a2a"/>
+    <circle cx="26" cy="92" r="3" fill="#3a2a2a"/>
+    <circle cx="104" cy="72" r="4" fill="#ef8a3a"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".16" mask="url(#s)"/>
+</svg>

@@ -25,6 +25,7 @@ import {
 } from "@/components/requests/next-action-deadline-fields";
 import { NextActionField } from "@/components/requests/next-action-field";
 import { RequestAssigneesField } from "@/components/requests/request-assignees-field";
+import { AssigneeAvatarGroup } from "@/components/app/user-avatar";
 import { cn } from "@/lib/cn";
 import { requestAssignedUserIds } from "@/lib/request-assignees";
 import {
@@ -528,7 +529,12 @@ export function RequestDetailWorkspace({
             />
           ) : (
             <div className="mt-1.5">
-              <p className={cn(controlClass, "flex min-h-[2.75rem] items-center bg-field")}>
+              <p className={cn(controlClass, "flex min-h-[2.75rem] items-center gap-2 bg-field")}>
+                <AssigneeAvatarGroup
+                  assignees={request.assignees}
+                  max={4}
+                  size="sm"
+                />
                 <span className="truncate font-medium">
                   {request.assignedToLabel ?? "Non assegnata"}
                 </span>

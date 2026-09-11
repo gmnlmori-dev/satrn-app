@@ -1,3 +1,4 @@
+import { normalizeAvatarKey } from "@/lib/avatars";
 import { parseUserPreferences } from "@/lib/user-preferences";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ProfileRow, ProfileRowWithTeam } from "@/types/database";
@@ -17,7 +18,37 @@ function profileRowToSummary(row: ProfileRowWithTeam): ProfileSummary {
     teamId: row.team_id,
     teamName: row.team?.name ?? undefined,
     preferences: parseUserPreferences(row.preferences ?? {}),
+    avatarKey: normalizeAvatarKey(row.avatar_key),
   };
+}
+
+/**
+ * Mappa userId → chiave avatar per tutti i profili visibili all'utente
+ * (RLS). Solo profili con un'immagine impostata. Se la colonna non esiste
+ * ancora (script profile_avatar.sql non eseguito) restituisce mappa vuota.
+ */
+export async function getMemberAvatarMap(): Promise<Record<string, string>> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_id, avatar_key")
+    .not("avatar_key", "is", null);
+
+  if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("avatar_key")) return {};
+    throw new Error(`getMemberAvatarMap: ${error.message}`);
+  }
+
+  const map: Record<string, string> = {};
+  for (const row of (data ?? []) as {
+    user_id: string;
+    avatar_key: string | null;
+  }[]) {
+    const key = normalizeAvatarKey(row.avatar_key);
+    if (key) map[row.user_id] = key;
+  }
+  return map;
 }
 
 /** Profilo dell’utente loggato, o null se anonimo / profilo assente. */

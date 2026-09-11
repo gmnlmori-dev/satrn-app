@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Urano">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#7fd6e8"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 26 C 16 20 40 32 64 26 S 112 20 136 26 L136 40 C 112 46 88 34 64 40 S 16 46 -8 40 Z" fill="#a4e4f0"/>
+    <path d="M-8 58 C 16 52 40 64 64 58 S 112 52 136 58 L136 70 C 112 76 88 64 64 70 S 16 76 -8 70 Z" fill="#5fc4da"/>
+    <path d="M-8 88 C 16 82 40 94 64 88 S 112 82 136 88 L136 104 C 112 110 88 98 64 104 S 16 110 -8 104 Z" fill="#a4e4f0"/>
+    <ellipse cx="88" cy="46" rx="10" ry="4" fill="#dff6fb"/>
+    <ellipse cx="36" cy="94" rx="7" ry="3" fill="#dff6fb"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".14" mask="url(#s)"/>
+</svg>

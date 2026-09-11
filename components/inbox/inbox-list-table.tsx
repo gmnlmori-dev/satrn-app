@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { InboxItem } from "@/types/inbox";
 import type { TeamTag } from "@/types/tag";
+import { MemberAvatar } from "@/components/app/user-avatar";
 import { InboxStatusBadge } from "@/components/inbox/inbox-status-badge";
 import { TagChips } from "@/components/tags/tag-chips";
 import { formatDateTime } from "@/lib/date";
@@ -101,7 +102,20 @@ function Row({
             dataTableColSepClass,
           )}
         >
-          {r.assignedToLabel ?? "—"}
+          {r.assignedToLabel ? (
+            <span className="flex min-w-0 items-center gap-2">
+              <MemberAvatar
+                userId={r.assignedUserId}
+                name={r.assignedToLabel}
+                size="sm"
+                title=""
+                decorative
+              />
+              <span className="min-w-0 truncate">{r.assignedToLabel}</span>
+            </span>
+          ) : (
+            "—"
+          )}
         </td>
       ) : null}
       <td

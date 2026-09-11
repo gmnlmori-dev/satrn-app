@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Ganimede">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#a89a90"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 34 C 16 26 40 42 64 34 S 112 26 136 34 L136 52 C 112 60 88 44 64 52 S 16 60 -8 52 Z" fill="#8f8076"/>
+    <path d="M-8 80 C 16 72 40 88 64 80 S 112 72 136 80 L136 100 C 112 108 88 92 64 100 S 16 108 -8 100 Z" fill="#8f8076"/>
+    <path d="M20 20 C 34 14 52 20 54 32 C 56 42 42 48 32 44 C 22 40 14 28 20 20 Z" fill="#c4b8ae"/>
+    <path d="M78 58 C 92 52 110 60 110 72 C 110 84 96 90 84 84 C 74 78 68 64 78 58 Z" fill="#c4b8ae"/>
+    <circle cx="44" cy="74" r="6" fill="#ece6e0"/>
+    <circle cx="90" cy="26" r="5" fill="#ece6e0"/>
+    <circle cx="66" cy="106" r="4" fill="#ece6e0"/>
+    <circle cx="30" cy="100" r="4" fill="#736459"/>
+    <circle cx="100" cy="104" r="3" fill="#736459"/>
+    <circle cx="66" cy="40" r="3" fill="#736459"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".18" mask="url(#s)"/>
+</svg>

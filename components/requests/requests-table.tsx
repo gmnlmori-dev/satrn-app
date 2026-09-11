@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type { Request } from "@/types/request";
 import type { RequestPriority } from "@/types/request";
 import type { TeamTag } from "@/types/tag";
+import { AssigneeAvatarGroup } from "@/components/app/user-avatar";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { TagChips } from "@/components/tags/tag-chips";
 import { formatDate, formatDateTime } from "@/lib/date";
@@ -174,13 +175,18 @@ function Row({
         )}
       >
         <span
-          className={cn(
-            "block text-sm leading-snug text-fg-secondary",
-            clampTwoLines,
-          )}
+          className="flex min-w-0 items-center gap-2"
           title={r.assignedToLabel ?? "Non assegnata"}
         >
-          {r.assignedToLabel ?? "—"}
+          <AssigneeAvatarGroup assignees={r.assignees} max={3} size="sm" />
+          <span
+            className={cn(
+              "min-w-0 text-sm leading-snug text-fg-secondary",
+              clampTwoLines,
+            )}
+          >
+            {r.assignedToLabel ?? "—"}
+          </span>
         </span>
       </td>
       <td

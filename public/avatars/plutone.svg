@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Plutone">
+  <defs>
+    <clipPath id="c"><circle cx="64" cy="64" r="60"/></clipPath>
+    <mask id="s"><rect width="128" height="128" fill="#fff"/><circle cx="54" cy="54" r="63" fill="#000"/></mask>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="#d8b49a"/>
+  <g clip-path="url(#c)">
+    <path d="M-8 20 C 16 12 40 28 64 20 S 112 12 136 20 L136 40 C 112 48 88 32 64 40 S 16 48 -8 40 Z" fill="#b98a6c"/>
+    <path d="M-8 96 C 16 88 40 104 64 96 S 112 88 136 96 L136 130 L-8 130 Z" fill="#b98a6c"/>
+    <path d="M64 100 C 44 84 30 76 32 62 C 34 50 48 48 56 56 C 60 60 62 62 64 66 C 66 62 68 60 72 56 C 80 48 94 50 96 62 C 98 76 84 84 64 100 Z" fill="#f4e6d8"/>
+    <circle cx="28" cy="52" r="5" fill="#a0715a"/>
+    <circle cx="100" cy="46" r="4" fill="#a0715a"/>
+    <circle cx="90" cy="108" r="4" fill="#a0715a"/>
+    <circle cx="44" cy="30" r="3" fill="#8d5f4a"/>
+  </g>
+  <circle cx="64" cy="64" r="60" fill="#0a0f2e" opacity=".16" mask="url(#s)"/>
+</svg>
