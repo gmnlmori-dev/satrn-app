@@ -102,6 +102,7 @@ export function requestRowToRequest(row: RequestRowWithAssignee): Request {
     teamName: row.team?.name?.trim() || null,
     createdByUserId: row.created_by_user_id ?? null,
     createdByLabel: profileDisplayName(row.creator),
+    tagIds: [],
   };
 }
 
@@ -151,5 +152,6 @@ export function teamNoteRowToNote(row: TeamNoteRowWithRelations): TeamNote {
     sharedTeamIds: (row.team_note_shared_teams ?? []).map((s) => s.team_id),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    tagIds: [],
   };
 }

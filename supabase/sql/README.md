@@ -21,6 +21,7 @@ Gli script in questa cartella **non** hanno runner automatico: vanno eseguiti ma
 15. `app_announcements.sql` — novità app e letture
 16. `app_announcement_reads_update_policy.sql` — solo se prod ha già `app_announcements.sql` senza policy UPDATE
 17. `app_settings.sql` — impostazioni globali (es. abilitazione Inbox)
+18. `team_tags.sql` — tag di team + assegnazioni su progetti/task/note/checklist
 
 ## Checklist deploy produzione
 
@@ -32,6 +33,8 @@ Confrontare lo schema Supabase prod con le dipendenze del codice:
 | `request_assignees.sql` | Tabella `request_assignees`, trigger sync `assigned_user_id` |
 | `roles_profiles_assignment.sql` | Valore enum `assigned_user_changed` in `request_activity_type` |
 | `app_announcement_reads_update_policy.sql` | Upsert letture novità (`markAnnouncementRead`) |
+| `app_settings.sql` | Impostazioni globali (es. Inbox) |
+| `team_tags.sql` | Tabella `team_tags` + assegnazioni tag |
 
 ## Gap RLS noti (mitigati lato app)
 

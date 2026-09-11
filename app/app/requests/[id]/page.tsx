@@ -7,6 +7,10 @@ import {
   getCurrentProfileSummary,
 } from "@/lib/supabase/profile-queries";
 import { getRequestById, getRequestNotes } from "@/lib/supabase/queries";
+import {
+  getChecklistTagIdsByRequest,
+  getTeamTags,
+} from "@/lib/supabase/tag-queries";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -15,12 +19,15 @@ export default async function RequestDetailPage({ params }: Props) {
   const request = await getRequestById(id);
   if (!request) notFound();
 
-  const [notes, activities, profile, assignees] = await Promise.all([
-    getRequestNotes(id),
-    getRequestActivities(id),
-    getCurrentProfileSummary(),
-    getActiveAssigneeOptions(request.teamId),
-  ]);
+  const [notes, activities, profile, assignees, teamTags, checklistTagIdsByTask] =
+    await Promise.all([
+      getRequestNotes(id),
+      getRequestActivities(id),
+      getCurrentProfileSummary(),
+      getActiveAssigneeOptions(request.teamId),
+      getTeamTags(request.teamId),
+      getChecklistTagIdsByRequest(id),
+    ]);
 
   return (
     <RequestDetailWorkspace
@@ -30,6 +37,8 @@ export default async function RequestDetailPage({ params }: Props) {
       initialActivities={activities}
       canAssignRequests={canAssignRequests(profile?.role ?? "operator")}
       assigneeOptions={assignees}
+      teamTags={teamTags}
+      checklistTagIdsByTask={checklistTagIdsByTask}
     />
   );
 }

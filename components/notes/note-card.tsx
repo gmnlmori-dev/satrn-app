@@ -22,6 +22,10 @@ import {
 } from "@/lib/ui-classes";
 import type { NoteSharingTeamOption } from "@/lib/actions/list-note-sharing-teams";
 import type { TeamNote, NoteColor, NoteVisibility } from "@/types/note";
+import type { TeamTag } from "@/types/tag";
+import { TagChips } from "@/components/tags/tag-chips";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
+import { setNoteTags } from "@/lib/actions/set-entity-tags";
 
 function AutosaveIndicator({
   status,
@@ -109,6 +113,7 @@ type NoteCardProps = {
   note?: TeamNote;
   currentUserId: string;
   teamId?: string;
+  teamTags?: TeamTag[];
   draft?: boolean;
   teamSharingOptions?: NoteSharingTeamOption[];
   userFilterTeamId?: string;
@@ -178,6 +183,7 @@ export function NoteCard({
   note,
   currentUserId,
   teamId = "",
+  teamTags = [],
   draft = false,
   teamSharingOptions = [],
   userFilterTeamId,
@@ -243,6 +249,7 @@ export function NoteCard({
         sharedTeamIds: payload.sharedTeamIds,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        tagIds: [],
       };
       setLocalNote(created);
       setVisibility(payload.visibility);
@@ -591,6 +598,11 @@ export function NoteCard({
                 {previewBody}
               </p>
             ) : null}
+            <TagChips
+              tagIds={localNote?.tagIds ?? []}
+              catalog={teamTags}
+              className="mt-2"
+            />
             <div className="mt-auto flex items-center justify-between gap-2 pt-3">
               <span className="rounded-full bg-canvas/70 px-2 py-0.5 text-[11px] font-medium text-fg-tertiary">
                 {noteVisibilityLabel(localNote?.visibility ?? "private")}
@@ -646,6 +658,29 @@ export function NoteCard({
               <p className={cn("whitespace-pre-wrap text-sm text-fg-secondary", noteTextWrap)}>
                 {previewBody}
               </p>
+            )}
+
+            {editable && localNote?.id ? (
+              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                <EntityTagPicker
+                  catalog={teamTags}
+                  selectedIds={localNote.tagIds}
+                  label=""
+                  onChange={async (nextIds) => {
+                    const res = await setNoteTags(localNote.id, nextIds);
+                    if (!res.ok) throw new Error(res.message);
+                    const next = { ...localNote, tagIds: nextIds };
+                    setLocalNote(next);
+                    onUpdated?.(next);
+                  }}
+                />
+              </div>
+            ) : (
+              <TagChips
+                tagIds={localNote?.tagIds ?? []}
+                catalog={teamTags}
+                className="mt-3"
+              />
             )}
 
             <div className="mt-3 border-t border-line-default/40 pt-2.5">

@@ -22,6 +22,8 @@ export type ToolbarFilters = {
   source: string | "all";
   assignScope: AssignScopeFilter;
   assignUserId: string;
+  /** Id tag di team, oppure "all". */
+  tagId: string | "all";
 };
 
 export const defaultToolbarFilters = (
@@ -33,6 +35,7 @@ export const defaultToolbarFilters = (
   source: "all",
   assignScope,
   assignUserId: "",
+  tagId: "all",
 });
 
 export function collectSources(requests: Request[]): string[] {
@@ -56,6 +59,7 @@ export function filterByAssignScope(
       source: "all",
       assignScope,
       assignUserId,
+      tagId: "all",
     },
     ctx,
   );
@@ -75,6 +79,7 @@ export function filterByToolbar(
     }
     if (f.priority !== "all" && r.priority !== f.priority) return false;
     if (f.source !== "all" && r.source !== f.source) return false;
+    if (f.tagId !== "all" && !(r.tagIds ?? []).includes(f.tagId)) return false;
 
     switch (f.assignScope) {
       case "mine":
@@ -177,6 +182,7 @@ export function filtersActive(
   if (f.status !== base.status) return true;
   if (f.priority !== base.priority) return true;
   if (f.source !== base.source) return true;
+  if (f.tagId !== base.tagId) return true;
   if (f.assignScope !== base.assignScope) return true;
   if (f.assignScope === "user") {
     return f.assignUserId.trim().length > 0;

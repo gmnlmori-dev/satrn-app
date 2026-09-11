@@ -2,6 +2,7 @@
 
 import type { AssigneeOption } from "@/types/profile";
 import type { RequestPriority, RequestStatus } from "@/types/request";
+import type { TeamTag } from "@/types/tag";
 import { priorityLabel, statusLabel } from "@/lib/labels";
 import {
   defaultToolbarFilters,
@@ -51,6 +52,7 @@ type Props = {
   onSortChange: (s: SortOption) => void;
   onReset: () => void;
   assigneeOptions: AssigneeOption[];
+  teamTags?: TeamTag[];
   hideSort?: boolean;
   filterBaseline?: ToolbarFilters;
 };
@@ -84,6 +86,7 @@ export function RequestsFilters({
   onSortChange,
   onReset,
   assigneeOptions,
+  teamTags = [],
   hideSort = false,
   filterBaseline,
 }: Props) {
@@ -221,6 +224,33 @@ export function RequestsFilters({
           ))}
         </select>
       </FilterField>
+
+      {teamTags.length > 0 ? (
+        <FilterField
+          className={uiFilterField}
+          label="Tag"
+          htmlFor="req-filter-tag"
+        >
+          <select
+            id="req-filter-tag"
+            className={uiFilterSelect}
+            value={filters.tagId}
+            onChange={(e) =>
+              onFiltersChange({
+                ...filters,
+                tagId: e.target.value,
+              })
+            }
+          >
+            <option value="all">Tutti i tag</option>
+            {teamTags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
+        </FilterField>
+      ) : null}
 
       {hideSort ? null : (
         <FilterField

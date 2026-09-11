@@ -12,6 +12,7 @@ export type TaskToolbarFilters = {
   status: TaskStatusFilter;
   assignScope: AssignScopeFilter;
   assignUserId: string;
+  tagId: string | "all";
 };
 
 export const defaultTaskToolbarFilters = (
@@ -21,6 +22,7 @@ export const defaultTaskToolbarFilters = (
   status: "open",
   assignScope,
   assignUserId: "",
+  tagId: "all",
 });
 
 export function filterTasksByAssignScope(
@@ -59,6 +61,10 @@ export function filterTasksByToolbar(
     result = result.filter((t) => !t.done);
   } else if (filters.status === "done") {
     result = result.filter((t) => t.done);
+  }
+
+  if (filters.tagId !== "all") {
+    result = result.filter((t) => (t.tagIds ?? []).includes(filters.tagId));
   }
 
   const q = filters.search.trim().toLowerCase();

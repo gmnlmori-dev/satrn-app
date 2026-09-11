@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Request } from "@/types/request";
 import type { Task } from "@/types/task";
+import type { TeamTag } from "@/types/tag";
 import { filterTasksByAssignScope } from "@/lib/tasks-query";
 import type { AppRole, AssigneeOption } from "@/types/profile";
 import { canViewAllTeamsRequestMeta } from "@/lib/permissions";
@@ -95,6 +96,7 @@ export function CalendarWorkspace({
   currentUserId,
   currentUserRole = "operator",
   assigneeOptions,
+  teamTags = [],
   defaultAssignScope = "all",
   defaultCalendarLayout = "month",
 }: {
@@ -103,6 +105,7 @@ export function CalendarWorkspace({
   currentUserId: string;
   currentUserRole?: AppRole;
   assigneeOptions: AssigneeOption[];
+  teamTags?: TeamTag[];
   defaultAssignScope?: AssignScopeFilter;
   defaultCalendarLayout?: DefaultRequestsCalendarLayoutPreference;
 }) {
@@ -129,16 +132,24 @@ export function CalendarWorkspace({
     [requests, currentUserId],
   );
 
-  const filteredTasks = useMemo(
-    () =>
-      filterTasksByAssignScope(
-        tasks,
-        toolbar.assignScope,
-        toolbar.assignUserId,
-        { currentUserId },
-      ),
-    [tasks, toolbar.assignScope, toolbar.assignUserId, currentUserId],
-  );
+  const filteredTasks = useMemo(() => {
+    let list = filterTasksByAssignScope(
+      tasks,
+      toolbar.assignScope,
+      toolbar.assignUserId,
+      { currentUserId },
+    );
+    if (toolbar.tagId !== "all") {
+      list = list.filter((t) => (t.tagIds ?? []).includes(toolbar.tagId));
+    }
+    return list;
+  }, [
+    tasks,
+    toolbar.assignScope,
+    toolbar.assignUserId,
+    toolbar.tagId,
+    currentUserId,
+  ]);
 
   const scopedRequests = useMemo(
     () =>
@@ -260,6 +271,7 @@ export function CalendarWorkspace({
         onReset={resetAll}
         currentUserId={currentUserId}
         assigneeOptions={assigneeOptions}
+        teamTags={teamTags}
         myAssignedCount={myAssignedCount}
         variant="calendar"
         filterBaseline={toolbarBaseline}

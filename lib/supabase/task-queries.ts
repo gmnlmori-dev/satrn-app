@@ -1,5 +1,6 @@
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import { taskRowToTask } from "@/lib/supabase/task-mappers";
+import { attachTaskTagIds } from "@/lib/supabase/tag-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { TaskRowWithAssignee } from "@/types/database";
 import type { Task } from "@/types/task";
@@ -39,7 +40,9 @@ export async function getTasks(): Promise<Task[]> {
     .order("updated_at", { ascending: false });
 
   assertNoError("getTasks", error);
-  return ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask);
+  return attachTaskTagIds(
+    ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask),
+  );
 }
 
 export async function getTaskById(id: string): Promise<Task | null> {
@@ -52,7 +55,10 @@ export async function getTaskById(id: string): Promise<Task | null> {
 
   assertNoError("getTaskById", error);
   if (!data) return null;
-  return taskRowToTask(data as TaskRowWithAssignee);
+  const [withTags] = await attachTaskTagIds([
+    taskRowToTask(data as TaskRowWithAssignee),
+  ]);
+  return withTags ?? null;
 }
 
 export async function getOverdueStandaloneTasks(): Promise<Task[]> {
@@ -67,7 +73,9 @@ export async function getOverdueStandaloneTasks(): Promise<Task[]> {
     .order("due_at", { ascending: true });
 
   assertNoError("getOverdueStandaloneTasks", error);
-  return ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask);
+  return attachTaskTagIds(
+    ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask),
+  );
 }
 
 export async function getStandaloneTasksToday(): Promise<Task[]> {
@@ -83,7 +91,9 @@ export async function getStandaloneTasksToday(): Promise<Task[]> {
     .order("due_at", { ascending: true });
 
   assertNoError("getStandaloneTasksToday", error);
-  return ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask);
+  return attachTaskTagIds(
+    ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask),
+  );
 }
 
 export async function getUpcomingStandaloneTasks(): Promise<Task[]> {
@@ -99,7 +109,9 @@ export async function getUpcomingStandaloneTasks(): Promise<Task[]> {
     .order("due_at", { ascending: true });
 
   assertNoError("getUpcomingStandaloneTasks", error);
-  return ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask);
+  return attachTaskTagIds(
+    ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask),
+  );
 }
 
 /** Tutte le task libere aperte (con o senza scadenza), ordinate: scadenza ASC, null in fondo. */
@@ -111,7 +123,9 @@ export async function getOpenStandaloneTasks(): Promise<Task[]> {
     .eq("done", false);
 
   assertNoError("getOpenStandaloneTasks", error);
-  const tasks = ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask);
+  const tasks = await attachTaskTagIds(
+    ((data ?? []) as TaskRowWithAssignee[]).map(taskRowToTask),
+  );
   return tasks.sort((a, b) => {
     const aMs = a.dueAt ? new Date(a.dueAt).getTime() : null;
     const bMs = b.dueAt ? new Date(b.dueAt).getTime() : null;

@@ -7,10 +7,13 @@ import { uiControl, uiTransition } from "@/lib/ui-classes";
 import { canEditTeamNote } from "@/lib/team-note-access";
 import type { NoteSharingTeamOption } from "@/lib/actions/list-note-sharing-teams";
 import type { TeamNote } from "@/types/note";
+import type { TeamTag } from "@/types/tag";
+
 type NotesGridProps = {
   notes: TeamNote[];
   currentUserId: string;
   teamId?: string;
+  teamTags?: TeamTag[];
   teamSharingOptions?: NoteSharingTeamOption[];
   userFilterTeamId?: string;
   onUserFilterTeamChange?: (teamId: string) => void;
@@ -107,6 +110,7 @@ export function NotesGrid({
   notes,
   currentUserId,
   teamId,
+  teamTags = [],
   teamSharingOptions = [],
   userFilterTeamId,
   onUserFilterTeamChange,
@@ -317,6 +321,7 @@ export function NotesGrid({
         <NoteCard
           note={note}
           currentUserId={currentUserId}
+          teamTags={teamTags}
           teamSharingOptions={teamSharingOptions}
           userFilterTeamId={userFilterTeamId}
           onUserFilterTeamChange={onUserFilterTeamChange}
@@ -348,6 +353,7 @@ export function NotesGrid({
                   draft
                   currentUserId={currentUserId}
                   teamId={teamId}
+                  teamTags={teamTags}
                   teamSharingOptions={teamSharingOptions}
                   userFilterTeamId={userFilterTeamId}
                   onUserFilterTeamChange={onUserFilterTeamChange}

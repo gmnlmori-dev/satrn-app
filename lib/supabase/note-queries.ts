@@ -1,4 +1,5 @@
 import { teamNoteRowToNote } from "@/lib/supabase/mappers";
+import { attachNoteTagIds } from "@/lib/supabase/tag-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { TeamNoteRowWithRelations } from "@/types/database";
 import type { TeamNote } from "@/types/note";
@@ -33,7 +34,9 @@ export async function getTeamNotes(): Promise<TeamNote[]> {
     .order("updated_at", { ascending: false });
 
   assertNoError("getTeamNotes", error);
-  return ((data ?? []) as TeamNoteRowWithRelations[]).map(teamNoteRowToNote);
+  return attachNoteTagIds(
+    ((data ?? []) as TeamNoteRowWithRelations[]).map(teamNoteRowToNote),
+  );
 }
 
 /** Dettaglio nota per id, o `null` se assente o non visibile. */
@@ -47,5 +50,8 @@ export async function getTeamNoteById(id: string): Promise<TeamNote | null> {
 
   assertNoError("getTeamNoteById", error);
   if (!data) return null;
-  return teamNoteRowToNote(data as TeamNoteRowWithRelations);
+  const [withTags] = await attachNoteTagIds([
+    teamNoteRowToNote(data as TeamNoteRowWithRelations),
+  ]);
+  return withTags ?? null;
 }

@@ -39,6 +39,8 @@ export interface Request {
   teamName: string | null;
   createdByUserId: string | null;
   createdByLabel: string | null;
+  /** Tag di team applicati al progetto */
+  tagIds: string[];
 }
 
 export interface RequestNote {

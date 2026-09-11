@@ -1,11 +1,12 @@
 "use client";
 
 import type { AssigneeOption } from "@/types/profile";
+import type { TeamTag } from "@/types/tag";
 import type { AssignScopeFilter } from "@/lib/requests-query";
 import type { TaskStatusFilter, TaskToolbarFilters } from "@/lib/tasks-query";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/cn";
-import { uiControl } from "@/lib/ui-classes";
+import { uiControl, uiFilterSelect } from "@/lib/ui-classes";
 import { uiFilterLabel } from "@/lib/typography";
 import { uiPanel } from "@/lib/surfaces";
 
@@ -14,6 +15,7 @@ type Props = {
   onToolbarChange: (t: TaskToolbarFilters) => void;
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
+  teamTags?: TeamTag[];
   myAssignedCount: number;
 };
 
@@ -32,6 +34,7 @@ const statusSegments: { value: TaskStatusFilter; label: string }[] = [
 export function TasksToolbar({
   toolbar,
   onToolbarChange,
+  teamTags = [],
   myAssignedCount,
 }: Props) {
   const assignValue =
@@ -103,6 +106,29 @@ export function TasksToolbar({
           />
         </div>
       </div>
+
+      {teamTags.length > 0 ? (
+        <div className="border-t border-line-default px-4 py-3 sm:px-5">
+          <label htmlFor="task-filter-tag" className={uiFilterLabel}>
+            Tag
+          </label>
+          <select
+            id="task-filter-tag"
+            className={cn(uiFilterSelect, "mt-1")}
+            value={toolbar.tagId}
+            onChange={(e) =>
+              onToolbarChange({ ...toolbar, tagId: e.target.value })
+            }
+          >
+            <option value="all">Tutti i tag</option>
+            {teamTags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
     </div>
   );
 }

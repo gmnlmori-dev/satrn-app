@@ -24,6 +24,8 @@ export interface TeamNote {
   sharedTeamIds: string[];
   createdAt: string;
   updatedAt: string;
+  /** Tag di team applicati alla nota */
+  tagIds: string[];
 }
 
 export type NotesTabFilter = "mine" | "shared_with_me" | "team" | "archived";

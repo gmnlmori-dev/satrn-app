@@ -3,6 +3,7 @@ import {
   requestNoteRowToNote,
   requestRowToRequest,
 } from "@/lib/supabase/mappers";
+import { attachRequestTagIds } from "@/lib/supabase/tag-queries";
 import type { RequestNoteRow, RequestRowWithAssignee } from "@/types/database";
 import type { Request, RequestNote } from "@/types/request";
 
@@ -47,7 +48,10 @@ export async function getRequests(): Promise<Request[]> {
     .order("updated_at", { ascending: false });
 
   assertNoError("getRequests", error);
-  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
+  const requests = ((data ?? []) as RequestRowWithAssignee[]).map(
+    requestRowToRequest,
+  );
+  return attachRequestTagIds(requests);
 }
 
 /** Singolo progetto per id, o `null` se assente. */
@@ -61,7 +65,10 @@ export async function getRequestById(id: string): Promise<Request | null> {
 
   assertNoError("getRequestById", error);
   if (!data) return null;
-  return requestRowToRequest(data as RequestRowWithAssignee);
+  const [withTags] = await attachRequestTagIds([
+    requestRowToRequest(data as RequestRowWithAssignee),
+  ]);
+  return withTags ?? null;
 }
 
 /** Note collegate a un progetto (cronologia). */

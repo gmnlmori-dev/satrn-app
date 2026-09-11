@@ -11,6 +11,7 @@ import {
 import { inboxItemRowToInboxItem, requestRowToRequest } from "@/lib/supabase/mappers";
 import { INBOX_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/inbox-queries";
 import { REQUEST_SELECT_WITH_ASSIGNEE } from "@/lib/supabase/queries";
+import { attachRequestTagIds } from "@/lib/supabase/tag-queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { InboxItemRowWithAssignee, RequestRowWithAssignee } from "@/types/database";
 import type { InboxItem } from "@/types/inbox";
@@ -28,7 +29,9 @@ async function getOpenRequestsForFollowUp(): Promise<Request[]> {
     .neq("status", "closed");
 
   assertNoError("getOpenRequestsForFollowUp", error);
-  return ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest);
+  return attachRequestTagIds(
+    ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest),
+  );
 }
 
 /** Aperte in ritardo (scadenza effettiva prima di oggi). */

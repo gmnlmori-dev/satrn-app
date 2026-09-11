@@ -5,6 +5,7 @@ import {
   getCurrentProfileSummary,
 } from "@/lib/supabase/profile-queries";
 import { getRequests } from "@/lib/supabase/queries";
+import { getTeamTags } from "@/lib/supabase/tag-queries";
 import {
   defaultAssignScopeToFilter,
   resolveDefaultAssignScope,
@@ -19,7 +20,10 @@ export default async function RequestsPage() {
     getRequests(),
     getCurrentProfileSummary(),
   ]);
-  const assignees = await getActiveAssigneeOptions(profile?.teamId ?? "");
+  const [assignees, teamTags] = await Promise.all([
+    getActiveAssigneeOptions(profile?.teamId ?? ""),
+    getTeamTags(profile?.role === "admin" ? undefined : profile?.teamId),
+  ]);
   const defaultAssignScope = profile
     ? defaultAssignScopeToFilter(
         resolveDefaultAssignScope(profile.preferences, profile.role),
@@ -32,6 +36,7 @@ export default async function RequestsPage() {
         requests={requests}
         currentUserId={profile?.userId ?? ""}
         assigneeOptions={assignees}
+        teamTags={teamTags}
         defaultAssignScope={defaultAssignScope}
       />
     </Suspense>

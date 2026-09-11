@@ -21,22 +21,26 @@ import {
 import { uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 import type { NotesTabFilter, TeamNote } from "@/types/note";
+import type { TeamTag } from "@/types/tag";
 
 type NotesWorkspaceProps = {
   notes: TeamNote[];
   currentUserId: string;
   teamId?: string;
+  teamTags?: TeamTag[];
 };
 
 export function NotesWorkspace({
   notes: initialNotes,
   currentUserId,
   teamId = "",
+  teamTags = [],
 }: NotesWorkspaceProps) {
   const openNewNote = useOpenCreateNote();
   const [notes, setNotes] = useState(initialNotes);
   const [tab, setTab] = useState<NotesTabFilter>("mine");
   const [search, setSearch] = useState("");
+  const [tagId, setTagId] = useState<string>("all");
   const [composerOpen, setComposerOpen] = useState(false);
   const [composingNoteId, setComposingNoteId] = useState<string | null>(null);
   const [teamSharingOptions, setTeamSharingOptions] = useState<
@@ -67,8 +71,12 @@ export function NotesWorkspace({
   const filtered = useMemo(() => {
     const byTab = filterNotesByTab(notes, tab, currentUserId, teamId);
     const bySearch = filterNotesBySearch(byTab, search);
-    return sortNotesForGrid(bySearch);
-  }, [notes, tab, currentUserId, teamId, search]);
+    const byTag =
+      tagId === "all"
+        ? bySearch
+        : bySearch.filter((n) => (n.tagIds ?? []).includes(tagId));
+    return sortNotesForGrid(byTag);
+  }, [notes, tab, currentUserId, teamId, search, tagId]);
 
   const gridNotes = useMemo(() => {
     if (!composerOpen || !composingNoteId) return filtered;
@@ -196,6 +204,26 @@ export function NotesWorkspace({
             aria-label="Cerca nelle note"
           />
         </div>
+        {teamTags.length > 0 ? (
+          <div className="max-w-xs">
+            <label htmlFor="notes-filter-tag" className="sr-only">
+              Filtra per tag
+            </label>
+            <select
+              id="notes-filter-tag"
+              className={cn(uiControl, "w-full py-2 text-sm")}
+              value={tagId}
+              onChange={(e) => setTagId(e.target.value)}
+            >
+              <option value="all">Tutti i tag</option>
+              {teamTags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
       </Panel>
 
       {filtered.length === 0 && !showGrid && !composerOpen ? (
@@ -221,6 +249,7 @@ export function NotesWorkspace({
           notes={gridNotes}
           currentUserId={currentUserId}
           teamId={teamId}
+          teamTags={teamTags}
           teamSharingOptions={teamSharingOptions}
           userFilterTeamId={resolvedUserFilterTeamId}
           onUserFilterTeamChange={setUserFilterTeamId}

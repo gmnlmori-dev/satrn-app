@@ -16,10 +16,13 @@ import {
 import type { CalendarTaskEntry } from "@/lib/next-action-tasks";
 import type { DefaultFollowUpTabPreference } from "@/lib/user-preferences";
 import type { Task } from "@/types/task";
+import type { TeamTag } from "@/types/tag";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { InboxItem } from "@/types/inbox";
 import type { Request } from "@/types/request";
 import { FollowUpView } from "@/components/follow-up/follow-up-view";
+import { cn } from "@/lib/cn";
+import { uiControl } from "@/lib/ui-classes";
 
 type Props = {
   overdue: Request[];
@@ -34,11 +37,34 @@ type Props = {
   overdueChecklists: CalendarTaskEntry[];
   todayChecklists: CalendarTaskEntry[];
   upcomingChecklists: CalendarTaskEntry[];
+  checklistTagIdsByRequest?: Record<string, Record<string, string[]>>;
+  teamTags?: TeamTag[];
   currentUserId: string;
   defaultScope: FollowUpAssigneeScope;
   preferredFollowUpTab?: DefaultFollowUpTabPreference | null;
   inboxEnabled?: boolean;
 };
+
+function filterByTagId<T extends { tagIds?: string[] }>(
+  items: T[],
+  tagId: string,
+): T[] {
+  if (tagId === "all") return items;
+  return items.filter((item) => (item.tagIds ?? []).includes(tagId));
+}
+
+function filterChecklistsByTag(
+  entries: CalendarTaskEntry[],
+  tagId: string,
+  checklistTagIdsByRequest: Record<string, Record<string, string[]>>,
+): CalendarTaskEntry[] {
+  if (tagId === "all") return entries;
+  return entries.filter((entry) => {
+    const ids =
+      checklistTagIdsByRequest[entry.requestId]?.[entry.task.id] ?? [];
+    return ids.includes(tagId);
+  });
+}
 
 export function FollowUpAssigneeScope({
   overdue,
@@ -53,6 +79,8 @@ export function FollowUpAssigneeScope({
   overdueChecklists,
   todayChecklists,
   upcomingChecklists,
+  checklistTagIdsByRequest = {},
+  teamTags = [],
   currentUserId,
   defaultScope,
   preferredFollowUpTab = null,
@@ -64,6 +92,7 @@ export function FollowUpAssigneeScope({
   const [scope, setScope] = useState<FollowUpAssigneeScope>(() =>
     scopeFromSearchParam(urlScope, defaultScope),
   );
+  const [tagId, setTagId] = useState("all");
 
   useEffect(() => {
     setScope(scopeFromSearchParam(urlScope, defaultScope));
@@ -78,75 +107,145 @@ export function FollowUpAssigneeScope({
   const mineOnly = scope === "mine" && showMine;
 
   const filteredOverdue = useMemo(
-    () => (mineOnly ? filterRequestsMine(overdue, currentUserId) : overdue),
-    [mineOnly, overdue, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterRequestsMine(overdue, currentUserId) : overdue,
+        tagId,
+      ),
+    [mineOnly, overdue, currentUserId, tagId],
   );
   const filteredToday = useMemo(
-    () => (mineOnly ? filterRequestsMine(today, currentUserId) : today),
-    [mineOnly, today, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterRequestsMine(today, currentUserId) : today,
+        tagId,
+      ),
+    [mineOnly, today, currentUserId, tagId],
   );
   const filteredUpcoming = useMemo(
-    () => (mineOnly ? filterRequestsMine(upcoming, currentUserId) : upcoming),
-    [mineOnly, upcoming, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterRequestsMine(upcoming, currentUserId) : upcoming,
+        tagId,
+      ),
+    [mineOnly, upcoming, currentUserId, tagId],
   );
   const filteredAll = useMemo(
-    () => (mineOnly ? filterRequestsMine(all, currentUserId) : all),
-    [mineOnly, all, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterRequestsMine(all, currentUserId) : all,
+        tagId,
+      ),
+    [mineOnly, all, currentUserId, tagId],
   );
   const filteredInbox = useMemo(
     () => (mineOnly ? filterInboxMine(inbox, currentUserId) : inbox),
     [mineOnly, inbox, currentUserId],
   );
   const filteredOverdueTasks = useMemo(
-    () => (mineOnly ? filterTasksMine(overdueTasks, currentUserId) : overdueTasks),
-    [mineOnly, overdueTasks, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterTasksMine(overdueTasks, currentUserId) : overdueTasks,
+        tagId,
+      ),
+    [mineOnly, overdueTasks, currentUserId, tagId],
   );
   const filteredTodayTasks = useMemo(
-    () => (mineOnly ? filterTasksMine(todayTasks, currentUserId) : todayTasks),
-    [mineOnly, todayTasks, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterTasksMine(todayTasks, currentUserId) : todayTasks,
+        tagId,
+      ),
+    [mineOnly, todayTasks, currentUserId, tagId],
   );
   const filteredUpcomingTasks = useMemo(
     () =>
-      mineOnly ? filterTasksMine(upcomingTasks, currentUserId) : upcomingTasks,
-    [mineOnly, upcomingTasks, currentUserId],
+      filterByTagId(
+        mineOnly
+          ? filterTasksMine(upcomingTasks, currentUserId)
+          : upcomingTasks,
+        tagId,
+      ),
+    [mineOnly, upcomingTasks, currentUserId, tagId],
   );
   const filteredAllTasks = useMemo(
-    () => (mineOnly ? filterTasksMine(allTasks, currentUserId) : allTasks),
-    [mineOnly, allTasks, currentUserId],
+    () =>
+      filterByTagId(
+        mineOnly ? filterTasksMine(allTasks, currentUserId) : allTasks,
+        tagId,
+      ),
+    [mineOnly, allTasks, currentUserId, tagId],
   );
   const filteredOverdueChecklists = useMemo(
     () =>
-      mineOnly
-        ? filterChecklistEntriesMine(overdueChecklists, currentUserId)
-        : overdueChecklists,
-    [mineOnly, overdueChecklists, currentUserId],
+      filterChecklistsByTag(
+        mineOnly
+          ? filterChecklistEntriesMine(overdueChecklists, currentUserId)
+          : overdueChecklists,
+        tagId,
+        checklistTagIdsByRequest,
+      ),
+    [mineOnly, overdueChecklists, currentUserId, tagId, checklistTagIdsByRequest],
   );
   const filteredTodayChecklists = useMemo(
     () =>
-      mineOnly
-        ? filterChecklistEntriesMine(todayChecklists, currentUserId)
-        : todayChecklists,
-    [mineOnly, todayChecklists, currentUserId],
+      filterChecklistsByTag(
+        mineOnly
+          ? filterChecklistEntriesMine(todayChecklists, currentUserId)
+          : todayChecklists,
+        tagId,
+        checklistTagIdsByRequest,
+      ),
+    [mineOnly, todayChecklists, currentUserId, tagId, checklistTagIdsByRequest],
   );
   const filteredUpcomingChecklists = useMemo(
     () =>
-      mineOnly
-        ? filterChecklistEntriesMine(upcomingChecklists, currentUserId)
-        : upcomingChecklists,
-    [mineOnly, upcomingChecklists, currentUserId],
+      filterChecklistsByTag(
+        mineOnly
+          ? filterChecklistEntriesMine(upcomingChecklists, currentUserId)
+          : upcomingChecklists,
+        tagId,
+        checklistTagIdsByRequest,
+      ),
+    [
+      mineOnly,
+      upcomingChecklists,
+      currentUserId,
+      tagId,
+      checklistTagIdsByRequest,
+    ],
   );
 
-  const scopeControl = showMine ? (
-    <SegmentedControl
-      ariaLabel="Ambito assegnazione"
-      value={scope}
-      options={[
-        { value: "all", label: "Tutte" },
-        { value: "mine", label: "Le mie" },
-      ]}
-      onChange={handleScopeChange}
-    />
-  ) : null;
+  const scopeControl = (
+    <div className="flex flex-wrap items-center gap-3">
+      {showMine ? (
+        <SegmentedControl
+          ariaLabel="Ambito assegnazione"
+          value={scope}
+          options={[
+            { value: "all", label: "Tutte" },
+            { value: "mine", label: "Le mie" },
+          ]}
+          onChange={handleScopeChange}
+        />
+      ) : null}
+      {teamTags.length > 0 ? (
+        <select
+          aria-label="Filtro tag"
+          className={cn(uiControl, "py-1.5 text-sm")}
+          value={tagId}
+          onChange={(e) => setTagId(e.target.value)}
+        >
+          <option value="all">Tutti i tag</option>
+          {teamTags.map((tag) => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
+            </option>
+          ))}
+        </select>
+      ) : null}
+    </div>
+  );
 
   return (
     <FollowUpView

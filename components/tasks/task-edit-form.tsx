@@ -16,7 +16,10 @@ import { taskAssignedUserIds } from "@/lib/task-assignees";
 import { cn } from "@/lib/cn";
 import { uiBtnPrimary, uiBtnSecondary, uiControl } from "@/lib/ui-classes";
 import { uiFormLabel } from "@/lib/typography";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
+import { setTaskTags } from "@/lib/actions/set-entity-tags";
 import type { Task } from "@/types/task";
+import type { TeamTag } from "@/types/tag";
 
 function parseAssigneeIds(fd: FormData): string[] {
   return [
@@ -31,11 +34,13 @@ function parseAssigneeIds(fd: FormData): string[] {
 
 export function TaskEditForm({
   task,
+  teamTags = [],
   onSuccess,
   onCancel,
   onDeleted,
 }: {
   task: Task;
+  teamTags?: TeamTag[];
   onSuccess: (updated: Task) => void;
   onCancel: () => void;
   onDeleted: (taskId: string) => void;
@@ -45,6 +50,7 @@ export function TaskEditForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [assigneeTeamId, setAssigneeTeamId] = useState(task.teamId);
+  const [tagIds, setTagIds] = useState(task.tagIds);
   const initialDue = nextActionDeadlineDraftFromIso(task.dueAt);
   const [dueDate, setDueDate] = useState(initialDue.date);
   const [dueTime, setDueTime] = useState(initialDue.time);
@@ -78,6 +84,7 @@ export function TaskEditForm({
         title: String(fd.get("title") ?? "").trim(),
         dueAt: nextDueAt,
         recurrence,
+        tagIds,
       };
 
       if (canAssign) {
@@ -159,6 +166,17 @@ export function TaskEditForm({
           />
         </div>
       ) : null}
+
+      <EntityTagPicker
+        catalog={teamTags}
+        selectedIds={tagIds}
+        disabled={pending}
+        onChange={async (nextIds) => {
+          const res = await setTaskTags(task.id, nextIds);
+          if (!res.ok) throw new Error(res.message);
+          setTagIds(nextIds);
+        }}
+      />
 
       {error ? (
         <p className="text-sm text-danger" role="alert">

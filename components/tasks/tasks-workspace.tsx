@@ -16,6 +16,7 @@ import { uiBtnPrimary } from "@/lib/ui-classes";
 import { uiPageLead, uiPageTitle } from "@/lib/typography";
 import type { Task } from "@/types/task";
 import type { AssigneeOption, AppRole } from "@/types/profile";
+import type { TeamTag } from "@/types/tag";
 import type { UserPreferences } from "@/lib/user-preferences";
 import { cn } from "@/lib/cn";
 
@@ -24,6 +25,7 @@ type Props = {
   currentUserId: string;
   currentUserRole: AppRole;
   assigneeOptions: AssigneeOption[];
+  teamTags?: TeamTag[];
   preferences?: UserPreferences;
 };
 
@@ -32,6 +34,7 @@ export function TasksWorkspace({
   currentUserId,
   currentUserRole,
   assigneeOptions,
+  teamTags = [],
   preferences = {},
 }: Props) {
   const openNewTask = useOpenCreateTask();
@@ -80,6 +83,7 @@ export function TasksWorkspace({
         onToolbarChange={setToolbar}
         currentUserId={currentUserId}
         assigneeOptions={assigneeOptions}
+        teamTags={teamTags}
         myAssignedCount={myAssignedCount}
       />
 
@@ -102,6 +106,7 @@ export function TasksWorkspace({
       ) : (
         <TasksTable
           tasks={filtered}
+          teamTags={teamTags}
           onTasksChange={setTasks}
           onEditTask={setEditingTask}
         />
@@ -109,6 +114,7 @@ export function TasksWorkspace({
 
       <TaskEditSlideOver
         task={editingTask}
+        teamTags={teamTags}
         onClose={() => setEditingTask(null)}
         onUpdated={(updated) => {
           setTasks((prev) =>

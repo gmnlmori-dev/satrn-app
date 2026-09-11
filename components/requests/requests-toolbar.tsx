@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import type { AssigneeOption } from "@/types/profile";
+import type { TeamTag } from "@/types/tag";
 import type { AssignScopeFilter, SortOption, ToolbarFilters } from "@/lib/requests-query";
 import { filtersActive } from "@/lib/requests-query";
 import { RequestsFilters } from "@/components/requests/requests-filters";
@@ -20,6 +21,7 @@ type Props = {
   onReset: () => void;
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
+  teamTags?: TeamTag[];
   myAssignedCount: number;
   filterBaseline: ToolbarFilters;
   variant?: "list" | "calendar";
@@ -40,6 +42,7 @@ export function RequestsToolbar({
   onReset,
   currentUserId,
   assigneeOptions,
+  teamTags = [],
   myAssignedCount,
   filterBaseline,
   variant = "list",
@@ -174,6 +177,7 @@ export function RequestsToolbar({
               onSortChange={onSortChange}
               onReset={onReset}
               assigneeOptions={assigneeOptions}
+              teamTags={teamTags}
               hideSort={isCalendar}
               filterBaseline={filterBaseline}
             />

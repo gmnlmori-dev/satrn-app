@@ -16,6 +16,10 @@ import {
 } from "@/lib/supabase/task-queries";
 import { getCurrentProfileSummary } from "@/lib/supabase/profile-queries";
 import {
+  getChecklistTagIdsForRequests,
+  getTeamTags,
+} from "@/lib/supabase/tag-queries";
+import {
   resolveDefaultAssignScope,
   resolveDefaultFollowUpTab,
 } from "@/lib/user-preferences";
@@ -43,6 +47,7 @@ export default async function FollowUpPage() {
     overdueChecklists,
     todayChecklists,
     upcomingChecklists,
+    teamTags,
   ] = await Promise.all([
     getFollowUpRequestQueues(),
     inboxEnabled ? getInboxTriageItems() : Promise.resolve([]),
@@ -53,9 +58,19 @@ export default async function FollowUpPage() {
     getFollowUpChecklistEntries("overdue"),
     getFollowUpChecklistEntries("today"),
     getFollowUpChecklistEntries("upcoming"),
+    getTeamTags(profile?.role === "admin" ? undefined : profile?.teamId),
   ]);
 
   const { overdue, today, upcoming, all } = requestQueues;
+  const checklistRequestIds = [
+    ...new Set(
+      [...overdueChecklists, ...todayChecklists, ...upcomingChecklists].map(
+        (e) => e.requestId,
+      ),
+    ),
+  ];
+  const checklistTagIdsByRequest =
+    await getChecklistTagIdsForRequests(checklistRequestIds);
 
   const defaultScope = profile
     ? resolveDefaultAssignScope(profile.preferences, profile.role)
@@ -88,6 +103,8 @@ export default async function FollowUpPage() {
           overdueChecklists={overdueChecklists}
           todayChecklists={todayChecklists}
           upcomingChecklists={upcomingChecklists}
+          checklistTagIdsByRequest={checklistTagIdsByRequest}
+          teamTags={teamTags}
           currentUserId={profile?.userId ?? ""}
           defaultScope={defaultScope}
           preferredFollowUpTab={preferredFollowUpTab}

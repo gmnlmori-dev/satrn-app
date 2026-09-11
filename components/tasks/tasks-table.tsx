@@ -19,14 +19,22 @@ import {
   dataTableThClass,
 } from "@/lib/table-ui";
 import type { Task } from "@/types/task";
+import type { TeamTag } from "@/types/tag";
+import { TagChips } from "@/components/tags/tag-chips";
 
 type Props = {
   tasks: Task[];
+  teamTags?: TeamTag[];
   onTasksChange?: (tasks: Task[]) => void;
   onEditTask?: (task: Task) => void;
 };
 
-export function TasksTable({ tasks, onTasksChange, onEditTask }: Props) {
+export function TasksTable({
+  tasks,
+  teamTags = [],
+  onTasksChange,
+  onEditTask,
+}: Props) {
   const [pending, startTransition] = useTransition();
   const [postpone, setPostpone] = useState<{
     task: Task;
@@ -130,6 +138,11 @@ export function TasksTable({ tasks, onTasksChange, onEditTask }: Props) {
                       <TaskRecurrenceSummary
                         recurrence={task.recurrence}
                         className="mt-0.5 block"
+                      />
+                      <TagChips
+                        tagIds={task.tagIds}
+                        catalog={teamTags}
+                        className="mt-1"
                       />
                     </div>
                   </td>

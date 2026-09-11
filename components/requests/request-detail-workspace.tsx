@@ -54,6 +54,9 @@ import { Panel } from "@/components/ui/panel";
 import { useDetailSaveFeedback } from "@/components/app/detail-save-feedback-context";
 import { StatusBadge } from "@/components/requests/status-badge";
 import { PriorityBadge } from "@/components/requests/priority-badge";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
+import { setRequestTags } from "@/lib/actions/set-entity-tags";
+import type { TeamTag } from "@/types/tag";
 
 const NOTE_COMPOSER_PLACEHOLDER =
   "Aggiungi una nota operativa, aggiornamento o follow-up…";
@@ -78,6 +81,8 @@ type Props = {
   /** Admin e manager possono riassegnare. */
   canAssignRequests: boolean;
   assigneeOptions: AssigneeOption[];
+  teamTags?: TeamTag[];
+  checklistTagIdsByTask?: Record<string, string[]>;
 };
 
 /**
@@ -89,9 +94,14 @@ export function RequestDetailWorkspace({
   initialActivities,
   canAssignRequests,
   assigneeOptions,
+  teamTags = [],
+  checklistTagIdsByTask: initialChecklistTagIds = {},
 }: Props) {
   const router = useRouter();
   const [request, setRequest] = useState<Request>(initialRequest);
+  const [checklistTagIdsByTask, setChecklistTagIdsByTask] = useState(
+    initialChecklistTagIds,
+  );
   const [notes, setNotes] = useState<RequestNote[]>(initialNotes);
   const [activities, setActivities] =
     useState<RequestActivity[]>(initialActivities);
@@ -540,6 +550,19 @@ export function RequestDetailWorkspace({
         </div>
 
         <div className="mt-7 border-t border-line-default pt-6">
+          <EntityTagPicker
+            catalog={teamTags}
+            selectedIds={request.tagIds}
+            disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
+            onChange={async (nextIds) => {
+              const res = await setRequestTags(request.id, nextIds);
+              if (!res.ok) throw new Error(res.message);
+              setRequest((prev) => ({ ...prev, tagIds: nextIds }));
+            }}
+          />
+        </div>
+
+        <div className="mt-7 border-t border-line-default pt-6">
         <h2 className={uiSectionHeading}>Prossima azione</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-fg-secondary">
           Scadenza facoltativa. Usa &quot;Salva&quot; per confermare le modifiche.
@@ -559,6 +582,15 @@ export function RequestDetailWorkspace({
               onValidationError={setNextDeadlineError}
               disabled={opBusy || nextSaveUi === "saving" || assignmentBusy}
               className="mt-1.5"
+              requestId={request.id}
+              teamTags={teamTags}
+              checklistTagIdsByTask={checklistTagIdsByTask}
+              onChecklistTagsChange={(checklistTaskId, tagIds) => {
+                setChecklistTagIdsByTask((prev) => ({
+                  ...prev,
+                  [checklistTaskId]: tagIds,
+                }));
+              }}
             />
           </div>
 

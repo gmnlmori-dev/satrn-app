@@ -20,6 +20,9 @@ import {
   isChecklistDueAllowed,
 } from "@/lib/next-action-deadline-validation";
 import { ExpandableChecklistTaskInput } from "@/components/requests/checklist-task-text";
+import { EntityTagPicker } from "@/components/tags/entity-tag-picker";
+import { setChecklistItemTags } from "@/lib/actions/set-entity-tags";
+import type { TeamTag } from "@/types/tag";
 
 type Props = {
   value: string;
@@ -32,6 +35,14 @@ type Props = {
   /** Scadenza progetto già impostata (limita le date checklist). */
   requestNextActionAt?: string | null;
   onValidationError?: (message: string | null) => void;
+  /** Se impostato, consente tag sulle voci checklist. */
+  requestId?: string;
+  teamTags?: TeamTag[];
+  checklistTagIdsByTask?: Record<string, string[]>;
+  onChecklistTagsChange?: (
+    checklistTaskId: string,
+    tagIds: string[],
+  ) => void;
 };
 
 function updateTask(
@@ -126,6 +137,10 @@ export function NextActionField({
   className,
   requestNextActionAt = null,
   onValidationError,
+  requestId,
+  teamTags = [],
+  checklistTagIdsByTask = {},
+  onChecklistTagsChange,
 }: Props) {
   const [content, setContent] = useState<NextActionContent>(() =>
     parseNextAction(value),
@@ -252,6 +267,25 @@ export function NextActionField({
                       })
                     }
                   />
+                  {requestId && teamTags.length > 0 ? (
+                    <div className="mt-2">
+                      <EntityTagPicker
+                        catalog={teamTags}
+                        selectedIds={checklistTagIdsByTask[task.id] ?? []}
+                        disabled={disabled}
+                        label="Tag"
+                        onChange={async (nextIds) => {
+                          const res = await setChecklistItemTags(
+                            requestId,
+                            task.id,
+                            nextIds,
+                          );
+                          if (!res.ok) throw new Error(res.message);
+                          onChecklistTagsChange?.(task.id, nextIds);
+                        }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </li>
             ))}

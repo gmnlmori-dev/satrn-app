@@ -40,4 +40,6 @@ export interface Task {
   teamName: string | null;
   createdByUserId: string;
   createdByLabel: string | null;
+  /** Tag di team applicati alla task */
+  tagIds: string[];
 }

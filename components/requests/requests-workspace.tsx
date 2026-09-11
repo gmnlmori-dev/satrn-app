@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Request } from "@/types/request";
 import type { AssigneeOption } from "@/types/profile";
+import type { TeamTag } from "@/types/tag";
 import {
   RequestsDatabaseEmptyState,
   RequestsEmptyState,
@@ -109,11 +110,13 @@ export function RequestsWorkspace({
   requests,
   currentUserId,
   assigneeOptions,
+  teamTags = [],
   defaultAssignScope = "all",
 }: {
   requests: Request[];
   currentUserId: string;
   assigneeOptions: AssigneeOption[];
+  teamTags?: TeamTag[];
   defaultAssignScope?: AssignScopeFilter;
 }) {
   const toolbarBaseline = useMemo(
@@ -224,6 +227,7 @@ export function RequestsWorkspace({
         onReset={resetAll}
         currentUserId={currentUserId}
         assigneeOptions={assigneeOptions}
+        teamTags={teamTags}
         myAssignedCount={myAssignedCount}
         filterBaseline={toolbarBaseline}
       />
@@ -241,7 +245,7 @@ export function RequestsWorkspace({
               : ` su ${scopedRequests.length} progetti`}
           </p>
           <PriorityLegend />
-          <RequestsTable requests={forList} />
+          <RequestsTable requests={forList} teamTags={teamTags} />
         </section>
       )}
     </div>

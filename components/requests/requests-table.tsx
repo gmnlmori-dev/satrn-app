@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import type { Request } from "@/types/request";
 import type { RequestPriority } from "@/types/request";
+import type { TeamTag } from "@/types/tag";
 import { StatusBadge } from "@/components/requests/status-badge";
+import { TagChips } from "@/components/tags/tag-chips";
 import { formatDate, formatDateTime } from "@/lib/date";
 import { cn } from "@/lib/cn";
 import {
@@ -34,9 +36,11 @@ const priorityBarClass: Record<RequestPriority, string> = {
 function Row({
   r,
   index,
+  teamTags,
 }: {
   r: Request;
   index: number;
+  teamTags: TeamTag[];
 }) {
   const router = useRouter();
 
@@ -90,6 +94,11 @@ function Row({
         >
           {r.title}
         </span>
+        <TagChips
+          tagIds={r.tagIds}
+          catalog={teamTags}
+          className="mt-1 pl-2"
+        />
         <p className="mt-1 truncate text-xs text-fg-tertiary sm:hidden">
           {r.companyName}
         </p>
@@ -164,7 +173,13 @@ function Row({
   );
 }
 
-export function RequestsTable({ requests }: { requests: Request[] }) {
+export function RequestsTable({
+  requests,
+  teamTags = [],
+}: {
+  requests: Request[];
+  teamTags?: TeamTag[];
+}) {
   return (
     <div className={dataTableShellClass}>
       <div className="w-full min-w-[760px]">
@@ -213,7 +228,7 @@ export function RequestsTable({ requests }: { requests: Request[] }) {
           </thead>
           <tbody>
             {requests.map((r, i) => (
-              <Row key={r.id} r={r} index={i} />
+              <Row key={r.id} r={r} index={i} teamTags={teamTags} />
             ))}
           </tbody>
         </table>

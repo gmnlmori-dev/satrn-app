@@ -58,5 +58,6 @@ export function taskRowToTask(row: TaskRowWithAssignee): Task {
     teamName: row.team?.name?.trim() || null,
     createdByUserId: row.created_by_user_id,
     createdByLabel: profileDisplayName(row.creator),
+    tagIds: [],
   };
 }
