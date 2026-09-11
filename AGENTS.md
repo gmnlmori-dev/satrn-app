@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Note di rilascio
 
 Per changelog, comunicazioni Novità o testi per annunci in-app, seguire `.cursor/rules/release-notes.mdc` (tag Git, titolo `Satrn vX.Y.Z — data | …`, tono formale).
+
+## Versionamento
+
+A ogni modifica funzionale consegnata aggiornare automaticamente la versione (`package.json` + tag Git `vX.Y.Z`) seguendo `.cursor/rules/versioning.mdc`.

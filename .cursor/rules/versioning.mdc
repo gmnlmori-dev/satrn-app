@@ -1,0 +1,32 @@
+---
+description: Aggiornamento automatico della versione (package.json + tag Git) a ogni modifica consegnata
+alwaysApply: true
+---
+
+# Versionamento automatico Satrn
+
+Ogni volta che si completa e si committa una modifica funzionale al codice dell'app, aggiornare **anche la versione**, senza attendere richiesta esplicita.
+
+## Fonte di verità
+
+- La versione vive in `package.json` (`"version"`) e nel **tag Git** `vX.Y.Z` corrispondente. I due valori devono coincidere.
+- Prima di scegliere il numero, leggere la versione corrente da `package.json` (non fidarsi dei soli tag locali: potrebbero non essere aggiornati).
+
+## Regola di incremento (semver, pre-1.0)
+
+- Nuova funzionalità o cambiamento visibile all'utente (`feat`) → incremento **minor** (`0.10.0` → `0.11.0`).
+- Correzione, refactor, miglioramento UX minore, SQL/migrazione di supporto (`fix`, `chore`, `refactor`) → incremento **patch** (`0.10.0` → `0.10.1`).
+- Più modifiche nella stessa sessione: **un solo** incremento alla fine, del livello più alto tra quelle fatte.
+- Non incrementare per modifiche che toccano solo documentazione, regole `.cursor`, o file di test.
+
+## Procedura
+
+1. Aggiornare `"version"` in `package.json`.
+2. Includere il bump nello stesso commit della modifica, oppure in un commit dedicato `chore(release): vX.Y.Z`.
+3. Creare il tag annotato: `git tag -a vX.Y.Z -m "Satrn vX.Y.Z — <sintesi breve>"`.
+4. Al push, inviare anche il tag: `git push origin main --follow-tags` (o `git push origin vX.Y.Z`).
+5. Nel riepilogo finale all'utente indicare la nuova versione.
+
+## Collegamento con le note di rilascio
+
+Il tag creato qui è quello da usare nel titolo delle note di rilascio (`.cursor/rules/release-notes.mdc`): `Satrn vX.Y.Z — data | aree toccate`.

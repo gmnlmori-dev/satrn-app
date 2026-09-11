@@ -10,6 +10,7 @@ Quando l'utente chiede note di rilascio, changelog, comunicazioni Novità o test
 ## Versione
 
 - Usare **solo tag Git** (es. `v0.8.0`), mai codici interni tipo SRN-AAAA.MM.GG.
+- La versione corrente è quella in `package.json`, mantenuta allineata al tag da `.cursor/rules/versioning.mdc`.
 - Se il tag non è indicato, ricavare l'ultimo tag con `git describe --tags --abbrev=0` o chiedere quale tag associare al rilascio.
 
 ## Titolo
