@@ -44,7 +44,6 @@ as_deploy() {
       LOGNAME="$DEPLOY_USER" \
       LANG="C.UTF-8" \
       LC_ALL="C.UTF-8" \
-      NODE_ENV="production" \
       PATH="${NODE_BIN}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin" \
       "$@"
 }
@@ -146,8 +145,10 @@ git_app worktree add --detach "$release_dir" "$sha"
 install -o "$DEPLOY_USER" -g "$DEPLOY_USER" -m 0600 \
   "${APP_DIR}/.env.local" "${release_dir}/.env.local"
 
+# devDependencies incluse: servono alla build (Tailwind, TypeScript).
+# NODE_ENV=production è impostato solo a runtime dalla unit systemd.
 log "npm ci"
-run_in "$release_dir" npm ci --no-audit --no-fund
+run_in "$release_dir" npm ci --include=dev --no-audit --no-fund
 log "npm run build"
 run_in "$release_dir" npm run build
 
