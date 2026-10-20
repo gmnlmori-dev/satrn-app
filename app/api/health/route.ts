@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 
@@ -9,6 +11,17 @@ import { getSupabasePublicEnv } from "@/lib/supabase/env";
 export const dynamic = "force-dynamic";
 
 const TIMEOUT_MS = 5000;
+
+/** Versione della release in esecuzione (package.json nella cwd del servizio). */
+function appVersion(): string | null {
+  try {
+    const raw = readFileSync(path.join(process.cwd(), "package.json"), "utf8");
+    const parsed = JSON.parse(raw) as { version?: unknown };
+    return typeof parsed.version === "string" ? parsed.version : null;
+  } catch {
+    return null;
+  }
+}
 
 async function supabaseReachable(): Promise<boolean> {
   try {
@@ -29,7 +42,7 @@ export async function GET() {
   const body = {
     status: reachable ? "ok" : "degraded",
     database: reachable ? "reachable" : "unreachable",
-    version: process.env.npm_package_version ?? null,
+    version: appVersion(),
     timestamp: new Date().toISOString(),
   };
   return NextResponse.json(body, {

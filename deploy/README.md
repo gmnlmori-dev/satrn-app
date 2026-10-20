@@ -23,9 +23,12 @@ I segreti stanno in `/opt/satrn/app/.env.local` (utente `satrn`, 0600) e
 Sul server, con un utente sudo:
 
 ```bash
-git clone https://github.com/gmnlmori-dev/satrn-app.git /tmp/satrn-setup
-sudo bash /tmp/satrn-setup/deploy/bin/satrn-server-setup
+git clone https://github.com/gmnlmori-dev/satrn-app.git ~/satrn-setup
+sudo bash ~/satrn-setup/deploy/bin/satrn-server-setup
 ```
+
+Il checkout `~/satrn-setup` serve solo per (re)installare script e unit:
+per aggiornarli, `git -C ~/satrn-setup pull` e rieseguire il setup.
 
 Lo script è rieseguibile e:
 
