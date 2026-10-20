@@ -54,11 +54,11 @@ ln -sfn "${RUNTIME_DIR}/${NODE_DIST}" "${RUNTIME_DIR}/node"
 log "node: $("${RUNTIME_DIR}/node/bin/node" -v)"
 
 # --- repository ---------------------------------------------------------------
+install -d -o "$DEPLOY_USER" -g "$DEPLOY_USER" -m 0750 "$APP_DIR"
 if [[ ! -d "${APP_DIR}/.git" ]]; then
   log "clono ${REPO_URL} in ${APP_DIR}"
   as_deploy git clone --branch main "$REPO_URL" "$APP_DIR"
 fi
-chmod 0750 "$APP_DIR"
 as_deploy git -C "$APP_DIR" config user.email "satrn@${DOMAIN}"
 as_deploy git -C "$APP_DIR" config user.name "satrn-release"
 
