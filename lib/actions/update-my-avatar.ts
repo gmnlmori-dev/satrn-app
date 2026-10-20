@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { isAvatarKey, type AvatarKey } from "@/lib/avatars";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  getAuthUserId,
+} from "@/lib/supabase/server";
 
 export type UpdateMyAvatarResult =
   | { ok: true; avatarKey: AvatarKey | null }
@@ -19,14 +22,11 @@ export async function updateMyAvatar(
     return { ok: false, message: "Immagine profilo non valida." };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.id) {
+  if (!(await getAuthUserId())) {
     return { ok: false, message: "Sessione non valida." };
   }
 
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("update_my_avatar", {
     key: avatarKey,
   });

@@ -42,18 +42,23 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verifica locale della firma JWT (chiavi asimmetriche): nessun round-trip
+  // all'Auth server; il refresh del token scaduto avviene comunque qui.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub ?? null;
 
   const pathname = request.nextUrl.pathname;
 
   if (pathname === "/login" || pathname.startsWith("/login/")) {
-    if (user) {
+    if (userId && request.nextUrl.searchParams.get("reason") === "inactive") {
+      await supabase.auth.signOut();
+      return response;
+    }
+    if (userId) {
       const { data: prof } = await supabase
         .from("profiles")
         .select("preferences")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .maybeSingle();
 
       const home = resolveDefaultHomePath(
@@ -69,16 +74,22 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (!user) {
+  if (!userId) {
     const redirect = NextResponse.redirect(new URL("/login", request.url));
     copyCookies(response, redirect);
     return redirect;
   }
 
+  // Le pagine verificano `is_active` nel layout `/app` (profilo già caricato);
+  // qui il controllo resta per le mutazioni (Server Actions in POST).
+  if (request.method === "GET" || request.method === "HEAD") {
+    return response;
+  }
+
   const { data: prof, error: profErr } = await supabase
     .from("profiles")
     .select("is_active")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (!profErr && prof?.is_active === false) {

@@ -28,8 +28,10 @@ export const metadata = {
 const DASHBOARD_FEED_LIMIT = 5;
 
 export default async function DashboardPage() {
-  const profile = await getCurrentProfileSummary();
-  const appSettings = await getAppSettings();
+  const [profile, appSettings] = await Promise.all([
+    getCurrentProfileSummary(),
+    getAppSettings(),
+  ]);
   const inboxEnabled = isInboxEnabled(appSettings);
   const userId = profile?.userId ?? "";
   const teamScope = profile

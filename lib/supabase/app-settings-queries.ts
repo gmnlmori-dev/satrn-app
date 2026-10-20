@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   DEFAULT_APP_SETTINGS,
   isInboxEnabled,
@@ -8,7 +9,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const GLOBAL_SETTINGS_ID = "global";
 
-export async function getAppSettings(): Promise<AppSettings> {
+export const getAppSettings = cache(async (): Promise<AppSettings> => {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("app_settings")
@@ -21,7 +22,7 @@ export async function getAppSettings(): Promise<AppSettings> {
   }
 
   return parseAppSettings(data.settings);
-}
+});
 
 export async function isInboxEnabledServer(): Promise<boolean> {
   const settings = await getAppSettings();

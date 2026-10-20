@@ -1,6 +1,10 @@
+import { cache } from "react";
 import { normalizeAvatarKey } from "@/lib/avatars";
 import { parseUserPreferences } from "@/lib/user-preferences";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  getAuthUserId,
+} from "@/lib/supabase/server";
 import type { ProfileRow, ProfileRowWithTeam } from "@/types/database";
 import type { AssigneeOption, ProfileSummary } from "@/types/profile";
 
@@ -51,28 +55,31 @@ export async function getMemberAvatarMap(): Promise<Record<string, string>> {
   return map;
 }
 
-/** Profilo dell’utente loggato, o null se anonimo / profilo assente. */
-export async function getCurrentProfileSummary(): Promise<ProfileSummary | null> {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.id) return null;
+/**
+ * Profilo dell’utente loggato, o null se anonimo / profilo assente.
+ * Condiviso nella stessa richiesta tra layout, pagina e query (React `cache`).
+ */
+export const getCurrentProfileSummary = cache(
+  async (): Promise<ProfileSummary | null> => {
+    const userId = await getAuthUserId();
+    if (!userId) return null;
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*, team:teams(id, name, slug)")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*, team:teams(id, name, slug)")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  if (error) {
-    console.error("[getCurrentProfileSummary]", error.message);
-    return null;
-  }
-  if (!data) return null;
+    if (error) {
+      console.error("[getCurrentProfileSummary]", error.message);
+      return null;
+    }
+    if (!data) return null;
 
-  return profileRowToSummary(data as ProfileRowWithTeam);
-}
+    return profileRowToSummary(data as ProfileRowWithTeam);
+  },
+);
 
 /** Utenti attivi del team per picker assegnazione (ordine alfabetico). */
 export async function getActiveAssigneeOptions(

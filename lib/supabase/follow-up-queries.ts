@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getFollowUpWindowBounds } from "@/lib/follow-up-windows";
 import {
   extractCalendarTasks,
@@ -24,7 +25,8 @@ function assertNoError(message: string, error: { message: string } | null) {
   if (error) throw new Error(`${message}: ${error.message}`);
 }
 
-async function getOpenRequestsForFollowUp(): Promise<Request[]> {
+/** Una sola lettura per richiesta, condivisa da code e checklist. */
+const getOpenRequestsForFollowUp = cache(async (): Promise<Request[]> => {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("requests")
@@ -35,7 +37,7 @@ async function getOpenRequestsForFollowUp(): Promise<Request[]> {
   return attachRequestTagIds(
     ((data ?? []) as RequestRowWithAssignee[]).map(requestRowToRequest),
   );
-}
+});
 
 /** Aperte in ritardo (scadenza effettiva prima di oggi). */
 export async function getOverdueRequests(): Promise<Request[]> {

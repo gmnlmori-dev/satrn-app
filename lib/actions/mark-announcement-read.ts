@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { revalidateAnnouncementPaths } from "@/lib/actions/announcement-validation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  getAuthUserId,
+} from "@/lib/supabase/server";
 
 export type MarkAnnouncementReadResult =
   | { ok: true }
@@ -16,18 +19,15 @@ export async function markAnnouncementRead(
     return { ok: false, message: "Identificativo novità mancante." };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user?.id) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return { ok: false, message: "Sessione non valida." };
   }
 
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("app_announcement_reads").upsert(
     {
-      user_id: user.id,
+      user_id: userId,
       announcement_id: id,
       read_at: new Date().toISOString(),
     },

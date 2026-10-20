@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { AppChrome } from "@/components/app/app-chrome";
 import { CurrentUserProvider } from "@/components/app/current-user-context";
 import { isInboxEnabled } from "@/lib/app-settings";
@@ -21,28 +22,35 @@ export default async function AppSectionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = await getCurrentProfileSummary();
-  const appSettings = await getAppSettings();
+  const [profile, appSettings] = await Promise.all([
+    getCurrentProfileSummary(),
+    getAppSettings(),
+  ]);
+  if (profile && !profile.isActive) {
+    redirect("/login?reason=inactive");
+  }
   const inboxEnabled = isInboxEnabled(appSettings);
-  const teamsForCreate =
-    profile?.role === "admin" ? await getTeamsForSelect() : [];
-  const teamTags = profile?.userId
-    ? await getTeamTags(
-        profile.role === "admin" ? undefined : profile.teamId,
-      ).catch(() => [])
-    : [];
-  const memberAvatars = profile?.userId
-    ? await getMemberAvatarMap().catch(() => ({}))
-    : {};
+  const userId = profile?.userId;
 
-  const [welcomeAnnouncement, unreadAnnouncementCount] = profile?.userId
-    ? await Promise.all([
-        getOldestUnreadActiveAnnouncementForUser(profile.userId).catch(
-          () => null,
-        ),
-        getUnreadAnnouncementCountForUser(profile.userId).catch(() => 0),
-      ])
-    : [null, 0];
+  const [
+    teamsForCreate,
+    teamTags,
+    memberAvatars,
+    welcomeAnnouncement,
+    unreadAnnouncementCount,
+  ] = await Promise.all([
+    profile?.role === "admin" ? getTeamsForSelect() : [],
+    userId
+      ? getTeamTags(
+          profile.role === "admin" ? undefined : profile.teamId,
+        ).catch(() => [])
+      : [],
+    userId ? getMemberAvatarMap().catch(() => ({})) : {},
+    userId
+      ? getOldestUnreadActiveAnnouncementForUser(userId).catch(() => null)
+      : null,
+    userId ? getUnreadAnnouncementCountForUser(userId).catch(() => 0) : 0,
+  ]);
 
   return (
     <CurrentUserProvider

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { teamTagRowToTeamTag } from "@/lib/tags";
 import type { TeamTag, TeamTagRow } from "@/types/tag";
@@ -23,22 +24,24 @@ function groupIdsByKey(
 }
 
 /** Tag del team (o tutti i team visibili all'admin via RLS). */
-export async function getTeamTags(teamId?: string): Promise<TeamTag[]> {
-  const supabase = await createSupabaseServerClient();
-  let query = supabase
-    .from("team_tags")
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
+export const getTeamTags = cache(
+  async (teamId?: string): Promise<TeamTag[]> => {
+    const supabase = await createSupabaseServerClient();
+    let query = supabase
+      .from("team_tags")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
 
-  if (teamId) {
-    query = query.eq("team_id", teamId);
-  }
+    if (teamId) {
+      query = query.eq("team_id", teamId);
+    }
 
-  const { data, error } = await query;
-  assertNoError("getTeamTags", error);
-  return ((data ?? []) as TeamTagRow[]).map(teamTagRowToTeamTag);
-}
+    const { data, error } = await query;
+    assertNoError("getTeamTags", error);
+    return ((data ?? []) as TeamTagRow[]).map(teamTagRowToTeamTag);
+  },
+);
 
 export async function attachRequestTagIds(
   requests: Request[],
