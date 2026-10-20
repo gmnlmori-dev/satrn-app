@@ -1,0 +1,23 @@
+[Unit]
+Description=Satrn internal health heartbeat
+After=network-online.target satrn-web.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=satrn
+Group=satrn
+EnvironmentFile=/etc/satrn/monitoring.env
+ExecStart=/usr/local/sbin/satrn-health-heartbeat
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6
+UMask=0077

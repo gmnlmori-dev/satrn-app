@@ -1,0 +1,36 @@
+[Unit]
+Description=Satrn web application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=satrn
+Group=satrn
+WorkingDirectory=/opt/satrn/current
+
+Environment=NODE_ENV=production
+Environment=PATH=/opt/satrn/runtime/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+
+ExecStart=/opt/satrn/runtime/node/bin/node /opt/satrn/current/node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3002
+
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+# 128+SIGTERM: uno stop normale non deve risultare un errore di servizio.
+SuccessExitStatus=143
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

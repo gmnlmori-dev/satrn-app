@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+# Rilascio Satrn (stesso modello di stellr-release).
+#
+# - aggiorna /opt/satrn/app (branch main) con fast-forward da origin/main
+# - crea una worktree detached in /opt/satrn/releases/<sha>
+# - copia .env.local, esegue npm ci e npm run build come utente satrn
+# - scambia /opt/satrn/current in modo atomico e riavvia satrn-web.service
+# - verifica /api/health; se fallisce ripristina la release precedente
+# - conserva le ultime 3 release (mai quella attiva né quella di rollback)
+#
+# Uso: sudo satrn-release [--ref <sha|tag>]   (default: origin/main)
+set -Eeuo pipefail
+
+APP_DIR="/opt/satrn/app"
+RELEASES_DIR="/opt/satrn/releases"
+CURRENT_LINK="/opt/satrn/current"
+NODE_BIN="/opt/satrn/runtime/node/bin"
+DEPLOY_USER="satrn"
+SERVICE="satrn-web.service"
+HEALTH_URL="http://127.0.0.1:3002/api/health"
+HEALTH_TIMEOUT=30
+KEEP_RELEASES=3
+LOCK_FILE="/run/lock/satrn-release.lock"
+TMP_LINK="${CURRENT_LINK}.tmp"
+
+REF="origin/main"
+if [[ "${1:-}" == "--ref" && -n "${2:-}" ]]; then
+  REF="$2"
+fi
+
+switched=0
+finish_ok=0
+previous_target=""
+deploy_home=""
+
+die() { echo "satrn-release: $*" >&2; exit 1; }
+log() { echo "satrn-release: $*"; }
+
+as_deploy() {
+  runuser -u "$DEPLOY_USER" -- \
+    env -i \
+      HOME="$deploy_home" \
+      USER="$DEPLOY_USER" \
+      LOGNAME="$DEPLOY_USER" \
+      LANG="C.UTF-8" \
+      LC_ALL="C.UTF-8" \
+      NODE_ENV="production" \
+      PATH="${NODE_BIN}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin" \
+      "$@"
+}
+
+run_in() {
+  local dir="$1"; shift
+  as_deploy bash -c 'set -Eeuo pipefail; cd -- "$1"; shift; exec "$@"' bash "$dir" "$@"
+}
+
+git_app() { as_deploy git -C "$APP_DIR" "$@"; }
+
+wait_for_health() {
+  local deadline=$(( $(date +%s) + HEALTH_TIMEOUT ))
+  while (( $(date +%s) < deadline )); do
+    if curl --silent --fail --max-time 5 "$HEALTH_URL" | grep -Eq '"status"[[:space:]]*:[[:space:]]*"ok"'; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+swap_link() {
+  local target="$1"
+  rm -f -- "$TMP_LINK"
+  ln -s -- "$target" "$TMP_LINK"
+  mv -Tf -- "$TMP_LINK" "$CURRENT_LINK"
+}
+
+on_exit() {
+  local status=$?
+  trap - EXIT
+  set +e
+  if [[ "$finish_ok" -eq 1 ]]; then
+    exit "$status"
+  fi
+  if [[ "$switched" -eq 1 && -n "$previous_target" ]]; then
+    echo "satrn-release: avvio non riuscito, ripristino ${CURRENT_LINK} -> ${previous_target}" >&2
+    if swap_link "$previous_target" && systemctl restart "$SERVICE"; then
+      if wait_for_health; then
+        echo "satrn-release: rollback operativo (${HEALTH_URL} risponde HTTP 200)" >&2
+      else
+        echo "satrn-release: rollback NON operativo: intervento manuale necessario" >&2
+      fi
+    else
+      echo "satrn-release: ripristino non riuscito: intervento manuale necessario" >&2
+    fi
+    status=1
+  fi
+  exit "$status"
+}
+
+# --- prerequisiti -----------------------------------------------------------
+[[ "$(id -u)" -eq 0 ]] || die "eseguire come root (sudo)"
+for c in runuser git curl systemctl; do
+  command -v "$c" >/dev/null 2>&1 || die "comando assente: $c"
+done
+[[ -x "${NODE_BIN}/node" ]] || die "runtime Node assente in ${NODE_BIN} (eseguire satrn-server-setup)"
+[[ -d "${APP_DIR}/.git" ]] || die "repository assente in ${APP_DIR} (eseguire satrn-server-setup)"
+[[ -f "${APP_DIR}/.env.local" ]] || die "manca ${APP_DIR}/.env.local"
+deploy_home="$(getent passwd "$DEPLOY_USER" | cut -d: -f6)"
+[[ -n "$deploy_home" ]] || die "utente ${DEPLOY_USER} assente"
+
+exec 9>"$LOCK_FILE"
+flock -n 9 || die "un altro rilascio è in corso"
+trap on_exit EXIT
+
+mkdir -p -- "$RELEASES_DIR"
+chown "$DEPLOY_USER:$DEPLOY_USER" "$RELEASES_DIR"
+chmod 0750 "$RELEASES_DIR"
+
+# --- aggiornamento sorgenti ---------------------------------------------------
+[[ -z "$(git_app status --porcelain)" ]] || die "${APP_DIR} non è pulito"
+log "git fetch origin"
+git_app fetch --prune --tags origin
+git_app checkout -q main
+git_app merge --ff-only origin/main
+
+sha="$(git_app rev-parse --verify "${REF}^{commit}")"
+[[ "$sha" =~ ^[0-9a-f]{40}$ ]] || die "ref non valida: ${REF}"
+release_dir="${RELEASES_DIR}/${sha}"
+previous_target="$(readlink -- "$CURRENT_LINK" 2>/dev/null || true)"
+
+if [[ "$previous_target" == "$release_dir" ]]; then
+  log "il commit ${sha:0:12} è già la release attiva; nulla da fare"
+  finish_ok=1
+  exit 0
+fi
+
+# --- preparazione release -----------------------------------------------------
+if [[ -d "$release_dir" ]]; then
+  log "rimuovo una precedente release incompleta ${sha:0:12}"
+  git_app worktree remove --force "$release_dir"
+fi
+log "creo worktree ${release_dir}"
+git_app worktree prune
+git_app worktree add --detach "$release_dir" "$sha"
+
+install -o "$DEPLOY_USER" -g "$DEPLOY_USER" -m 0600 \
+  "${APP_DIR}/.env.local" "${release_dir}/.env.local"
+
+log "npm ci"
+run_in "$release_dir" npm ci --no-audit --no-fund
+log "npm run build"
+run_in "$release_dir" npm run build
+
+# --- attivazione --------------------------------------------------------------
+log "attivo ${sha:0:12}"
+swap_link "$release_dir"
+switched=1
+systemctl restart "$SERVICE"
+wait_for_health || die "${HEALTH_URL} non ha risposto HTTP 200 entro ${HEALTH_TIMEOUT}s"
+finish_ok=1
+log "release attiva: $(readlink -f -- "$CURRENT_LINK")"
+
+# --- pulizia release vecchie --------------------------------------------------
+mapfile -t all_releases < <(
+  for d in "$RELEASES_DIR"/*/; do
+    d="${d%/}"
+    [[ "$(basename -- "$d")" =~ ^[0-9a-f]{40}$ ]] || continue
+    ts="$(git_app log -1 --format=%ct "$(basename -- "$d")" 2>/dev/null || echo 0)"
+    echo "${ts} ${d}"
+  done | sort -rn | awk '{print $2}'
+)
+idx=0
+for d in "${all_releases[@]}"; do
+  idx=$((idx + 1))
+  # mai la release attiva né quella di rollback; poi le KEEP_RELEASES più recenti
+  if [[ "$d" == "$release_dir" || "$d" == "$previous_target" ]] || (( idx <= KEEP_RELEASES )); then
+    continue
+  fi
+  log "rimuovo release vecchia $(basename -- "$d" | cut -c1-12)"
+  git_app worktree remove --force "$d" || echo "satrn-release: impossibile rimuovere ${d}" >&2
+done
+git_app worktree prune
+log "completato"

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Verifica http://127.0.0.1:3002/api/health e invia un heartbeat a
+# Healthchecks.io solo se app e Supabase risultano disponibili.
+# HEALTHCHECKS_PING_URL arriva da /etc/satrn/monitoring.env (root:root 0600).
+set -Eeuo pipefail
+
+HEALTH_URL="http://127.0.0.1:3002/api/health"
+
+if [[ -z "${HEALTHCHECKS_PING_URL:-}" ]]; then
+  echo "HEALTHCHECKS_PING_URL non impostato" >&2
+  exit 1
+fi
+
+response="$(
+  curl \
+    --silent \
+    --show-error \
+    --fail \
+    --max-time 10 \
+    "$HEALTH_URL"
+)"
+
+if ! grep -Eq '"status"[[:space:]]*:[[:space:]]*"ok"' <<<"$response"; then
+  echo "Satrn health check non valido" >&2
+  exit 1
+fi
+
+if ! grep -Eq '"database"[[:space:]]*:[[:space:]]*"reachable"' <<<"$response"; then
+  echo "Supabase non raggiungibile da Satrn" >&2
+  exit 1
+fi
+
+curl \
+  --silent \
+  --show-error \
+  --fail \
+  --max-time 10 \
+  --retry 2 \
+  --retry-delay 2 \
+  --request POST \
+  "$HEALTHCHECKS_PING_URL" \
+  >/dev/null

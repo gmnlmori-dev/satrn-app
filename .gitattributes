@@ -1,0 +1,4 @@
+# Script e configurazioni eseguiti su Linux: sempre LF, anche con checkout Windows.
+deploy/** text eol=lf
+*.sh text eol=lf
+*.sql text eol=lf

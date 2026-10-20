@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Satrn internal health heartbeat every two minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=15s
+RandomizedDelaySec=15s
+Persistent=true
+Unit=satrn-health-heartbeat.service
+
+[Install]
+WantedBy=timers.target
